@@ -1,0 +1,18 @@
+{% extends 'encyclopedia/base_wiki.html' %}
+
+{% block title %}Article :: {{ article.entry_name }}{% endblock %}
+
+{% block top_header %}<h1>{{ article.entry_name }}</h1>{% endblock %}
+
+{% block main_content %}
+{% if article %}
+<div>
+  {{ article.entry_text }}
+</div>
+<div>
+  <div>last update: {{ article.upd_date }}</div>
+</div>
+{% else %}
+  <p>Some Error.</p>
+{% endif %}
+{% endblock %}

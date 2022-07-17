@@ -1,20 +1,25 @@
 import datetime
 
-from django.db.models import Model, IntegerField, CharField, DateTimeField, ForeignKey
-from django.db import models
 from django.utils import timezone
+from django.urls import reverse
 from django.contrib import admin
+from django.db import models
+from django.db.models import (
+    Model, IntegerField, CharField,
+    DateTimeField, ForeignKey
+)
 
 
 class Question(Model):
-    question_text = CharField(max_length=200)
+    question_text = CharField('text', max_length=200)
     pub_date = DateTimeField('date published', default=timezone.localtime)
 
-    def __repr__(self): return f'<q{self.id}: {self.question_text}>'
+    def __str__(self): return self.question_text
+
+    def __repr__(self): return f'<question-{self.pk}>'
 
     @admin.display(
         boolean=True,
-        ordering='pub_date',
         description='Published recently?',
     )
     def published_recently(self):
@@ -22,10 +27,20 @@ class Question(Model):
         yesterday = now - datetime.timedelta(days=1)
         return yesterday <= self.pub_date <= now
 
+    def get_absolute_url(self):
+        return reverse('polls:detail', kwargs={'pk': self.pk})
+
+    class Meta:
+        verbose_name = 'Question'
+        verbose_name_plural = 'Questions'
+        ordering = ['-pub_date']
+
 
 class Choice(Model):
-    question = ForeignKey(Question, on_delete=models.CASCADE)
-    choice_text = CharField(max_length=200)
+    question = ForeignKey(Question, on_delete=models.PROTECT, db_index=True)
+    choice_text = CharField('text', max_length=200)
     votes = IntegerField(default=0)
 
-    def __repr__(self): return f'<q{self.question.id}-a{self.id}: {self.choice_text}>'
+    def __str__(self): return self.choice_text
+
+    def __repr__(self): return f'<choice-{self.pk}>'

@@ -1,21 +1,25 @@
-{% load static %}
+{% extends 'polls/base_polls.html' %}
 
-<link rel='stylesheet' type='text/css' href="{% static 'polls/style.css' %}">
+{% block title %}Polls{% endblock %}
 
-{% if latest_question_list %}
-  <ul>
-  {% for q in latest_question_list %}
-    <li>
-      Q{{ q.pk }}. <a href={% url 'polls:detail' q.pk %}>{{ q.question_text }}</a>
-      <ol>
-      {% for a in q.choice_set.all %}
-        <li>{{ a.choice_text }} - {{ a.votes }} vote{{ a.votes|pluralize }}</li>
-      {% endfor %}
-      </ol>
-    </li>
+{% block top_header %}<h1>Polls</h1>{% endblock %}
+
+{% block menubar %}{% endblock %}
+
+{% block main_content %}
+<ul>
+{% for q in latest_question_list %}
+  <li>
+    Q{{ q.pk }}. <a href="{{ q.get_absolute_url }}">{{ q.question_text }}</a>
+    <ol>
+    {% for a in q.choice_set.all %}
+      <li>{{ a.choice_text }} - {{ a.votes }} vote{{ a.votes|pluralize }}</li>
+    {% endfor %}
+    </ol>
     <br>
-  {% endfor %}
-  </ul>
-{% else %}
-  <p>No polls are available.</p>
-{% endif %}
+  </li>
+{% empty %}
+  <li>No polls are available.</li>
+{% endfor %}
+</ul>
+{% endblock %}

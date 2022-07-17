@@ -1,0 +1,20 @@
+{% extends 'encyclopedia/base_wiki.html' %}
+
+{% block title %}Encyclopedia{% endblock %}
+
+{% block top_header %}<h1>Encyclopedia</h1>{% endblock %}
+
+{% block menubar %}{% endblock %}
+
+{% block main_content %}
+<div>
+  <h3>Articles to read</h3>
+  <ul>
+  {% for entry in wiki_entries %}
+    <li><a href='{{ entry.get_absolute_url }}'>{{ entry.entry_name }}</a></li>
+  {% empty %}
+    <li>No entries in wiki.</li>
+  {% endfor %}
+  </ul>
+</div>
+{% endblock %}

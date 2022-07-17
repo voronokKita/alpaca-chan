@@ -1,0 +1,13 @@
+{% extends 'encyclopedia/base_wiki.html' %}
+
+{% block title %} {{ title }} {% endblock %}
+
+{% block top_header %}<h1>{{ title }}</h1>{% endblock %}
+
+{% block main_content %}
+<form action='{{ request.path }}' method='POST'>
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type='submit' value='Save'>
+</form>
+{% endblock %}

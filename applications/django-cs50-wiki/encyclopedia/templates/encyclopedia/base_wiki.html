@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block stylesheet %}
+  {% load static %}
+  <link rel='stylesheet' type='text/css' href="{% static 'encyclopedia/style.css' %}">
+{% endblock %}
+
+{% block menubar %}
+<div><a href="{% url 'encyclopedia:index' %}">go back</a></div>
+{% endblock %}

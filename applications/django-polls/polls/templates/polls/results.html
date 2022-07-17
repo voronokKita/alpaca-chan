@@ -1,8 +1,15 @@
-<h1>{{ question.question_text }}</h1>
+{% extends 'polls/base_polls.html' %}
+
+{% block title %}Question {{ question.pk }} results{% endblock %}
+
+{% block top_header %}<h1>{{ question.question_text }}</h1>{% endblock %}
+
+{% block main_content %}
 <ol>
 {% for choice in question.choice_set.all %}
   <li>{{ choice.choice_text }} - {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
 {% endfor %}
 </ol>
 
-<a href="{% url 'polls:detail' question.id %}">Vote again?</a>
+<a href="{{ question.get_absolute_url }}">Vote again?</a>
+{% endblock %}

@@ -1,9 +1,14 @@
+{% extends 'polls/base_polls.html' %}
+
+{% block title %}Question {{ question.pk }} details{% endblock %}
+
+{% block top_header %}<h1>{{ question.question_text }}</h1>{% endblock %}
+
+{% block main_content %}
 <form action="{% url 'polls:vote' question.pk %}" method='POST'>
   {% csrf_token %}
 
   <fieldset>
-    <legend><h1>{{ question.question_text }}</h1></legend>
-
     {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
     {% for choice in question.choice_set.all %}
@@ -14,3 +19,4 @@
 
   <input type='submit' value='Vote'>
 </form>
+{% endblock %}
