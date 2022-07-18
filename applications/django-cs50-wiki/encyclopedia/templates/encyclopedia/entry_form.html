@@ -7,7 +7,10 @@
 {% block main_content %}
 <form action='{{ request.path }}' method='POST'>
   {% csrf_token %}
+  {% if delete_conformation %}
+  <p>{{ delete_conformation }}</p>
+  {% endif %}
   {{ form.as_p }}
-  <input type='submit' value='Save'>
+  <input type='submit' value='Done'>
 </form>
 {% endblock %}

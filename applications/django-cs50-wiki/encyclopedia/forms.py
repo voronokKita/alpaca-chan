@@ -1,13 +1,23 @@
-from django.forms import ModelForm, TextInput, Textarea
+from django.forms import Form, ModelForm, TextInput, Textarea, BooleanField, CheckboxInput, SlugField
 
 from .models import Entry
 
 
-class AddNewEntryForm(ModelForm):
+class EntryForm(ModelForm):
     class Meta:
         model = Entry
-        fields = ['entry_name', 'entry_text']
+        fields = ['slug', 'entry_name', 'entry_text']
         widgets = {
-            'entry_name': TextInput(),
-            'entry_text': Textarea(),
+            'slug': TextInput,
+            'entry_name': TextInput,
+            'entry_text': Textarea,
         }
+
+    def __init__(self, *args, **kwargs):
+        super(EntryForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.slug:
+            self.fields['slug'].disabled = True
+
+
+class DeleteEntryForm(Form):
+    conform = BooleanField(label='Yes.', widget=CheckboxInput)

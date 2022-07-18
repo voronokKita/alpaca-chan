@@ -1,12 +1,14 @@
 from django.utils import timezone
+from django.utils.text import slugify
 from django.urls import reverse
 from django.db.models import (
-    Model, DateTimeField,
-    CharField, TextField
+    Model, DateTimeField, Index,
+    CharField, TextField, SlugField
 )
 
 
 class Entry(Model):
+    slug = SlugField('URL Shortcut (slug)', null=True, unique=True)
     entry_name = CharField('Article Name', max_length=150)
     entry_text = TextField('Article Text')
     pub_date = DateTimeField('Date Published', default=timezone.localtime)
@@ -15,9 +17,15 @@ class Entry(Model):
     def __repr__(self): return f'<entry-{self.pk}>'
 
     def get_absolute_url(self):
-        return reverse('encyclopedia:detail', kwargs={'pk': self.pk})
+        return reverse('encyclopedia:detail', kwargs={'slug': self.slug})
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.entry_name)
+        return super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Wiki Entry'
         verbose_name_plural = 'Wiki Entries'
         ordering = ['entry_name']
+        indexes = [Index(fields=['slug'])]

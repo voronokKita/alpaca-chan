@@ -4,7 +4,7 @@
 
 {% block top_header %}<h1>Encyclopedia</h1>{% endblock %}
 
-{% block menubar %}{% endblock %}
+{% block menubar %}<div><a href="{% url 'encyclopedia:new_entry' %}">write new article</a></div>{% endblock %}
 
 {% block main_content %}
 <div>

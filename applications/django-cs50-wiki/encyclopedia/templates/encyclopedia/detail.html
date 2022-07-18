@@ -4,10 +4,20 @@
 
 {% block top_header %}<h1>{{ article.entry_name }}</h1>{% endblock %}
 
+{% block menubar %}
+<div>
+  <a href="{% url 'encyclopedia:index' %}">go back</a>
+  <a href="{% url 'encyclopedia:edit_entry' article.slug %}">edit this article</a>
+  <a href="{% url 'encyclopedia:delete_entry' article.slug %}">delete this article</a>
+</div>
+{% endblock %}
+
 {% block main_content %}
 {% if article %}
 <div>
-  {{ article.entry_text }}
+  {% autoescape off %}
+    {{ entry_text_html }}
+  {% endautoescape %}
 </div>
 <div>
   <div>last update: {{ article.upd_date }}</div>
