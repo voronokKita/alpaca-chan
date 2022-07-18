@@ -14,8 +14,6 @@ class Entry(Model):
     pub_date = DateTimeField('Date Published', default=timezone.localtime)
     upd_date = DateTimeField('Last Update', auto_now=True)
 
-    def __repr__(self): return f'<entry-{self.pk}>'
-
     def get_absolute_url(self):
         return reverse('encyclopedia:detail', kwargs={'slug': self.slug})
 
@@ -29,3 +27,7 @@ class Entry(Model):
         verbose_name_plural = 'Wiki Entries'
         ordering = ['entry_name']
         indexes = [Index(fields=['slug'])]
+
+    def __str__(self): return self.slug
+
+    def __repr__(self): return f'<entry-{self.slug}>'

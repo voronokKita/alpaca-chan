@@ -1,5 +1,7 @@
-from django.forms import Form, ModelForm, TextInput, Textarea, BooleanField, CheckboxInput, SlugField
-
+from django.forms import (
+    Form, ModelForm, TextInput,
+    Textarea, BooleanField, CheckboxInput
+)
 from .models import Entry
 
 

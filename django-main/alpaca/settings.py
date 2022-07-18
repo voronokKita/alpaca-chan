@@ -105,31 +105,43 @@ MEDIA_ROOT = PROJECT_ROOT_DIR / 'file-storage'
 
 # <database>
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'django-main.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
-    }
+    },
+    'polls_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': PROJECT_APPLICATIONS / 'django-polls' / 'polls.sqlite3',
+        'TIME_ZONE': 'Europe/Moscow',
+    },
+    'encyclopedia_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': PROJECT_APPLICATIONS / 'django-cs50-wiki' / 'encyclopedia.sqlite3',
+        'TIME_ZONE': 'Europe/Moscow',
+    },
 }
 # TODO disable AUTOCOMMIT for other db-es
 #     The test database https://docs.djangoproject.com/en/4.0/topics/testing/overview/#the-test-database
 #     https://docs.djangoproject.com/en/4.0/ref/settings/#test
 
-# DATABASE_ROUTERS
-# https://docs.djangoproject.com/en/4.0/topics/db/multi-db/#topics-db-multi-db-routing
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# DATABASE_ROUTERS
+# https://docs.djangoproject.com/en/4.0/topics/db/multi-db/#topics-db-multi-db-routing
+# https://stackoverflow.com/questions/13756356/different-databases-for-different-apps-in-django
+DATABASE_ROUTERS = [
+    'polls.db_router.PollsRouter',
+    'encyclopedia.db_router.WikiRouter',
+]
 # </database>
 
 
 # <password>
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -144,7 +156,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 # </password>
 
 
