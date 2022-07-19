@@ -28,6 +28,8 @@ class Entry(Model):
         ordering = ['entry_name']
         indexes = [Index(fields=['slug'])]
 
-    def __str__(self): return self.slug
+    def __str__(self): return self.slug if self.slug else self.entry_name
 
-    def __repr__(self): return f'<entry-{self.slug}>'
+    def __repr__(self):
+        s = self.slug if self.slug else self.entry_name
+        return f'<entry-{s}>'

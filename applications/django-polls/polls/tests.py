@@ -28,7 +28,7 @@ class QuestionIndexViewTests(TestCase):
         self.assertContains(response, 'No polls are available.')
         self.assertQuerysetEqual(response.context['latest_question_list'], [])
 
-    def test_two_questions(self):
+    def test_question(self):
         """ The questions index page may display questions. """
         question = create_question(question_text='Question.')
         response = self.client.get(reverse('polls:index'))

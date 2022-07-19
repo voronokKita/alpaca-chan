@@ -105,21 +105,25 @@ MEDIA_ROOT = PROJECT_ROOT_DIR / 'file-storage'
 
 # <database>
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+# https://docs.djangoproject.com/en/4.0/topics/testing/advanced/
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'django-main.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
+        'TEST': {'DEPENDENCIES': []},
     },
     'polls_db': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': PROJECT_APPLICATIONS / 'django-polls' / 'polls.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
+        'TEST': {'DEPENDENCIES': []},
     },
     'encyclopedia_db': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': PROJECT_APPLICATIONS / 'django-cs50-wiki' / 'encyclopedia.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
+        'TEST': {'DEPENDENCIES': []},
     },
 }
 # TODO disable AUTOCOMMIT for other db-es
