@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 #! TODO https://docs.djangoproject.com/en/4.0/ref/settings/#core-settings-topical-index
 
+import os
 import sys
 import secrets
 from pathlib import Path
@@ -30,7 +31,7 @@ for app in PROJECT_APPLICATIONS.iterdir():
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # https://docs.djangoproject.com/en/4.0/ref/settings/#secret-key
-key = PROJECT_ROOT_DIR / '.SECRET_KEY'
+key = BASE_DIR / '.SECRET_KEY'
 if key.exists():
     with open(key, 'r') as f: SECRET_KEY = f.read().strip()
 else:
@@ -185,7 +186,7 @@ DATETIME_FORMAT = 'Y.n.j G:i:s'
 # </internationalization>
 
 
-#? File upload
+# File upload
 # https://docs.djangoproject.com/en/4.0/topics/files/
 
 
@@ -193,10 +194,113 @@ DATETIME_FORMAT = 'Y.n.j G:i:s'
 # https://docs.djangoproject.com/en/4.0/topics/email/
 
 
-# Logging TODO
-# https://docs.djangoproject.com/en/4.0/ref/settings/#logging
-# https://docs.djangoproject.com/en/4.0/topics/logging/#configuring-logging
-# https://docs.djangoproject.com/en/4.0/ref/settings/#message-level
+# <logging>
+# https://docs.djangoproject.com/en/4.0/ref/logging/
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'loggers': {
+        'polls': {
+            'handlers': ['polls_file', 'console_debug'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        },
+        'encyclopedia': {
+            'handlers': ['encyclopedia_file', 'console_debug'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        },
+        'django': {
+            'handlers': ['console', 'django_main_file'],
+            'level': 'INFO',
+        },
+        'django.server': {
+            'handlers': ['django.server', 'django_main_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        '': {
+            'handlers': ['django_main_errors_file'],
+            'level': 'ERROR',
+        }
+    },
+    'handlers': {
+        'polls_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': PROJECT_APPLICATIONS / 'django-polls' / 'polls.log',
+            'formatter': 'file',
+        },
+        'encyclopedia_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': PROJECT_APPLICATIONS / 'django-cs50-wiki' / 'encyclopedia.log',
+            'formatter': 'file',
+        },
+        'django_main_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django-main.log',
+            'formatter': 'file',
+        },
+        'django_main_errors_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django-main-errors.log',
+            'formatter': 'file_errors',
+        },
+        'console_debug': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'console_debug',
+        },
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        },
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+    },
+    'formatters': {
+        'file': {
+            'format': '[{levelname}] {asctime} {filename} line-{lineno} {message}',
+            'style': '{',
+        },
+        'file_errors': {
+            'format': '[{levelname}] {asctime} {filename} line-{lineno}\n'
+                      '[MESSAGE] {message}\n'
+                      '[EXC_INFO] {exc_info}\n'
+                      '[STACK_INFO] {stack_info}\n',
+            'style': '{',
+        },
+        'console_debug': {
+            'format': '!>> {message} <<!',
+            'style': '{',
+        },
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+}
+# </logging>
 
 
 # Testing TODO
@@ -209,9 +313,6 @@ DATETIME_FORMAT = 'Y.n.j G:i:s'
 
 
 # <misc>
-
 APPEND_SLASH = False
-
 CSRF_COOKIE_SECURE = True
-
 # </misc>

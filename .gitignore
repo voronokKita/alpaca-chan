@@ -3,13 +3,13 @@
 .vscode/
 
 # Project
+*.log
 IDEAS
 .SECRET_KEY
 
 ### Created by https://www.toptal.com/developers/gitignore/api/django,python ###
 
 ### Django ###
-*.log
 *.pot
 *.pyc
 __pycache__/

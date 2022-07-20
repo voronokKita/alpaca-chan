@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -7,6 +9,10 @@ from django.utils import timezone
 from django.db.models import F
 
 from .models import Question, Choice
+
+
+logger = logging.getLogger(__name__)
+logger.debug('Logging is going')
 
 
 class IndexView(generic.ListView):
