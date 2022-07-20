@@ -41,6 +41,9 @@ class Choice(Model):
     choice_text = CharField('text', max_length=200)
     votes = IntegerField(default=0)
 
+    class Meta:
+        ordering = ['-votes']
+
     def __str__(self): return self.choice_text
 
     def __repr__(self): return f'<choice-{self.pk}>'

@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 
 {% block stylesheet %}
-  {% load static %}
-  <link rel='stylesheet' type='text/css' href="{% static 'polls/style.css' %}">
+{% load static %}
+<link rel='stylesheet' type='text/css' href="{% static 'polls/style.css' %}">
 {% endblock %}
 
 {% block menubar %}
-<div><a href="{% url 'polls:index' %}">go back</a></div>
+<li class="nav-item">
+  <a class="nav-link active" aria-current="true" href="{% url 'polls:index' %}">Goto home</a>
+</li>
 {% endblock %}

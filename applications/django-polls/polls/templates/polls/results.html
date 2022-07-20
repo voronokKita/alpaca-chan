@@ -2,13 +2,18 @@
 
 {% block title %}Question {{ question.pk }} results{% endblock %}
 
-{% block top_header %}<h1>{{ question.question_text }}</h1>{% endblock %}
+{% block top_header %}{{ question.question_text }}{% endblock %}
 
 {% block main_content %}
-<ol>
-{% for choice in question.choice_set.all %}
-  <li>{{ choice.choice_text }} - {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
-{% endfor %}
+<ol class="list-group col-sm-12 col-md-6 col-lg-5">
+  {% for choice in question.choice_set.all %}
+  <li class="list-group-item d-flex justify-content-between align-items-center">
+    {{ choice.choice_text }}
+    <span class="badge bg-primary rounded-pill">
+      {{ choice.votes }} vote{{ choice.votes|pluralize }}
+    </span>
+  </li>
+  {% endfor %}
 </ol>
 
 <a href="{{ question.get_absolute_url }}">Vote again?</a>

@@ -2,15 +2,17 @@
 
 {% block title %} {{ title }} {% endblock %}
 
-{% block top_header %}<h1>{{ title }}</h1>{% endblock %}
+{% block top_header %}{{ title }}{% endblock %}
 
 {% block main_content %}
-<form action='{{ request.path }}' method='POST'>
-  {% csrf_token %}
-  {% if delete_conformation %}
-  <p>{{ delete_conformation }}</p>
-  {% endif %}
-  {{ form.as_p }}
-  <input type='submit' value='Done'>
-</form>
+<div class='col-sm-12 col-md-6'>
+  <form action='{{ request.path }}' method='POST'>
+    {% csrf_token %}
+    {% if delete_conformation %}
+    <p>{{ delete_conformation }}</p>
+    {% endif %}
+    {{ form.as_p }}
+    <button type='submit' class='btn btn-primary'>Done</button>
+  </form>
+</div>
 {% endblock %}

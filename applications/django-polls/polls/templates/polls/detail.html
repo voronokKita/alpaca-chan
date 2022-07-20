@@ -2,21 +2,25 @@
 
 {% block title %}Question {{ question.pk }} details{% endblock %}
 
-{% block top_header %}<h1>{{ question.question_text }}</h1>{% endblock %}
+{% block top_header %}{{ question.question_text }}{% endblock %}
 
 {% block main_content %}
 <form action="{% url 'polls:vote' question.pk %}" method='POST'>
   {% csrf_token %}
 
-  <fieldset>
-    {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+  <fieldset class="form-check">
+    {% if error_message %}
+    <p><strong>{{ error_message }}</strong></p>
+    {% endif %}
 
     {% for choice in question.choice_set.all %}
-      <input type='radio' name='choice' value='{{ choice.pk }}' id='choice-{{ forloop.counter }}'>
-      <label for='choice-{{ forloop.counter }}'>{{ choice.choice_text }}</label><br>
+    <input type='radio' name='choice' value='{{ choice.pk }}'
+           id='choice-{{ forloop.counter }}' class="form-check-input">
+    <label for='choice-{{ forloop.counter }}' class="form-check-label">{{ choice.choice_text }}</label>
+    <br>
     {% endfor %}
   </fieldset>
 
-  <input type='submit' value='Vote'>
+  <button type='submit' class='btn btn-primary'>Vote</button>
 </form>
 {% endblock %}

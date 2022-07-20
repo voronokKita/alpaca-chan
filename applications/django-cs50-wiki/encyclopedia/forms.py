@@ -10,9 +10,9 @@ class EntryForm(ModelForm):
         model = Entry
         fields = ['slug', 'entry_name', 'entry_text']
         widgets = {
-            'slug': TextInput,
-            'entry_name': TextInput,
-            'entry_text': Textarea,
+            'slug': TextInput(attrs={'class': 'form-control'}),
+            'entry_name': TextInput(attrs={'class': 'form-control'}),
+            'entry_text': Textarea(attrs={'class': 'form-control', 'rows': 10}),
         }
 
     def __init__(self, *args, **kwargs):

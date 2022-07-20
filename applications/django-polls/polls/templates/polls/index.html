@@ -2,24 +2,32 @@
 
 {% block title %}Polls{% endblock %}
 
-{% block top_header %}<h1>Polls</h1>{% endblock %}
+{% block top_header %}Polls{% endblock %}
 
-{% block menubar %}{% endblock %}
+{% block menubar %}
+<li class="nav-item">
+  <a class="nav-link disabled" href="{% url 'polls:index' %}">Blank</a>
+</li>
+{% endblock %}
 
 {% block main_content %}
-<ul>
-{% for q in latest_question_list %}
-  <li>
-    Q{{ q.pk }}. <a href="{{ q.get_absolute_url }}">{{ q.question_text }}</a>
-    <ol>
+<div class="list-group col-sm-12 col-md-6 col-lg-5">
+  {% for q in latest_question_list %}
+  <a href="{{ q.get_absolute_url }}" class="list-group-item list-group-item-action">
+    <div class="d-flex w-100 justify-content-between">
+      <h5 class="mb-1">Q{{ q.pk }}. {{ q.question_text }}</h5>
+      <small class="text-muted">Published recently? <br> {{ q.published_recently }}</small>
+    </div>
+    <ol class="mb-1">
     {% for a in q.choice_set.all %}
-      <li>{{ a.choice_text }} - {{ a.votes }} vote{{ a.votes|pluralize }}</li>
+    <li>{{ a.choice_text }} - {{ a.votes }} vote{{ a.votes|pluralize }}</li>
     {% endfor %}
     </ol>
-    <br>
-  </li>
-{% empty %}
-  <li>No polls are available.</li>
-{% endfor %}
-</ul>
+  </a>
+  {% empty %}
+  <div class="d-flex w-100 justify-content-between">
+    <h5 class="mb-1">No polls are available.</h5>
+  </div>
+  {% endfor %}
+</div>
 {% endblock %}
