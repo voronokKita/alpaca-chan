@@ -251,7 +251,7 @@ LOGGING = {
     },
     'formatters': {
         'file': {
-            'format': '[{levelname}] {asctime} line-{lineno} {message}',
+            'format': '[{levelname}] {asctime} {message}',
             'style': '{',
         },
         'file_errors': {

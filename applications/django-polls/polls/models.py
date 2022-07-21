@@ -14,10 +14,6 @@ class Question(Model):
     question_text = CharField('text', max_length=200)
     pub_date = DateTimeField('date published', default=timezone.localtime)
 
-    def __str__(self): return self.question_text
-
-    def __repr__(self): return f'<question-{self.pk}>'
-
     @admin.display(
         boolean=True,
         description='Published recently?',
@@ -34,6 +30,10 @@ class Question(Model):
         verbose_name = 'Question'
         verbose_name_plural = 'Questions'
         ordering = ['-pub_date']
+
+    def __str__(self): return self.question_text
+
+    def __repr__(self): return f'<question-{self.pk}>'
 
 
 class Choice(Model):

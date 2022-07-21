@@ -11,10 +11,6 @@ from django.db.models import F
 from .models import Question, Choice
 
 
-logger = logging.getLogger(__name__)
-logger.debug('Logging is going')
-
-
 class IndexView(generic.ListView):
     template_name = 'polls/index.html'
     context_object_name = 'latest_question_list'
@@ -44,13 +40,13 @@ class ResultsView(generic.DetailView):
 def vote(request, question_pk):
     q = get_object_or_404(Question, pk=question_pk)
     try:
-        selected = Choice.objects.filter(pk=request.POST['choice'])
+        selected = q.choice_set.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
-        return render(   # TODO ERROR
+        return render(
             request, 'polls/detail.html',
             {'q': q, 'error_message': "You didn't select a choice."}
         )
     else:
-        selected.update(votes=F('votes')+1)
-        # selected.refresh_from_db()
-        return HttpResponseRedirect(reverse('polls:results', args=(q.id,)))
+        selected.votes = F('votes') + 1
+        selected.save()
+        return HttpResponseRedirect(reverse('polls:results', args=(q.pk,)))
