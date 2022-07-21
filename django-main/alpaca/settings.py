@@ -8,10 +8,18 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
-"""
-#! TODO https://docs.djangoproject.com/en/4.0/ref/settings/#core-settings-topical-index
 
-import os
+As a security measure, Django will exclude from debug pages any setting
+whose name partial includes any of the following:
+'API', 'KEY', 'PASS', 'SECRET', 'SIGNATURE', 'TOKEN'
+"""
+# TODO: https://docs.djangoproject.com/en/4.0/ref/settings/#core-settings-topical-index
+#     The test database https://docs.djangoproject.com/en/4.0/topics/testing/overview/#the-test-database
+#     https://docs.djangoproject.com/en/4.0/ref/settings/#test
+#     https://docs.djangoproject.com/en/4.0/topics/testing/advanced/
+#     https://docs.djangoproject.com/en/4.0/ref/settings/#test-runner
+#     https://docs.djangoproject.com/en/4.0/topics/testing/advanced/#other-testing-frameworks
+
 import sys
 import secrets
 from pathlib import Path
@@ -20,14 +28,17 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT_DIR = BASE_DIR.parent
 PROJECT_APPLICATIONS = PROJECT_ROOT_DIR / 'applications'
-
 for app in PROJECT_APPLICATIONS.iterdir():
     if str(app) not in sys.path:
         sys.path.append(str(app))
 
 
 # <development settings>
-# See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
+# Deployment checklist https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
+DEBUG = True
+
+# If DEBUG is False, you also need to properly set the ALLOWED_HOSTS setting
+ALLOWED_HOSTS = ['example.com', 'test.com', 'localhost', '127.0.0.1', '[::1]']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # https://docs.djangoproject.com/en/4.0/ref/settings/#secret-key
@@ -35,24 +46,14 @@ key = BASE_DIR / '.SECRET_KEY'
 if key.exists():
     with open(key, 'r') as f: SECRET_KEY = f.read().strip()
 else:
-    print("!WARNING -- Can't find SECRET_KEY, a random token will be generated.")
+    print("WARNING — can't find SECRET_KEY — a random token will be generated.")
     SECRET_KEY = secrets.token_urlsafe(49)
 del key
-
-# As a security measure, Django will exclude from debug pages any setting
-# whose name partial includes any of the following:
-# 'API', 'KEY', 'PASS', 'SECRET', 'SIGNATURE', 'TOKEN'
-DEBUG = True
-
-# If DEBUG is False, you also need to properly set the ALLOWED_HOSTS setting
-ALLOWED_HOSTS = ['example.com', 'test.com', 'localhost', '127.0.0.1', '[::1]']
-
 # </development settings>
 
 
 # <application definition>
 # https://docs.djangoproject.com/en/4.0/ref/applications/
-
 ROOT_URLCONF = 'alpaca.urls'
 
 WSGI_APPLICATION = 'alpaca.wsgi.application'
@@ -67,7 +68,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -77,7 +77,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -93,20 +92,22 @@ TEMPLATES = [
         },
     },
 ]
-
-# TODO
-# https://docs.djangoproject.com/en/4.0/ref/settings/#static-files
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
+# https://docs.djangoproject.com/en/4.0/ref/settings/#static-files
+# https://docs.djangoproject.com/en/4.0/howto/static-files/deployment/
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
+# File upload
+# https://docs.djangoproject.com/en/4.0/topics/files/
 MEDIA_ROOT = PROJECT_ROOT_DIR / 'file-storage'
-
 # </application definition>
 
 
 # <database>
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-# https://docs.djangoproject.com/en/4.0/topics/testing/advanced/
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -127,17 +128,9 @@ DATABASES = {
         'TEST': {'DEPENDENCIES': []},
     },
 }
-# TODO disable AUTOCOMMIT for other db-es
-#     The test database https://docs.djangoproject.com/en/4.0/topics/testing/overview/#the-test-database
-#     https://docs.djangoproject.com/en/4.0/ref/settings/#test
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# DATABASE_ROUTERS
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/#topics-db-multi-db-routing
-# https://stackoverflow.com/questions/13756356/different-databases-for-different-apps-in-django
 DATABASE_ROUTERS = [
     'polls.db_router.PollsRouter',
     'encyclopedia.db_router.WikiRouter',
@@ -146,27 +139,23 @@ DATABASE_ROUTERS = [
 
 
 # <password>
-# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/4.0/topics/auth/passwords/#password-validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 # </password>
 
 
+# <sessions>
+# https://docs.djangoproject.com/en/4.0/ref/settings/#sessions
+# </sessions>
+
+
 # <internationalization>
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
-
 LANGUAGE_COOKIE_SECURE = True
 
 LANGUAGE_CODE = 'en-us'
@@ -179,19 +168,10 @@ USE_I18N = True
 USE_TZ = True
 
 DATE_FORMAT = 'Y.n.j'
-SHORT_DATE_FORMAT = 'Y.n.j P'
 TIME_FORMAT = 'G:i:s'
 DATETIME_FORMAT = 'Y.n.j G:i:s'
-
+SHORT_DATE_FORMAT = 'Y.n.j P'
 # </internationalization>
-
-
-# File upload
-# https://docs.djangoproject.com/en/4.0/topics/files/
-
-
-# E-mail TODO
-# https://docs.djangoproject.com/en/4.0/topics/email/
 
 
 # <logging>
@@ -218,7 +198,7 @@ LOGGING = {
             'propagate': False,
         },
         '': {
-            'handlers': ['django_main_errors_file'],
+            'handlers': ['detail_errors_file'],
             'level': 'ERROR',
         }
     },
@@ -236,15 +216,15 @@ LOGGING = {
             'formatter': 'file',
         },
         'django_main_file': {
-            'level': 'WARNING',
+            'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'django-main.log',
             'formatter': 'file',
         },
-        'django_main_errors_file': {
+        'detail_errors_file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django-main-errors.log',
+            'filename': BASE_DIR / 'detail-errors.log',
             'formatter': 'file_errors',
         },
         'console_debug': {
@@ -271,11 +251,11 @@ LOGGING = {
     },
     'formatters': {
         'file': {
-            'format': '[{levelname}] {asctime} {filename} line-{lineno} {message}',
+            'format': '[{levelname}] {asctime} line-{lineno} {message}',
             'style': '{',
         },
         'file_errors': {
-            'format': '[{levelname}] {asctime} {filename} line-{lineno}\n'
+            'format': '\n[{levelname}] {asctime} ~/mdl-{module}/func-{funcName}/line-{lineno}\n'
                       '[MESSAGE] {message}\n'
                       '[EXC_INFO] {exc_info}\n'
                       '[STACK_INFO] {stack_info}\n',
@@ -301,15 +281,6 @@ LOGGING = {
     },
 }
 # </logging>
-
-
-# Testing TODO
-# https://docs.djangoproject.com/en/4.0/ref/settings/#test-runner
-# https://docs.djangoproject.com/en/4.0/topics/testing/advanced/#other-testing-frameworks
-
-
-# Sessions TODO
-# https://docs.djangoproject.com/en/4.0/ref/settings/#sessions
 
 
 # <misc>
