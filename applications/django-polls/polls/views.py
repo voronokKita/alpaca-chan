@@ -40,7 +40,7 @@ class ResultsView(generic.DetailView):
 def vote(request, question_pk):
     q = get_object_or_404(Question, pk=question_pk)
     try:
-        selected = q.choice_set.get(pk=request.POST['choice'])
+        selected = q.choices.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
         return render(
             request, 'polls/detail.html',

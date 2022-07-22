@@ -28,8 +28,8 @@ class Entry(Model):
         ordering = ['entry_name']
         indexes = [Index(fields=['slug'])]
 
-    def __str__(self): return self.slug if self.slug else self.entry_name
+    def __str__(self): return self.slug if self.slug else slugify(self.entry_name)
 
     def __repr__(self):
-        s = self.slug if self.slug else self.entry_name
-        return f'<entry-{s}>'
+        s = self.slug if self.slug else slugify(self.entry_name)
+        return f'<encyclopedia.models.Entry[{s}]>'

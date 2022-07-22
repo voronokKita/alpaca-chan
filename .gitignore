@@ -6,6 +6,7 @@
 *.log
 IDEAS
 .SECRET_KEY
+static_for_deployment/
 
 ### Created by https://www.toptal.com/developers/gitignore/api/django,python ###
 

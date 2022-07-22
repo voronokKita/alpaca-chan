@@ -96,13 +96,14 @@ TEMPLATES = [
 # https://docs.djangoproject.com/en/4.0/ref/settings/#static-files
 # https://docs.djangoproject.com/en/4.0/howto/static-files/deployment/
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static_for_deployment'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-
 # File upload
 # https://docs.djangoproject.com/en/4.0/topics/files/
-MEDIA_ROOT = PROJECT_ROOT_DIR / 'file-storage'
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 # </application definition>
 
 
