@@ -1,3 +1,4 @@
+import logging
 import markdown2
 
 from django.shortcuts import get_object_or_404
@@ -6,6 +7,8 @@ from django.views import generic
 
 from .models import Entry
 from .forms import EntryForm, DeleteEntryForm
+
+logger = logging.getLogger(__name__)
 
 
 class IndexView(generic.ListView):
@@ -21,8 +24,9 @@ class DetailView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        entry = get_object_or_404(Entry, slug=self.kwargs.get('slug'))
-        context['entry_text_html'] = markdown2.markdown(entry.entry_text)
+        context['entry_text_html'] = markdown2.markdown(
+            context['article'].entry_text
+        )
         return context
 
 
@@ -43,8 +47,7 @@ class EditEntry(generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        entry = get_object_or_404(Entry, slug=self.kwargs.get('slug'))
-        context['title'] = f'Edit an article :: {entry.entry_name}'
+        context['title'] = f'Edit an article :: {context["entry"].entry_name}'
         return context
 
 
@@ -56,7 +59,6 @@ class DeleteEntry(generic.DeleteView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        entry = get_object_or_404(Entry, slug=self.kwargs.get('slug'))
-        context['title'] = f'Delete an article :: {entry.entry_name}'
-        context['delete_conformation'] = f'Are you sure you want to delete "{entry.entry_name}"?'
+        context['title'] = f'Delete an article :: {context["entry"].entry_name}'
+        context['delete_conformation'] = f'Are you sure you want to delete \"{context["entry"].entry_name}\"?'
         return context

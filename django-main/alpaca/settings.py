@@ -59,14 +59,15 @@ ROOT_URLCONF = 'alpaca.urls'
 WSGI_APPLICATION = 'alpaca.wsgi.application'
 
 INSTALLED_APPS = [
-    'polls.apps.PollsConfig',
-    'encyclopedia.apps.EncyclopediaConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
+    'polls.apps.PollsConfig',
+    'encyclopedia.apps.EncyclopediaConfig',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,6 +77,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 TEMPLATES = [
     {
@@ -104,6 +106,10 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.0/topics/files/
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 # </application definition>
 
 
