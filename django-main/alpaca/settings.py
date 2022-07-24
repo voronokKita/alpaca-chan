@@ -13,13 +13,6 @@ As a security measure, Django will exclude from debug pages any setting
 whose name partial includes any of the following:
 'API', 'KEY', 'PASS', 'SECRET', 'SIGNATURE', 'TOKEN'
 """
-# TODO: https://docs.djangoproject.com/en/4.0/ref/settings/#core-settings-topical-index
-#     The test database https://docs.djangoproject.com/en/4.0/topics/testing/overview/#the-test-database
-#     https://docs.djangoproject.com/en/4.0/ref/settings/#test
-#     https://docs.djangoproject.com/en/4.0/topics/testing/advanced/
-#     https://docs.djangoproject.com/en/4.0/ref/settings/#test-runner
-#     https://docs.djangoproject.com/en/4.0/topics/testing/advanced/#other-testing-frameworks
-
 import sys
 import secrets
 from pathlib import Path
@@ -39,6 +32,8 @@ DEBUG = True
 
 # If DEBUG is False, you also need to properly set the ALLOWED_HOSTS setting
 ALLOWED_HOSTS = ['example.com', 'test.com', 'localhost', '127.0.0.1', '[::1]']
+
+INTERNAL_IPS = ['127.0.0.1']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # https://docs.djangoproject.com/en/4.0/ref/settings/#secret-key
@@ -68,6 +63,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'polls.apps.PollsConfig',
     'encyclopedia.apps.EncyclopediaConfig',
+    'auctions.apps.AuctionsConfig',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -106,10 +102,6 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.0/topics/files/
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
 # </application definition>
 
 
@@ -120,20 +112,38 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'django-main.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
-        'TEST': {'DEPENDENCIES': []},
+        'TEST': {
+            'NAME': None,
+            'DEPENDENCIES': [],
+        },
     },
     'polls_db': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': PROJECT_APPLICATIONS / 'django-polls' / 'polls.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
-        'TEST': {'DEPENDENCIES': []},
+        'TEST': {
+            'NAME': None,
+            'DEPENDENCIES': []
+        },
     },
     'encyclopedia_db': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPLICATIONS / 'django-cs50-wiki' / 'encyclopedia.sqlite3',
+        'NAME': PROJECT_APPLICATIONS / 'django-cs50web-wiki' / 'encyclopedia.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
-        'TEST': {'DEPENDENCIES': []},
+        'TEST': {
+            'NAME': None,
+            'DEPENDENCIES': []
+        },
     },
+    'auctions_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': PROJECT_APPLICATIONS / 'django-cs50web-commerce' / 'auctions.sqlite3',
+        'TIME_ZONE': 'Europe/Moscow',
+        'TEST': {
+            'NAME': None,
+            'DEPENDENCIES': []
+        },
+    }
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -141,6 +151,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATABASE_ROUTERS = [
     'polls.db_router.PollsRouter',
     'encyclopedia.db_router.WikiRouter',
+    'auctions.db_router.CommerceRouter',
 ]
 # </database>
 
@@ -195,6 +206,10 @@ LOGGING = {
             'handlers': ['encyclopedia_file', 'console_debug'],
             'level': 'DEBUG' if DEBUG else 'INFO',
         },
+        'auctions': {
+            'handlers': ['auctions_file', 'console_debug'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        },
         'django': {
             'handlers': ['console', 'django_main_file'],
             'level': 'INFO',
@@ -219,7 +234,13 @@ LOGGING = {
         'encyclopedia_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-cs50-wiki' / 'encyclopedia.log',
+            'filename': PROJECT_APPLICATIONS / 'django-cs50web-wiki' / 'encyclopedia.log',
+            'formatter': 'file',
+        },
+        'auctions_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': PROJECT_APPLICATIONS / 'django-cs50web-commerce' / 'auctions.log',
             'formatter': 'file',
         },
         'django_main_file': {

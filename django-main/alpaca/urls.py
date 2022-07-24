@@ -22,6 +22,7 @@ from django.conf import settings
 urlpatterns = [
     path('polls', include('polls.urls')),
     path('encyclopedia', include('encyclopedia.urls')),
+    path('auctions', include('auctions.urls')),
     path('admin/', admin.site.urls),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
