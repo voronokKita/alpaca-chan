@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'polls.apps.PollsConfig',
     'encyclopedia.apps.EncyclopediaConfig',
+    'accounts.apps.AccountsConfig',
     'auctions.apps.AuctionsConfig',
 ]
 MIDDLEWARE = [
@@ -206,6 +207,10 @@ LOGGING = {
             'handlers': ['encyclopedia_file', 'console_debug'],
             'level': 'DEBUG' if DEBUG else 'INFO',
         },
+        'accounts': {
+            'handlers': ['accounts_file', 'console_debug'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        },
         'auctions': {
             'handlers': ['auctions_file', 'console_debug'],
             'level': 'DEBUG' if DEBUG else 'INFO',
@@ -235,6 +240,12 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': PROJECT_APPLICATIONS / 'django-cs50web-wiki' / 'encyclopedia.log',
+            'formatter': 'file',
+        },
+        'accounts_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': PROJECT_APPLICATIONS / 'django-accounts' / 'accounts.log',
             'formatter': 'file',
         },
         'auctions_file': {

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block stylesheet %}
+{% load static %}
+<link rel='shortcut icon' type='image/png' href="{% static 'accounts/favicon.ico' %}"/>
+{% endblock %}
+
+{% block menubar %}
+<li class="nav-item">
+  <a class="nav-link active" aria-current="true" href="{% url 'accounts:index' %}">Goto home</a>
+</li>
+{% endblock %}

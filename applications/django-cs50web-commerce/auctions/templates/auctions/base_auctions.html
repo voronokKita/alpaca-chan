@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block stylesheet %}
+{% load static %}
+<link rel='shortcut icon' type='image/png' href="{% static 'auctions/favicon.ico' %}"/>
+{% endblock %}
+
+{% block menubar %}
+<li class="nav-item">
+  <a class="nav-link active" aria-current="true" href="{% url 'auctions:index' %}">Goto home</a>
+</li>
+{% endblock %}
