@@ -1,1 +1,10 @@
 {% extends 'accounts/base_accounts.html' %}
+
+{% block menubar %}
+<li class="nav-item">
+  <a class="nav-link" href="{% url 'accounts:register' %}">Register</a>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
+</li>
+{% endblock %}
