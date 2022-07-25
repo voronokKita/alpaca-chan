@@ -2,9 +2,9 @@
 
 {% block title %}Question {{ question.pk }} details{% endblock %}
 
-{% block top_header %}{{ question.question_text }}{% endblock %}
-
 {% block main_content %}
+<h3>{{ question.question_text }}</h3>
+
 <form action="{% url 'polls:vote' question.pk %}" method='POST'>
   {% csrf_token %}
 

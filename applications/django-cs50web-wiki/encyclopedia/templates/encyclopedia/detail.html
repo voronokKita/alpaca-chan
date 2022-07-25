@@ -14,9 +14,10 @@
 </li>
 {% endblock %}
 
-{% block top_header %}{{ article.entry_name }}{% endblock %}
-
 {% block main_content %}
+<h2>{{ article.entry_name }}</h2>
+<br>
+
 {% if article %}
 <div>
   {% autoescape off %}
