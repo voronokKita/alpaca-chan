@@ -1,6 +1,7 @@
 import logging
 
-from django.urls import reverse, reverse_lazy
+from django.conf import settings
+from django.urls import reverse_lazy
 from django.views import generic
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import views, login, authenticate
@@ -9,6 +10,14 @@ from django.contrib import messages
 from .forms import UserRegisterForm, UserLoginForm
 
 logger = logging.getLogger(__name__)
+
+
+def redirect_on_success(source_app):
+    """ Make sure that the redirect happens to the index of installed apps. """
+    if source_app in settings.PROJECT_MAIN_APPS:
+        return reverse_lazy(f'{source_app}:index')
+    else:
+        return reverse_lazy('accounts:index')
 
 
 class IndexView(generic.TemplateView):
@@ -22,10 +31,9 @@ class RegisterView(SuccessMessageMixin, generic.CreateView):
     success_message = "Hello, %(username)s!"
 
     def form_valid(self, form):
-        url_source = self.request.GET.get('next')
-        if url_source: self.success_url = url_source
+        self.success_url = redirect_on_success(self.kwargs.get('next'))
 
-        valid = super(RegisterView, self).form_valid(form)
+        valid = super().form_valid(form)
 
         username, password = form.cleaned_data.get('username'), form.cleaned_data.get('password1')
         new_user = authenticate(username=username, password=password)
@@ -41,6 +49,10 @@ class LoginView(SuccessMessageMixin, views.LoginView):
     next_page = reverse_lazy('accounts:index')
     success_message = "Welcome, %(username)s!"
 
+    def get_success_url(self):
+        self.next_page = redirect_on_success(self.kwargs.get('next'))
+        return super().get_success_url()
+
 
 class LogoutView(views.LogoutView):
     next_page = reverse_lazy('accounts:index')
@@ -52,6 +64,5 @@ class LogoutView(views.LogoutView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_next_page(self):
-        url_source = self.request.META.get('HTTP_REFERER')
-        if url_source: self.next_page = url_source
+        self.next_page = redirect_on_success(self.kwargs.get('next'))
         return super().get_next_page()

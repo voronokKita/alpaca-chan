@@ -53,6 +53,7 @@ ROOT_URLCONF = 'alpaca.urls'
 
 WSGI_APPLICATION = 'alpaca.wsgi.application'
 
+PROJECT_MAIN_APPS = ['polls', 'encyclopedia', 'auctions']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

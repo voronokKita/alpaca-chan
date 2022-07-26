@@ -50,11 +50,12 @@
             <span class='navbar-text'>
               {% if request.user.is_authenticated %}
               <span style="color: black;">{{ user.username }}</span>
-              | <a href="{% url 'accounts:logout' %}" style="color: #29b6f6; text-decoration: none;">Logout</a>
+              | <a href="{% url 'accounts:logout' request.resolver_match.app_name %}"
+                   style="color: #29b6f6; text-decoration: none;">Logout</a>
               {% else %}
-              <a href="{% url 'accounts:register' %}?next={% firstof request.path '/' %}"
+              <a href="{% url 'accounts:register' request.resolver_match.app_name %}"
                  style="color: #29b6f6; text-decoration: none;">Register</a>
-              | <a href="{% url 'accounts:login' %}?next={% firstof request.path '/' %}"
+              | <a href="{% url 'accounts:login' request.resolver_match.app_name %}"
                    style="color: #29b6f6; text-decoration: none;">Login
             </a>
               {% endif %}
