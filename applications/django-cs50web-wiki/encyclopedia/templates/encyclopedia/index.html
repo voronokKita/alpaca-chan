@@ -1,11 +1,5 @@
 {% extends 'encyclopedia/base_wiki.html' %}
 
-{% block menubar %}
-<li class="nav-item">
-  <a class="nav-link active" aria-current="true" href="{% url 'encyclopedia:new_entry' %}">Write a new article</a>
-</li>
-{% endblock %}
-
 {% block main_content %}
 <h3>Articles to read</h3>
 
@@ -15,7 +9,7 @@
     <a href='{{ entry.get_absolute_url }}'>{{ entry.entry_name }}</a>
   </li>
   {% empty %}
-  <li class="list-group-item active" aria-current="true">No entries in wiki.</li>
+  <li class="list-group-item active">No entries in wiki.</li>
   {% endfor %}
 </ul>
 {% endblock %}

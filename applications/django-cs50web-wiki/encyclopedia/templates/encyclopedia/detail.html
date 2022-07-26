@@ -2,18 +2,6 @@
 
 {% block title %}Article :: {{ article.entry_name }}{% endblock %}
 
-{% block menubar %}
-<li class="nav-item">
-  <a class="nav-link active" aria-current="true" href="{% url 'encyclopedia:index' %}">Go back</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="{% url 'encyclopedia:edit_entry' article.slug %}">Edit this article</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="{% url 'encyclopedia:delete_entry' article.slug %}">Delete this article</a>
-</li>
-{% endblock %}
-
 {% block main_content %}
 <h2>{{ article.entry_name }}</h2>
 <br>
@@ -29,6 +17,6 @@
   <div><small>last update: {{ article.upd_date }}</small></div>
 </div>
 {% else %}
-<p>Some Error.</p>
+<p style='color: red;'>Some Error.</p>
 {% endif %}
 {% endblock %}

@@ -1,3 +1,12 @@
 .errorlist {
   color: red;
 }
+.nav-item {
+  border-radius: 6%;
+}
+.nav-item:hover {
+  background-color: #c5cae9;
+}
+.navbar-ico {
+  border: 1px solid gold;
+}
