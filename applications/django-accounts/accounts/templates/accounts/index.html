@@ -1,10 +1,21 @@
 {% extends 'accounts/base_accounts.html' %}
 
 {% block menubar %}
-<li class="nav-item">
-  <a class="nav-link" href="{% url 'accounts:register' %}">Register</a>
-</li>
-<li class="nav-item">
-  <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
-</li>
+  {% if request.user.is_authenticated %}
+  <li class="navbar-brand">
+    {{ user.username }}
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'accounts:logout' %}">Logout</a>
+  </li>
+  {% else %}
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'accounts:register' %}">Register</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
+  </li>
+  {% endif %}
 {% endblock %}
+
+{% block menu_text %}{% endblock %}
