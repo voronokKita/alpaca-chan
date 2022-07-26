@@ -20,6 +20,10 @@ class RegisterView(SuccessMessageMixin, generic.CreateView):
     success_url = reverse_lazy('accounts:index')
     success_message = "Hello, %(username)s!"
 
+    def form_valid(self, form):
+        logger.info(f"A new user created ({form.cleaned_data['username']}).")
+        return super().form_valid(form)
+
 
 class LoginView(SuccessMessageMixin, generic.FormView):
     template_name = 'accounts/authentication.html'
