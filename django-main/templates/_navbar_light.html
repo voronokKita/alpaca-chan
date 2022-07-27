@@ -11,6 +11,11 @@
 
       <div class="collapse navbar-collapse" id="navbarText">
         <ul class="navbar-nav me-auto">
+          {%if request.resolver_match.app_name != 'core' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'core:index' %}">Home</a>
+          </li>
+          {% endif %}
           {% if request.user.is_authenticated %}
           <li class="navbar-brand">
             {{ user.username }}

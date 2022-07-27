@@ -1,3 +1,30 @@
 {% extends 'core/base_core.html' %}
 
+{% load static %}
+
 {% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
+
+{% block main_content %}
+<h3>List of applications</h3>
+
+{% autoescape off %}
+<div class="row row-cols-1 row-cols-md-5 g-2">
+  {% for card in main_app_list %}
+  <div class="col">
+    <a href="{% url card.app_name|add:':index' %}" style='color: black; text-decoration: none;'>
+      <div class="card h-100">
+        <img src="{% static card.app_name|add:'/logo.jpg' %}"
+             class="card-img-top" alt="{{ card.app_name }}">
+        <div class="card-body">
+          <h5 class='card-title'>{{ card.title }}</h5>
+          <p class='card-text'>{{ card.description }}</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% empty %}
+  Some bad error :C
+  {% endfor %}
+</div>
+{% endautoescape %}
+{% endblock %}

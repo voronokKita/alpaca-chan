@@ -15,7 +15,7 @@ whose name partial includes any of the following:
 """
 import secrets
 
-from .presets import DEBUG, BASE_DIR, PROJECT_ROOT_DIR, PROJECT_APPLICATIONS
+from .presets import DEBUG, BASE_DIR, PROJECT_ROOT_DIR, PROJECT_APPS_DIR
 
 
 # Deployment checklist
@@ -45,7 +45,11 @@ ROOT_URLCONF = 'alpaca.urls'
 
 WSGI_APPLICATION = 'alpaca.wsgi.application'
 
-PROJECT_MAIN_APPS = ['core', 'polls', 'encyclopedia', 'auctions']
+PROJECT_MAIN_APPS = {
+    'polls': PROJECT_APPS_DIR / 'django-polls',
+    'encyclopedia': PROJECT_APPS_DIR / 'django-cs50web-wiki',
+    'auctions': PROJECT_APPS_DIR / 'django-cs50web-commerce',
+}
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -115,7 +119,7 @@ DATABASES = {
     },
     'polls_db': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPLICATIONS / 'django-polls' / 'polls.sqlite3',
+        'NAME': PROJECT_APPS_DIR / 'django-polls' / 'polls.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
         'TEST': {
             'NAME': None,
@@ -124,7 +128,7 @@ DATABASES = {
     },
     'encyclopedia_db': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPLICATIONS / 'django-cs50web-wiki' / 'encyclopedia.sqlite3',
+        'NAME': PROJECT_APPS_DIR / 'django-cs50web-wiki' / 'encyclopedia.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
         'TEST': {
             'NAME': None,
@@ -133,7 +137,7 @@ DATABASES = {
     },
     'auctions_db': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPLICATIONS / 'django-cs50web-commerce' / 'auctions.sqlite3',
+        'NAME': PROJECT_APPS_DIR / 'django-cs50web-commerce' / 'auctions.sqlite3',
         'TIME_ZONE': 'Europe/Moscow',
         'TEST': {
             'NAME': None,

@@ -6,10 +6,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 PROJECT_ROOT_DIR = BASE_DIR.parent
 
-PROJECT_APPLICATIONS = PROJECT_ROOT_DIR / 'applications'
+PROJECT_APPS_DIR = PROJECT_ROOT_DIR / 'applications'
 
-for app in PROJECT_APPLICATIONS.iterdir():
-    if str(app) not in sys.path:
-        sys.path.append(str(app))
+for item in PROJECT_APPS_DIR.iterdir():
+    if item.is_dir() and str(item) not in sys.path:
+        sys.path.append(str(item))
 
 DEBUG = True

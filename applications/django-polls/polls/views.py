@@ -10,7 +10,7 @@ from .models import Question, Choice
 
 
 def get_default_nav():
-    return [{'url': reverse_lazy('polls:index'), 'text': 'Goto home', 'focus': True}, ]
+    return [{'url': reverse_lazy('polls:index'), 'text': 'Polls main', 'focus': True}, ]
 
 
 class IndexView(generic.ListView):

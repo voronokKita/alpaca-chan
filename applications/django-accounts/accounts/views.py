@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 def redirect_on_success(source_app):
-    """ Make sure that the redirect happens to the index of installed apps. """
+    """ Make sure that the redirect happens to the index of installed apps.
+        source_app :: str from the url, like example.com/[source_app]/login """
     if source_app in settings.PROJECT_MAIN_APPS:
         return reverse_lazy(f'{source_app}:index')
     else:
-        return reverse_lazy('accounts:index')
+        return reverse_lazy('core:index')
 
 
 class IndexView(generic.TemplateView):
@@ -27,7 +28,7 @@ class IndexView(generic.TemplateView):
 class RegisterView(SuccessMessageMixin, generic.CreateView):
     template_name = 'accounts/register_user.html'
     form_class = UserRegisterForm
-    success_url = reverse_lazy('accounts:index')
+    success_url = reverse_lazy('core:index')
     success_message = "Hello, %(username)s!"
 
     def form_valid(self, form):
@@ -46,7 +47,7 @@ class RegisterView(SuccessMessageMixin, generic.CreateView):
 class LoginView(SuccessMessageMixin, views.LoginView):
     template_name = 'accounts/authentication.html'
     authentication_form = UserLoginForm
-    next_page = reverse_lazy('accounts:index')
+    next_page = reverse_lazy('core:index')
     success_message = "Welcome, %(username)s!"
 
     def get_success_url(self):
@@ -55,7 +56,7 @@ class LoginView(SuccessMessageMixin, views.LoginView):
 
 
 class LogoutView(views.LogoutView):
-    next_page = reverse_lazy('accounts:index')
+    next_page = reverse_lazy('core:index')
 
     def dispatch(self, request, *args, **kwargs):
         if self.request.user.is_authenticated:

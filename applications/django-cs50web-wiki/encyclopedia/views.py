@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_default_nav():
-    return [{'url': reverse_lazy('encyclopedia:index'), 'text': 'Goto home', 'focus': True}, ]
+    return [{'url': reverse_lazy('encyclopedia:index'), 'text': 'Main page', 'focus': True}, ]
 
 
 class IndexView(generic.ListView):

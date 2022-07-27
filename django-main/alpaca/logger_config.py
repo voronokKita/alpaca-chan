@@ -1,4 +1,4 @@
-from .presets import DEBUG, BASE_DIR, PROJECT_APPLICATIONS
+from .presets import DEBUG, BASE_DIR, PROJECT_APPS_DIR
 
 
 # https://docs.djangoproject.com/en/4.0/ref/logging/
@@ -44,31 +44,31 @@ LOGGING = {
         'core_app_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-core-app' / 'core-app.log',
+            'filename': PROJECT_APPS_DIR / 'django-core-app' / 'core-app.log',
             'formatter': 'file',
         },
         'accounts_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-accounts' / 'accounts.log',
+            'filename': PROJECT_APPS_DIR / 'django-accounts' / 'accounts.log',
             'formatter': 'file',
         },
         'polls_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-polls' / 'polls.log',
+            'filename': PROJECT_APPS_DIR / 'django-polls' / 'polls.log',
             'formatter': 'file',
         },
         'encyclopedia_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-cs50web-wiki' / 'encyclopedia.log',
+            'filename': PROJECT_APPS_DIR / 'django-cs50web-wiki' / 'encyclopedia.log',
             'formatter': 'file',
         },
         'auctions_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-cs50web-commerce' / 'auctions.log',
+            'filename': PROJECT_APPS_DIR / 'django-cs50web-commerce' / 'auctions.log',
             'formatter': 'file',
         },
         'django_main_file': {
