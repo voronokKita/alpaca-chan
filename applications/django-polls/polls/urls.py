@@ -9,5 +9,4 @@ urlpatterns = [
     path('/', views.IndexView.as_view(), name='index_slash'),
     path('/<int:pk>', views.DetailView.as_view(), name='detail'),
     path('/<int:pk>/results', views.ResultsView.as_view(), name='results'),
-    path('/<int:question_pk>/vote', views.vote, name='vote'),
 ]
