@@ -13,23 +13,15 @@ As a security measure, Django will exclude from debug pages any setting
 whose name partial includes any of the following:
 'API', 'KEY', 'PASS', 'SECRET', 'SIGNATURE', 'TOKEN'
 """
-import sys
 import secrets
-from pathlib import Path
+
+from .presets import DEBUG, BASE_DIR, PROJECT_ROOT_DIR, PROJECT_APPLICATIONS
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-PROJECT_ROOT_DIR = BASE_DIR.parent
-PROJECT_APPLICATIONS = PROJECT_ROOT_DIR / 'applications'
-for app in PROJECT_APPLICATIONS.iterdir():
-    if str(app) not in sys.path:
-        sys.path.append(str(app))
-
+# Deployment checklist
+# https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # <development settings>
-# Deployment checklist https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
-DEBUG = True
-
 # If DEBUG is False, you also need to properly set the ALLOWED_HOSTS setting
 ALLOWED_HOSTS = ['example.com', 'test.com', 'localhost', '127.0.0.1', '[::1]']
 
@@ -53,7 +45,7 @@ ROOT_URLCONF = 'alpaca.urls'
 
 WSGI_APPLICATION = 'alpaca.wsgi.application'
 
-PROJECT_MAIN_APPS = ['polls', 'encyclopedia', 'auctions']
+PROJECT_MAIN_APPS = ['core', 'polls', 'encyclopedia', 'auctions']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -62,9 +54,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'debug_toolbar',
+
+    'core.apps.CoreAppConfig',
+    'accounts.apps.AccountsConfig',
     'polls.apps.PollsConfig',
     'encyclopedia.apps.EncyclopediaConfig',
-    'accounts.apps.AccountsConfig',
     'auctions.apps.AuctionsConfig',
 ]
 MIDDLEWARE = [
@@ -195,131 +189,7 @@ SHORT_DATE_FORMAT = 'Y.n.j P'
 
 
 # <logging>
-# https://docs.djangoproject.com/en/4.0/ref/logging/
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'loggers': {
-        'polls': {
-            'handlers': ['polls_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'encyclopedia': {
-            'handlers': ['encyclopedia_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'accounts': {
-            'handlers': ['accounts_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'auctions': {
-            'handlers': ['auctions_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'django': {
-            'handlers': ['console', 'django_main_file'],
-            'level': 'INFO',
-        },
-        'django.server': {
-            'handlers': ['django.server', 'django_main_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        '': {
-            'handlers': ['detail_errors_file'],
-            'level': 'ERROR',
-        }
-    },
-    'handlers': {
-        'polls_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-polls' / 'polls.log',
-            'formatter': 'file',
-        },
-        'encyclopedia_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-cs50web-wiki' / 'encyclopedia.log',
-            'formatter': 'file',
-        },
-        'accounts_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-accounts' / 'accounts.log',
-            'formatter': 'file',
-        },
-        'auctions_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPLICATIONS / 'django-cs50web-commerce' / 'auctions.log',
-            'formatter': 'file',
-        },
-        'django_main_file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django-main.log',
-            'formatter': 'file',
-        },
-        'detail_errors_file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'detail-errors.log',
-            'formatter': 'file_errors',
-        },
-        'console_debug': {
-            'level': 'DEBUG',
-            'filters': ['require_debug_true'],
-            'class': 'logging.StreamHandler',
-            'formatter': 'console_debug',
-        },
-        'console': {
-            'level': 'INFO',
-            'filters': ['require_debug_true'],
-            'class': 'logging.StreamHandler',
-        },
-        'django.server': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'django.server',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-    },
-    'formatters': {
-        'file': {
-            'format': '[{levelname}] {asctime} {message}',
-            'style': '{',
-        },
-        'file_errors': {
-            'format': '\n[{levelname}] {asctime} ~/mdl-{module}/func-{funcName}/line-{lineno}\n'
-                      '[MESSAGE] {message}\n'
-                      '[EXC_INFO] {exc_info}\n'
-                      '[STACK_INFO] {stack_info}\n',
-            'style': '{',
-        },
-        'console_debug': {
-            'format': '!>> {message} <<!',
-            'style': '{',
-        },
-        'django.server': {
-            '()': 'django.utils.log.ServerFormatter',
-            'format': '[{server_time}] {message}',
-            'style': '{',
-        },
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-    },
-}
+from .logger_config import LOGGING
 # </logging>
 
 

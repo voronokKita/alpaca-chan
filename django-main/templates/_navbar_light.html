@@ -1,0 +1,35 @@
+<br>
+<div class='row'>
+  <nav class="navbar navbar-expand col-sm-12 col-md-9 col-lg-6" style="background-color: #e8eaf6;">
+    <div class="container">
+
+      <div class="navbar-brand">
+        {% load static %}
+        <img src="{% static request.resolver_match.app_name|add:'/favicon.ico' %}"
+             alt="" width="24" height="24" class='navbar-ico'>
+      </div>
+
+      <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav me-auto">
+          {% if request.user.is_authenticated %}
+          <li class="navbar-brand">
+            {{ user.username }}
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:logout' request.resolver_match.app_name %}">Logout</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:register' request.resolver_match.app_name %}">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:login' request.resolver_match.app_name %}">Login</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+
+    </div>
+  </nav>
+</div>
+<br>

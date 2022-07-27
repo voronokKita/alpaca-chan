@@ -1,9 +1,9 @@
 {% extends 'polls/base_polls.html' %}
 
-{% block navbar %}{% endblock %}
+{% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
 
 {% block main_content %}
-<div class="list-group col-sm-12 col-md-6 col-lg-5">
+<div class="list-group col-sm-12 col-md-9 col-lg-6">
   {% for q in latest_question_list %}
   <a href="{{ q.get_absolute_url }}" class="list-group-item list-group-item-action">
     <div class="d-flex w-100 justify-content-between">
