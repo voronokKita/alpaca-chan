@@ -33,14 +33,13 @@ class RegisterView(SuccessMessageMixin, generic.CreateView):
 
     def form_valid(self, form):
         self.success_url = redirect_on_success(self.kwargs.get('next'))
-
         valid = super().form_valid(form)
 
-        username, password = form.cleaned_data.get('username'), form.cleaned_data.get('password1')
-        new_user = authenticate(username=username, password=password)
+        new_user = authenticate(
+            username=form.cleaned_data.get('username'),
+            password=form.cleaned_data.get('password1')
+        )
         login(self.request, new_user)
-
-        logger.info(f"A new user created ({form.cleaned_data['username']}).")
         return valid
 
 

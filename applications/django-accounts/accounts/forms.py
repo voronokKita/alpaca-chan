@@ -1,7 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django import forms
 
-from django.contrib.auth.models import User
+from .models import ProxyUser
 
 
 class UserLoginForm(AuthenticationForm):
@@ -56,5 +56,5 @@ class UserRegisterForm(UserCreationForm):
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'required'}),
     )
     class Meta:
-        model = User
+        model = ProxyUser
         fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
