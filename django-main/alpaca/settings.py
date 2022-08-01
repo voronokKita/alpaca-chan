@@ -15,7 +15,10 @@ whose name partial includes any of the following:
 """
 import secrets
 
-from .presets import DEBUG, BASE_DIR, PROJECT_ROOT_DIR, PROJECT_APPS_DIR
+from .presets import (
+    DEBUG, BASE_DIR, PROJECT_ROOT_DIR, PROJECT_APPS_DIR,
+    ALL_PROJECT_APPS, PROJECT_MAIN_APPS
+)
 
 
 # Deployment checklist
@@ -45,11 +48,12 @@ ROOT_URLCONF = 'alpaca.urls'
 
 WSGI_APPLICATION = 'alpaca.wsgi.application'
 
-PROJECT_MAIN_APPS = {
-    'polls': PROJECT_APPS_DIR / 'django-polls',
-    'encyclopedia': PROJECT_APPS_DIR / 'django-cs50web-wiki',
-    'auctions': PROJECT_APPS_DIR / 'django-cs50web-commerce',
-}
+""" To install or change an app:
+1. Append the [app].apps.ConfigClass to the INSTALLED_APPS.
+2. Append the app [app].urls to the alpaca.urls.
+3. Configure the app in the alpaca.presets.
+3.1. Set up the app db router if needed.
+"""
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -117,42 +121,28 @@ DATABASES = {
             'DEPENDENCIES': [],
         },
     },
-    'polls_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPS_DIR / 'django-polls' / 'polls.sqlite3',
-        'TIME_ZONE': 'Europe/Moscow',
-        'TEST': {
-            'NAME': None,
-            'DEPENDENCIES': []
-        },
-    },
-    'encyclopedia_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPS_DIR / 'django-cs50web-wiki' / 'encyclopedia.sqlite3',
-        'TIME_ZONE': 'Europe/Moscow',
-        'TEST': {
-            'NAME': None,
-            'DEPENDENCIES': []
-        },
-    },
-    'auctions_db': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': PROJECT_APPS_DIR / 'django-cs50web-commerce' / 'auctions.sqlite3',
-        'TIME_ZONE': 'Europe/Moscow',
-        'TEST': {
-            'NAME': None,
-            'DEPENDENCIES': []
-        },
-    }
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/#topics-db-multi-db-routing
-DATABASE_ROUTERS = [
-    'polls.db_router.PollsRouter',
-    'encyclopedia.db_router.WikiRouter',
-    'auctions.db_router.CommerceRouter',
-]
+DATABASE_ROUTERS = []
+
+for app in ALL_PROJECT_APPS:
+    if ALL_PROJECT_APPS[app]['db'] is not False:
+        app_db = ALL_PROJECT_APPS[app]['db']
+        dict_ = {
+            f'{app}_db': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': ALL_PROJECT_APPS[app]['app_dir'] / f'{app}.sqlite3',
+                'TIME_ZONE': 'Europe/Moscow',
+                'TEST': {
+                    'NAME': None,
+                    'DEPENDENCIES': app_db['dependencies']
+                },
+            },
+        }
+        DATABASES.update(dict_)
+        DATABASE_ROUTERS.append(f"{app}.db_router.{app_db['router_class']}")
 # </database>
 
 

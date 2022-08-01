@@ -14,7 +14,7 @@ def get_context():
     main_app_list = []
     for app in settings.PROJECT_MAIN_APPS:
         try:
-            readme = settings.PROJECT_MAIN_APPS[app] / 'readme.md'
+            readme = settings.PROJECT_MAIN_APPS[app]['app_dir'] / 'readme.md'
             readme_html = markdown2.markdown(readme.read_text())
             result = re.findall(r".*<h5>(.+)</h5>.*<p>(.+)</p>.*",
                                 readme_html, re.I | re.DOTALL)[0]

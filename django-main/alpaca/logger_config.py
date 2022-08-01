@@ -1,4 +1,4 @@
-from .presets import DEBUG, BASE_DIR, PROJECT_APPS_DIR
+from .presets import DEBUG, BASE_DIR, ALL_PROJECT_APPS
 
 
 # https://docs.djangoproject.com/en/4.0/ref/logging/
@@ -6,26 +6,6 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'loggers': {
-        'core': {
-            'handlers': ['core_app_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'accounts': {
-            'handlers': ['accounts_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'polls': {
-            'handlers': ['polls_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'encyclopedia': {
-            'handlers': ['encyclopedia_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
-        'auctions': {
-            'handlers': ['auctions_file', 'console_debug'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-        },
         'django': {
             'handlers': ['console', 'django_main_file'],
             'level': 'INFO',
@@ -41,36 +21,6 @@ LOGGING = {
         }
     },
     'handlers': {
-        'core_app_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPS_DIR / 'django-core-app' / 'core-app.log',
-            'formatter': 'file',
-        },
-        'accounts_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPS_DIR / 'django-accounts' / 'accounts.log',
-            'formatter': 'file',
-        },
-        'polls_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPS_DIR / 'django-polls' / 'polls.log',
-            'formatter': 'file',
-        },
-        'encyclopedia_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPS_DIR / 'django-cs50web-wiki' / 'encyclopedia.log',
-            'formatter': 'file',
-        },
-        'auctions_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_APPS_DIR / 'django-cs50web-commerce' / 'auctions.log',
-            'formatter': 'file',
-        },
         'django_main_file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
@@ -136,3 +86,21 @@ LOGGING = {
         },
     },
 }
+for app in ALL_PROJECT_APPS:
+    app_handler_name = f'{app}_app_file'
+    logger = {
+        app: {
+            'handlers': [app_handler_name, 'console_debug'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        }
+    }
+    handler = {
+        app_handler_name: {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': ALL_PROJECT_APPS[app]['app_dir'] / f'{app}.log',
+            'formatter': 'file',
+        }
+    }
+    LOGGING['loggers'].update(logger)
+    LOGGING['handlers'].update(handler)
