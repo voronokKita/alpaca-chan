@@ -4,7 +4,11 @@ from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import Question
+from .models import Question, Choice
+from .forms import ChoiceSetForm
+
+
+DB = 'polls_db'
 
 
 def create_question(question_text, days=0):
@@ -19,7 +23,7 @@ def create_question(question_text, days=0):
 
 
 class QuestionIndexViewTests(TestCase):
-    databases = ['polls_db']
+    databases = [DB]
 
     def test_no_questions(self):
         """ If no questions exist, an appropriate message is displayed. """
@@ -40,6 +44,7 @@ class QuestionIndexViewTests(TestCase):
         """ Questions with a pub_date in the past are displayed on the index page. """
         question1 = create_question(question_text='Past question 1.', days=-10)
         question2 = create_question(question_text='Past question 2.', days=-30)
+
         response = self.client.get(reverse('polls:index'))
         self.assertQuerysetEqual(
             response.context['latest_question_list'], [question1, question2]
@@ -49,6 +54,7 @@ class QuestionIndexViewTests(TestCase):
         """ Questions with a pub_date in the future aren't displayed on the index page. """
         create_question(question_text='Future question 1.', days=1)
         create_question(question_text='Future question 2.', days=30)
+
         response = self.client.get(reverse('polls:index'))
         self.assertContains(response, 'No polls are available.')
         self.assertQuerysetEqual(response.context['latest_question_list'], [])
@@ -57,6 +63,7 @@ class QuestionIndexViewTests(TestCase):
         """ Even if both past and future questions exist, only past questions are displayed. """
         question = create_question(question_text='Past question.', days=-1)
         create_question(question_text='Future question.', days=1)
+
         response = self.client.get(reverse('polls:index'))
         self.assertQuerysetEqual(
             response.context['latest_question_list'], [question]
@@ -64,24 +71,82 @@ class QuestionIndexViewTests(TestCase):
 
 
 class QuestionDetailViewTests(TestCase):
-    databases = ['polls_db']
+    databases = [DB]
 
     def test_future_question(self):
         """ The detail view of a question with a pub_date in the future returns a 404 not found. """
         future_question = create_question(question_text='Future question.', days=1)
-        url = reverse('polls:detail', args=(future_question.id,))
+        url = reverse('polls:detail', args=(future_question.pk,))
+
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
     def test_past_question(self):
         """ The detail view of a question with a pub_date in the past displays the question's text. """
         past_question = create_question(question_text='Past Question.', days=-1)
-        url = reverse('polls:detail', args=(past_question.id,))
+        url = reverse('polls:detail', args=(past_question.pk,))
+
         response = self.client.get(url)
         self.assertContains(response, past_question.question_text)
+        self.assertEqual(type(response.context['form']), ChoiceSetForm)
+
+    def test_choice_set(self):
+        """ The detail view of a question displays the question's choices. """
+        question = create_question(question_text='Question.')
+        choice1 = Choice.objects.create(question=question, choice_text='Choice #1')
+        choice2 = Choice.objects.create(question=question, choice_text='Choice #2')
+        url = reverse('polls:detail', args=[question.pk])
+
+        response = self.client.get(url)
+        self.assertContains(response, choice1.choice_text)
+        self.assertContains(response, choice2.choice_text)
+
+
+class ChoiceFormTests(TestCase):
+    databases = [DB]
+
+    def test_choice_normal(self):
+        """ The detail view of a question displays the question's choices. """
+        question = create_question(question_text='Question.')
+        choice1 = Choice.objects.create(question=question, choice_text='Choice #1', votes=0)
+        choice2 = Choice.objects.create(question=question, choice_text='Choice #2')
+
+        response = self.client.post(
+            reverse('polls:detail', args=[question.pk]),
+            data={'choices': choice1.pk}
+        )
+        self.assertRedirects(response, reverse('polls:results', args=[question.pk]))
+        choice1.refresh_from_db()
+        self.assertEqual(choice1.votes, 1)
+
+
+class QuestionResultsTests(TestCase):
+    databases = [DB]
+
+    def test_future_question(self):
+        """ The results view of a question with a pub_date in the future returns a 404 not found. """
+        future_question = create_question(question_text='Future question.', days=1)
+        url = reverse('polls:results', args=[future_question.pk])
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_normal_case(self):
+        """ The results view may display questions. """
+        question = create_question(question_text='Question.')
+        choice1 = Choice.objects.create(question=question, choice_text='Choice #1')
+        choice2 = Choice.objects.create(question=question, choice_text='Choice #2')
+        url = reverse('polls:results', args=[question.pk])
+
+        response = self.client.get(url)
+        self.assertContains(response, question.question_text)
+        self.assertContains(response, choice1.choice_text)
+        self.assertContains(response, choice2.choice_text)
 
 
 class QuestionModelTests(TestCase):
+    databases = [DB]
+
     def test_was_published_recently_with_future_question(self):
         pub_date = timezone.localtime() + datetime.timedelta(days=1)
         future_question = Question(pub_date=pub_date)
@@ -96,3 +161,12 @@ class QuestionModelTests(TestCase):
         pub_date = timezone.localtime() - datetime.timedelta(hours=23, minutes=59, seconds=59)
         recent_question = Question(pub_date=pub_date)
         self.assertIs(recent_question.published_recently(), True)
+
+    def test_models_integrity(self):
+        question = create_question(question_text='Question.')
+        choice1 = Choice.objects.create(question=question, choice_text='Choice #1')
+        choice2 = Choice.objects.create(question=question, choice_text='Choice #2')
+        question.refresh_from_db()
+        queryset = question.choice_set.all()
+        self.assertIn(choice1, queryset)
+        self.assertIn(choice2, queryset)

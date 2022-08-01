@@ -2,7 +2,6 @@ import logging
 
 from django.urls import reverse_lazy
 from django.views import generic
-
 from django.utils import timezone
 from django.db.models import F
 
@@ -21,9 +20,7 @@ class IndexView(generic.ListView):
     context_object_name = 'latest_question_list'
 
     def get_queryset(self):
-        return Question.objects.filter(
-            pub_date__lte=timezone.localtime()
-        ).order_by('-pub_date')
+        return Question.objects.filter(pub_date__lte=timezone.localtime())
 
 
 class DetailView(generic.UpdateView):
@@ -34,9 +31,7 @@ class DetailView(generic.UpdateView):
     extra_context = {'navbar_list': get_default_nav()}
 
     def get_queryset(self):
-        return Question.objects.filter(
-            pub_date__lte=timezone.localtime()
-        ).order_by('-pub_date')
+        return Question.objects.filter(pub_date__lte=timezone.localtime())
 
     def form_valid(self, form):
         """ I'm sure that it could be done better,
@@ -44,7 +39,7 @@ class DetailView(generic.UpdateView):
         choice = form.cleaned_data['choices']
         choice.votes = F('votes') + 1
         choice.save()
-        self.success_url = reverse_lazy('polls:results', kwargs={'pk': choice.question.pk})
+        self.success_url = reverse_lazy('polls:results', args=[choice.question.pk])
         return super().form_valid(form)
 
 
