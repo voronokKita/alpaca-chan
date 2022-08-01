@@ -3,7 +3,6 @@ import logging
 from django.urls import reverse_lazy
 from django.views import generic
 from django.utils import timezone
-from django.db.models import F
 
 from .models import Question
 from .forms import ChoiceSetForm
@@ -34,12 +33,7 @@ class DetailView(generic.UpdateView):
         return Question.objects.filter(pub_date__lte=timezone.localtime())
 
     def form_valid(self, form):
-        """ I'm sure that it could be done better,
-            but I can't understand or find an adequate answer on the net. """
-        choice = form.cleaned_data['choices']
-        choice.votes = F('votes') + 1
-        choice.save()
-        self.success_url = reverse_lazy('polls:results', args=[choice.question.pk])
+        self.success_url = reverse_lazy('polls:results', args=[form.instance.pk])
         return super().form_valid(form)
 
 

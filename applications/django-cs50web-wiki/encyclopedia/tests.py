@@ -9,13 +9,14 @@ from .models import Entry
 from .forms import EntryForm, DeleteEntryForm
 
 
+DB = 'encyclopedia_db'
+
+
 def get_url(path_name, slug=None):
-    if path_name == 'index':
-        return reverse_lazy('encyclopedia:index')
-    elif path_name == 'new_entry':
-        return reverse('encyclopedia:new_entry')
+    if path_name == 'index' or path_name == 'new_entry':
+        return reverse(f'encyclopedia:{path_name}')
     else:
-        return reverse(f'encyclopedia:{path_name}', kwargs={'slug': slug})
+        return reverse(f'encyclopedia:{path_name}', args=[slug])
 
 
 def get_entry(slug='test-article', entry_name='Test Article', entry_text='Some text.'):
@@ -23,7 +24,7 @@ def get_entry(slug='test-article', entry_name='Test Article', entry_text='Some t
 
 
 class EntryModelTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_entry_normal_case(self):
         """ Test that model is working. """
@@ -39,11 +40,12 @@ class EntryModelTests(TestCase):
         test_name = 'Slugify Me'
         article = Entry(entry_name=test_name, entry_text='Some text.')
         article.save()
+        article.refresh_from_db()
         self.assertEqual(article.slug, slugify(test_name))
 
 
 class EntryFormTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_entry_form_normal_case(self):
         form_data = {'slug': 'test', 'entry_name': 'Test', 'entry_text': 'text'}
@@ -65,7 +67,7 @@ class EntryFormTests(TestCase):
 
 
 class IndexViewTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_index_no_entries(self):
         """ If no articles exist, an appropriate message is displayed. """
@@ -87,7 +89,7 @@ class IndexViewTests(TestCase):
 
 
 class DetailViewTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_detail_no_entry(self):
         """ Empty page case. """
@@ -130,7 +132,7 @@ class DetailViewTests(TestCase):
 
 
 class NewEntryTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_create_page_loads(self):
         """ Add-new-entry-page loads well. """
@@ -167,7 +169,7 @@ class NewEntryTests(TestCase):
 
 
 class EditEntryTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_update_no_entry(self):
         """ Check if no article exist. """
@@ -217,7 +219,7 @@ class EditEntryTests(TestCase):
 
 
 class DeleteEntryTests(TestCase):
-    databases = ['encyclopedia_db']
+    databases = [DB]
 
     def test_delete_no_entry(self):
         """ Check if no article exist. """

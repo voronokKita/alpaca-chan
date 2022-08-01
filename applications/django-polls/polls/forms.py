@@ -1,17 +1,22 @@
 from django.forms import ModelForm, RadioSelect, ModelChoiceField
+from django.db.models import F
 
 from .models import Question, Choice
 
 
 class ChoiceSetForm(ModelForm):
-    """ I'm sure that it could be done better,
-        but I can't understand or find an adequate answer on the net. """
+    choices = ModelChoiceField(queryset=Choice.objects.all(), label='', widget=RadioSelect)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance:
             self.fields['choices'].queryset = self.instance.choice_set.all()
 
-    choices = ModelChoiceField(queryset=Choice.objects.all(), label='', widget=RadioSelect)
+    def clean_choices(self):
+        choice = self.cleaned_data['choices']
+        choice.votes = F('votes') + 1
+        choice.save()
+        return choice
 
     class Meta:
         model = Question
