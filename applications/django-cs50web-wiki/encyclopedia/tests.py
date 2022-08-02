@@ -10,6 +10,18 @@ from .models import Entry
 from .forms import EntryForm, DeleteEntryForm
 
 
+"""
++ entry model tests
++ create/update form tests
+- delete form tests
++ index page
++ detail page
++ add new entry page
++ edit entry page
++ delete entry page
++ check resources
+"""
+
 DB = settings.PROJECT_MAIN_APPS['encyclopedia']['db']['name']
 
 
@@ -67,7 +79,7 @@ class EntryFormTests(TestCase):
             self.assertFalse(form.is_valid())
 
 
-class IndexViewTests(TestCase):
+class WikiIndexViewTests(TestCase):
     databases = [DB]
 
     def test_index_no_entries(self):
@@ -89,7 +101,7 @@ class IndexViewTests(TestCase):
         )
 
 
-class DetailViewTests(TestCase):
+class WikiDetailViewTests(TestCase):
     databases = [DB]
 
     def test_detail_no_entry(self):
@@ -132,7 +144,7 @@ class DetailViewTests(TestCase):
                          markdown2.markdown(md_text))
 
 
-class NewEntryTests(TestCase):
+class WikiAddNewEntryViewTests(TestCase):
     databases = [DB]
 
     def test_create_page_loads(self):
@@ -169,7 +181,7 @@ class NewEntryTests(TestCase):
         self.assertFalse(Entry.objects.filter(slug=slug).exists())
 
 
-class EditEntryTests(TestCase):
+class WikiEditEntryViewTests(TestCase):
     databases = [DB]
 
     def test_update_no_entry(self):
@@ -219,7 +231,7 @@ class EditEntryTests(TestCase):
         self.assertEqual(expected_text, article.entry_text)
 
 
-class DeleteEntryTests(TestCase):
+class WikiDeleteEntryViewTests(TestCase):
     databases = [DB]
 
     def test_delete_no_entry(self):
@@ -261,3 +273,22 @@ class DeleteEntryTests(TestCase):
         )
         self.assertRedirects(response, get_url('index'))
         self.assertFalse(Entry.objects.filter(slug=slug).exists())
+
+
+class WikiResourcesTests(TestCase):
+    databases = [DB]
+    app_dir = settings.PROJECT_MAIN_APPS['encyclopedia']['app_dir']
+    resources = [
+        app_dir / 'readme.md',
+        app_dir / 'encyclopedia' / 'db_router.py',
+        app_dir / 'encyclopedia' / 'logs.py',
+        app_dir / 'encyclopedia' / 'static' / 'encyclopedia' / 'favicon.ico',
+        app_dir / 'encyclopedia' / 'static' / 'encyclopedia' / 'logo.jpg',
+        app_dir / 'encyclopedia' / 'templates' / 'encyclopedia' / 'base_wiki.html',
+    ]
+    def test_base_resources_exists(self):
+        """ Check that I didn't miss anything. """
+        for item in self.resources:
+            self.assertTrue(item.exists(), msg=item)
+
+        from .db_router import WikiRouter

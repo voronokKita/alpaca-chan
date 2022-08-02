@@ -9,6 +9,14 @@ from .models import Question, Choice
 from .forms import ChoiceSetForm
 
 
+# + form test
+# + model tests
+# + index page
+# + detail page
+#   + detail form
+# + results page
+# + check resources
+
 DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
 
 
@@ -38,7 +46,7 @@ class ChoiceSetFormTests(TestCase):
         self.assertEqual(choice1.votes, 1)
 
 
-class QuestionModelTests(TestCase):
+class QuestionAndChoiceModelTests(TestCase):
     databases = [DB]
 
     def test_was_published_recently_with_future_question(self):
@@ -65,7 +73,7 @@ class QuestionModelTests(TestCase):
         self.assertIn(choice2, queryset)
 
 
-class QuestionIndexViewTests(TestCase):
+class PollsIndexViewTests(TestCase):
     databases = [DB]
 
     def test_no_questions(self):
@@ -113,7 +121,7 @@ class QuestionIndexViewTests(TestCase):
         )
 
 
-class QuestionDetailViewTests(TestCase):
+class PollsDetailViewTests(TestCase):
     databases = [DB]
 
     def test_future_question(self):
@@ -145,7 +153,7 @@ class QuestionDetailViewTests(TestCase):
         self.assertContains(response, choice2.choice_text)
 
 
-class ChoiceFormTests(TestCase):
+class PollsDetailViewFormTests(TestCase):
     databases = [DB]
 
     def test_choice_normal(self):
@@ -163,7 +171,7 @@ class ChoiceFormTests(TestCase):
         self.assertEqual(choice1.votes, 1)
 
 
-class QuestionResultsTests(TestCase):
+class PollsResultsTests(TestCase):
     databases = [DB]
 
     def test_future_question(self):
@@ -185,3 +193,22 @@ class QuestionResultsTests(TestCase):
         self.assertContains(response, question.question_text)
         self.assertContains(response, choice1.choice_text)
         self.assertContains(response, choice2.choice_text)
+
+
+class PollsResourcesTests(TestCase):
+    databases = [DB]
+    app_dir = settings.PROJECT_MAIN_APPS['polls']['app_dir']
+    resources = [
+        app_dir / 'readme.md',
+        app_dir / 'polls' / 'db_router.py',
+        app_dir / 'polls' / 'logs.py',
+        app_dir / 'polls' / 'static' / 'polls' / 'favicon.ico',
+        app_dir / 'polls' / 'static' / 'polls' / 'logo.jpg',
+        app_dir / 'polls' / 'templates' / 'polls' / 'base_polls.html',
+    ]
+    def test_base_resources_exists(self):
+        """ Check that I didn't miss anything. """
+        for item in self.resources:
+            self.assertTrue(item.exists(), msg=item)
+
+        from .db_router import PollsRouter

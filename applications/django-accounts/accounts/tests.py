@@ -15,6 +15,7 @@ from .forms import UserLoginForm, UserRegisterForm
 # + register page
 #   + register a new user
 # + redirections
+# + check resources
 
 DB = ['default', settings.PROJECT_MAIN_APPS['polls']['db']['name']]
 
@@ -84,7 +85,7 @@ class AccountsIndexViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class LoginTests(TestCase):
+class AccountsLoginViewTests(TestCase):
 
     def test_login_page_loads(self):
         response = self.client.get(reverse('accounts:login'))
@@ -119,7 +120,7 @@ class LoginTests(TestCase):
         self.assertContains(response, 'This field is required.')
 
 
-class LogoutTests(TestCase):
+class AccountsLogoutViewTests(TestCase):
     def test_logout_page_redirects_anonymous(self):
         response = self.client.get(reverse('accounts:logout'))
         self.assertRedirects(response, reverse('core:index'), 302)
@@ -143,7 +144,7 @@ class LogoutTests(TestCase):
         self.assertFalse(response_get_logout.context['user'].is_authenticated)
 
 
-class LoginLogoutIntegrityTests(TestCase):
+class AccountsLoginLogoutIntegrityTests(TestCase):
     databases = DB
 
     def test_login_and_logout_redirects_back_to_app(self):
@@ -164,7 +165,7 @@ class LoginLogoutIntegrityTests(TestCase):
         self.assertFalse(response_get_logout.context['user'].is_authenticated)
 
 
-class RegisterTests(TestCase):
+class AccountsRegisterViewTests(TestCase):
     def test_register_page_loads(self):
         response = self.client.get(reverse('accounts:register'))
         self.assertEqual(response.status_code, 200)
@@ -209,7 +210,7 @@ class RegisterTests(TestCase):
             self.assertContains(response, 'This field is required.')
 
 
-class RegisterIntegrityTests(TestCase):
+class AccountsRegisterIntegrityTests(TestCase):
     databases = DB
 
     def test_register_redirects_back_to_app(self):
@@ -223,3 +224,17 @@ class RegisterIntegrityTests(TestCase):
         self.assertTrue(User.objects.filter(username='Fennec-chan').exists())
         response_get_register = self.client.get(reverse('core:index'))
         self.assertTrue(response_get_register.context['user'].is_authenticated)
+
+
+class AccountsResourcesTests(TestCase):
+    app_dir = settings.ALL_PROJECT_APPS['accounts']['app_dir']
+    resources = [
+        app_dir / 'readme.md',
+        app_dir / 'accounts' / 'logs.py',
+        app_dir / 'accounts' / 'static' / 'accounts' / 'favicon.ico',
+        app_dir / 'accounts' / 'templates' / 'accounts' / 'base_accounts.html',
+    ]
+    def test_base_resources_exists(self):
+        """ Check that I didn't miss anything. """
+        for item in self.resources:
+            self.assertTrue(item.exists(), msg=item)
