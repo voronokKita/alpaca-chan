@@ -3,12 +3,13 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
+from django.conf import settings
 
 from .models import Question, Choice
 from .forms import ChoiceSetForm
 
 
-DB = 'polls_db'
+DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
 
 
 def create_question(question_text, days=0):

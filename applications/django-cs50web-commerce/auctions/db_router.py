@@ -1,7 +1,10 @@
+from django.conf import settings
+
+
 class CommerceRouter:
     """ A router to control all database operations on models in an [app]. """
     app_label = 'auctions'
-    db_name = 'auctions_db'
+    db_name = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
 
     def db_for_read(self, model, **hints):
         """ Attempts to read from the [app] models go to the [app_db]. """

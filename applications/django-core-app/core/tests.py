@@ -1,3 +1,6 @@
 from django.test import TestCase
 
-# Create your tests here.
+
+# - list of applications test
+# - core index page
+# - resources check: app readme, logo, favicon, base templates

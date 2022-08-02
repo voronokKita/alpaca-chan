@@ -131,7 +131,7 @@ for app in ALL_PROJECT_APPS:
     if ALL_PROJECT_APPS[app]['db'] is not False:
         app_db = ALL_PROJECT_APPS[app]['db']
         dict_ = {
-            f'{app}_db': {
+            app_db['name']: {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': ALL_PROJECT_APPS[app]['app_dir'] / f'{app}.sqlite3',
                 'TIME_ZONE': 'Europe/Moscow',

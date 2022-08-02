@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 
 from django.contrib.auth.models import User
@@ -7,19 +8,20 @@ from .models import ProxyUser
 from .forms import UserLoginForm, UserRegisterForm
 
 
-# TODO:
-# + model user created
-# + page index get
+# + proxy user model
+# + forms
+# + index page
 # + login & logout
-# * page register
-#   * register new user
+# + register page
+#   + register a new user
+# + redirections
 
-DB = ['default', 'polls_db']
+DB = ['default', settings.PROJECT_MAIN_APPS['polls']['db']['name']]
 
 
 class ProxyUserModelTests(TestCase):
     def test_entry_normal_case(self):
-        """ Test that model is working fine. """
+        """ Test that the proxy model is working fine. """
         user = ProxyUser.objects.create(
             username='Rockhopper', first_name='Iwatobi', last_name='the Penguin',
             email='rockhopper@japaripark.int', is_staff=True, password='qwerty'

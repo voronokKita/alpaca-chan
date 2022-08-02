@@ -4,12 +4,13 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.conf import settings
 
 from .models import Entry
 from .forms import EntryForm, DeleteEntryForm
 
 
-DB = 'encyclopedia_db'
+DB = settings.PROJECT_MAIN_APPS['encyclopedia']['db']['name']
 
 
 def get_url(path_name, slug=None):
