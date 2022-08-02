@@ -1,7 +1,7 @@
 import markdown2
 
 from django.test import TestCase
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 
