@@ -13,7 +13,6 @@ from .forms import EntryForm, DeleteEntryForm
 """
 + entry model tests
 + create/update form tests
-- delete form tests
 + index page
 + detail page
 + add new entry page

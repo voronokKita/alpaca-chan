@@ -1,8 +1,9 @@
 from django.urls import reverse
+from django.views import generic
 
 
-def index(request):
-    return 'HI!'
+class IndexView(generic.TemplateView):
+    template_name = 'auctions/index.html'
 
 """ TODO
 https://cs50.harvard.edu/web/2020/projects/2/commerce/
