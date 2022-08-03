@@ -28,6 +28,13 @@ class DetailView(generic.DetailView):
     template_name = 'encyclopedia/detail.html'
     model = Entry
     context_object_name = 'article'
+    extra_context = {
+        'navbar_list': [
+            {'url': reverse_lazy('encyclopedia:index'), 'text': 'Go back', 'focus': True},
+            {'url': '', 'text': 'Edit this article'},
+            {'url': '', 'text': 'Delete this article'},
+        ]
+    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -35,13 +42,10 @@ class DetailView(generic.DetailView):
             context['article'].entry_text
         )
         slug = context['article'].slug
-        context['navbar_list'] = [
-            {'url': reverse('encyclopedia:index'), 'text': 'Go back', 'focus': True},
-            {'url': reverse('encyclopedia:edit_entry', kwargs={'slug': slug}),
-             'text': 'Edit this article'},
-            {'url': reverse('encyclopedia:delete_entry', kwargs={'slug': slug}),
-             'text': 'Delete this article'},
-        ]
+        url_edit = reverse_lazy('encyclopedia:edit_entry', kwargs={'slug': slug})
+        url_delete = reverse_lazy('encyclopedia:delete_entry', kwargs={'slug': slug})
+        self.extra_context['navbar_list'][1]['url'] = url_edit
+        self.extra_context['navbar_list'][2]['url'] = url_delete
         return context
 
 

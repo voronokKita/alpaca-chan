@@ -1,14 +1,15 @@
 import markdown2
 
 from django.test import TestCase
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 
+from django.contrib.auth.models import User
 from .models import Entry
 from .forms import EntryForm, DeleteEntryForm
-
 
 """
 + entry model tests
@@ -19,6 +20,7 @@ from .forms import EntryForm, DeleteEntryForm
 + edit entry page
 + delete entry page
 + check resources
++ check navbar
 """
 
 DB = settings.PROJECT_MAIN_APPS['encyclopedia']['db']['name']
@@ -33,6 +35,17 @@ def get_url(path_name, slug=None):
 
 def get_entry(slug='test-article', entry_name='Test Article', entry_text='Some text.'):
     return Entry.objects.create(slug=slug, entry_name=entry_name, entry_text=entry_text)
+
+
+def check_default_navbar(object_, path_name, slug=None):
+    """ Will make a new article if [slug] is passed. """
+    if slug:
+        get_entry(slug, 'Domine', 'de morte aeterna')
+    response = object_.client.get(get_url(path_name, slug))
+    from .views import get_default_nav
+    navbar_list = get_default_nav()
+    for ell in navbar_list:
+        object_.assertContains(response, ell['text'])
 
 
 class EntryModelTests(TestCase):
@@ -79,7 +92,7 @@ class EntryFormTests(TestCase):
 
 
 class WikiIndexViewTests(TestCase):
-    databases = [DB]
+    databases = ['default', DB]
 
     def test_index_no_entries(self):
         """ If no articles exist, an appropriate message is displayed. """
@@ -98,6 +111,23 @@ class WikiIndexViewTests(TestCase):
         self.assertQuerysetEqual(
             response.context['wiki_entries'], [article1, article2]
         )
+
+    def test_wiki_navbar(self):
+        response_anon = self.client.get(get_url('index'))
+        self.assertContains(response_anon, 'Home')
+        self.assertContains(response_anon, 'Register')
+        self.assertContains(response_anon, 'Login')
+
+        from .views import IndexView
+        navbar_list = IndexView.extra_context['navbar_list']
+        for ell in navbar_list:
+            self.assertContains(response_anon, ell['text'])
+
+        User.objects.create(username='Mirai', password=make_password('qwerty'))
+        login = self.client.login(username='Mirai', password='qwerty')
+        response_user = self.client.get(get_url('index'))
+        self.assertContains(response_user, 'Mirai')
+        self.assertContains(response_user, 'Logout')
 
 
 class WikiDetailViewTests(TestCase):
@@ -142,6 +172,20 @@ class WikiDetailViewTests(TestCase):
         self.assertEqual(response.context['entry_text_html'],
                          markdown2.markdown(md_text))
 
+    def test_detail_navbar(self):
+        article = get_entry('domine', 'Domine', 'de morte aeterna')
+        response = self.client.get(get_url('detail', 'domine'))
+
+        from .views import DetailView
+        navbar_list = DetailView.extra_context['navbar_list']
+        # not really need this logic...
+        # url_edit = reverse_lazy('encyclopedia:edit_entry', kwargs={'slug': 'domine'})
+        # url_delete = reverse_lazy('encyclopedia:delete_entry', kwargs={'slug': 'domine'})
+        # navbar_list[1]['url'] = url_edit
+        # navbar_list[2]['url'] = url_delete
+        for ell in navbar_list:
+            self.assertContains(response, ell['text'])
+
 
 class WikiAddNewEntryViewTests(TestCase):
     databases = [DB]
@@ -178,6 +222,9 @@ class WikiAddNewEntryViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, expected_msg)
         self.assertFalse(Entry.objects.filter(slug=slug).exists())
+
+    def test_new_entry_navbar(self):
+        check_default_navbar(self, 'new_entry')
 
 
 class WikiEditEntryViewTests(TestCase):
@@ -229,6 +276,9 @@ class WikiEditEntryViewTests(TestCase):
         article.refresh_from_db()
         self.assertEqual(expected_text, article.entry_text)
 
+    def test_edit_entry_navbar(self):
+        check_default_navbar(self, 'edit_entry', 'domine')
+
 
 class WikiDeleteEntryViewTests(TestCase):
     databases = [DB]
@@ -273,6 +323,9 @@ class WikiDeleteEntryViewTests(TestCase):
         self.assertRedirects(response, get_url('index'))
         self.assertFalse(Entry.objects.filter(slug=slug).exists())
 
+    def test_delete_entry_navbar(self):
+        check_default_navbar(self, 'delete_entry', 'domine')
+
 
 class WikiResourcesTests(TestCase):
     databases = [DB]
@@ -287,7 +340,6 @@ class WikiResourcesTests(TestCase):
     ]
     def test_base_resources_exists(self):
         """ Check that I didn't miss anything. """
+        from .db_router import WikiRouter
         for item in self.resources:
             self.assertTrue(item.exists(), msg=item)
-
-        from .db_router import WikiRouter

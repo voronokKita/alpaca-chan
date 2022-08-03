@@ -4,7 +4,9 @@ from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 
+from django.contrib.auth.models import User
 from .models import Question, Choice
 from .forms import ChoiceSetForm
 
@@ -16,6 +18,7 @@ from .forms import ChoiceSetForm
 #   + detail form
 # + results page
 # + check resources
+# + check navbar
 
 DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
 
@@ -29,6 +32,15 @@ def create_question(question_text, days=0):
     localtime = timezone.localtime()
     pub_date = localtime + datetime.timedelta(days=days) if days else localtime
     return Question.objects.create(question_text=question_text, pub_date=pub_date)
+
+def check_default_navbar(object_, path_name):
+    """ Will make a new article if [slug] is passed. """
+    q = create_question('What is love?')
+    response = object_.client.get(reverse(f'polls:{path_name}', args=[q.pk]))
+    from .views import get_default_nav
+    navbar_list = get_default_nav()
+    for ell in navbar_list:
+        object_.assertContains(response, ell['text'])
 
 
 class ChoiceSetFormTests(TestCase):
@@ -74,7 +86,7 @@ class QuestionAndChoiceModelTests(TestCase):
 
 
 class PollsIndexViewTests(TestCase):
-    databases = [DB]
+    databases = ['default', DB]
 
     def test_no_questions(self):
         """ If no questions exist, an appropriate message is displayed. """
@@ -120,6 +132,18 @@ class PollsIndexViewTests(TestCase):
             response.context['latest_question_list'], [question]
         )
 
+    def test_polls_navbar(self):
+        response_anon = self.client.get(reverse('polls:index'))
+        self.assertContains(response_anon, 'Home')
+        self.assertContains(response_anon, 'Register')
+        self.assertContains(response_anon, 'Login')
+
+        User.objects.create(username='Sunaneko', password=make_password('qwerty'))
+        self.client.login(username='Sunaneko', password='qwerty')
+        response_user = self.client.get(reverse('polls:index'))
+        self.assertContains(response_user, 'Sunaneko')
+        self.assertContains(response_user, 'Logout')
+
 
 class PollsDetailViewTests(TestCase):
     databases = [DB]
@@ -151,6 +175,9 @@ class PollsDetailViewTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, choice1.choice_text)
         self.assertContains(response, choice2.choice_text)
+
+    def test_detail_navbar(self):
+        check_default_navbar(self, 'detail')
 
 
 class PollsDetailViewFormTests(TestCase):
@@ -193,6 +220,9 @@ class PollsResultsTests(TestCase):
         self.assertContains(response, question.question_text)
         self.assertContains(response, choice1.choice_text)
         self.assertContains(response, choice2.choice_text)
+
+    def test_results_navbar(self):
+        check_default_navbar(self, 'results')
 
 
 class PollsResourcesTests(TestCase):

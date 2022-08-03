@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import User
 
 
 # + resources check
@@ -8,7 +10,7 @@ from django.urls import reverse
 # + integrity tests
 #   + list of applications test
 #   + project resources check
-#   - check navbar
+# + check navbar
 
 DB = ['default']
 for appname in settings.PROJECT_MAIN_APPS:
@@ -66,6 +68,17 @@ class CoreIndexViewTests(TestCase):
                          len(settings.PROJECT_MAIN_APPS))
         for card in response.context['main_app_list']:
             self.assertIn(card['app_name'], settings.PROJECT_MAIN_APPS, card['app_name'])
+
+    def test_core_navbar(self):
+        response_anon = self.client.get(reverse('core:index'))
+        self.assertContains(response_anon, 'Register')
+        self.assertContains(response_anon, 'Login')
+
+        User.objects.create(username='Gingitsune', password=make_password('qwerty'))
+        login = self.client.login(username='Gingitsune', password='qwerty')
+        response_user = self.client.get(reverse('core:index'))
+        self.assertContains(response_user, 'Gingitsune')
+        self.assertContains(response_user, 'Logout')
 
 
 class ProjectBaseIntegrityTests(TestCase):

@@ -7,5 +7,5 @@ register = template.Library()
 
 @register.simple_tag
 def active(pattern, path):
-    if re.search(pattern, path): return 'active'
+    if re.search(str(pattern), path): return 'active'
     else: return ''

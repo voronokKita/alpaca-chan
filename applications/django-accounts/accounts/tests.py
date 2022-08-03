@@ -16,6 +16,7 @@ from .forms import UserLoginForm, UserRegisterForm
 #   + register a new user
 # + redirections
 # + check resources
+# + check navbar
 
 DB = ['default', settings.PROJECT_MAIN_APPS['polls']['db']['name']]
 
@@ -83,6 +84,18 @@ class AccountsIndexViewTests(TestCase):
     def test_page_access(self):
         response = self.client.get(reverse('accounts:index'))
         self.assertEqual(response.status_code, 200)
+
+    def test_accounts_navbar(self):
+        response_anon = self.client.get(reverse('accounts:index'))
+        self.assertContains(response_anon, 'Home')
+        self.assertContains(response_anon, 'Register')
+        self.assertContains(response_anon, 'Login')
+
+        User.objects.create(username='Hashibirokou', password=make_password('qwerty'))
+        login = self.client.login(username='Hashibirokou', password='qwerty')
+        response_user = self.client.get(reverse('accounts:index'))
+        self.assertContains(response_user, 'Hashibirokou')
+        self.assertContains(response_user, 'Logout')
 
 
 class AccountsLoginViewTests(TestCase):
