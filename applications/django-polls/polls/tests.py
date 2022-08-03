@@ -1,6 +1,6 @@
 import datetime
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from django.utils import timezone
 from django.urls import reverse
 from django.conf import settings
@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from .models import Question, Choice
 from .forms import ChoiceSetForm
 
-
 # + form test
 # + model tests
 # + index page
@@ -19,8 +18,8 @@ from .forms import ChoiceSetForm
 # + results page
 # + check resources
 # + check navbar
-
 DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
+PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
 def create_question(question_text, days=0):
@@ -132,6 +131,7 @@ class PollsIndexViewTests(TestCase):
             response.context['latest_question_list'], [question]
         )
 
+    @override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
     def test_polls_navbar(self):
         response_anon = self.client.get(reverse('polls:index'))
         self.assertContains(response_anon, 'Home')
@@ -225,8 +225,7 @@ class PollsResultsTests(TestCase):
         check_default_navbar(self, 'results')
 
 
-class PollsResourcesTests(TestCase):
-    databases = [DB]
+class PollsResourcesTests(SimpleTestCase):
     app_dir = settings.PROJECT_MAIN_APPS['polls']['app_dir']
     resources = [
         app_dir / 'readme.md',
@@ -236,9 +235,9 @@ class PollsResourcesTests(TestCase):
         app_dir / 'polls' / 'static' / 'polls' / 'logo.jpg',
         app_dir / 'polls' / 'templates' / 'polls' / 'base_polls.html',
     ]
+
     def test_base_resources_exists(self):
         """ Check that I didn't miss anything. """
+        from .db_router import PollsRouter
         for item in self.resources:
             self.assertTrue(item.exists(), msg=item)
-
-        from .db_router import PollsRouter

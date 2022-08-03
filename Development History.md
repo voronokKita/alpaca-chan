@@ -16,3 +16,6 @@ Test the core app and some integrity tests.
 1st half of the day: <br>
 I wrote all the tests for the navbar of all the apps. <br>
 This is where I finished writing the tests, for now. But I will still read the django documentation on testing, maybe I will get some new ideas.
+
+2nd half of the day: <br>
+Some small tests optimization. Special reduced logger configuration for tests. <br>

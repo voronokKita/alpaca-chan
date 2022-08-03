@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -18,10 +18,13 @@ from .forms import UserLoginForm, UserRegisterForm
 # + check resources
 # + check navbar
 
-DB = ['default', settings.PROJECT_MAIN_APPS['polls']['db']['name']]
+SECOND_DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
+PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
 class ProxyUserModelTests(TestCase):
+    databases = ['default']
+
     def test_entry_normal_case(self):
         """ Test that the proxy model is working fine. """
         user = ProxyUser.objects.create(
@@ -34,7 +37,10 @@ class ProxyUserModelTests(TestCase):
         self.assertEqual(user.get_username(), 'Rockhopper')
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class UserRegisterFormTests(TestCase):
+    databases = ['default']
+
     def test_register_form_normal_case(self):
         form_data = {
             'username': 'Hululu',
@@ -71,7 +77,10 @@ class UserRegisterFormTests(TestCase):
             self.assertFalse(form.is_valid())
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class UserLoginFormTests(TestCase):
+    databases = ['default']
+
     def test_login_form_normal_case(self):
         user = ProxyUser.objects.create(username='Tsuchinoko',
                                         password=make_password('qwerty'))
@@ -80,7 +89,10 @@ class UserLoginFormTests(TestCase):
         self.assertTrue(form.is_valid())
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class AccountsIndexViewTests(TestCase):
+    databases = ['default']
+
     def test_page_access(self):
         response = self.client.get(reverse('accounts:index'))
         self.assertEqual(response.status_code, 200)
@@ -92,13 +104,15 @@ class AccountsIndexViewTests(TestCase):
         self.assertContains(response_anon, 'Login')
 
         User.objects.create(username='Hashibirokou', password=make_password('qwerty'))
-        login = self.client.login(username='Hashibirokou', password='qwerty')
+        self.client.login(username='Hashibirokou', password='qwerty')
         response_user = self.client.get(reverse('accounts:index'))
         self.assertContains(response_user, 'Hashibirokou')
         self.assertContains(response_user, 'Logout')
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class AccountsLoginViewTests(TestCase):
+    databases = ['default']
 
     def test_login_page_loads(self):
         response = self.client.get(reverse('accounts:login'))
@@ -133,7 +147,10 @@ class AccountsLoginViewTests(TestCase):
         self.assertContains(response, 'This field is required.')
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class AccountsLogoutViewTests(TestCase):
+    databases = ['default']
+
     def test_logout_page_redirects_anonymous(self):
         response = self.client.get(reverse('accounts:logout'))
         self.assertRedirects(response, reverse('core:index'), 302)
@@ -157,8 +174,9 @@ class AccountsLogoutViewTests(TestCase):
         self.assertFalse(response_get_logout.context['user'].is_authenticated)
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class AccountsLoginLogoutIntegrityTests(TestCase):
-    databases = DB
+    databases = ['default', SECOND_DB]
 
     def test_login_and_logout_redirects_back_to_app(self):
         user = ProxyUser.objects.create(username='Kitakitsune',
@@ -178,7 +196,10 @@ class AccountsLoginLogoutIntegrityTests(TestCase):
         self.assertFalse(response_get_logout.context['user'].is_authenticated)
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class AccountsRegisterViewTests(TestCase):
+    databases = ['default']
+
     def test_register_page_loads(self):
         response = self.client.get(reverse('accounts:register'))
         self.assertEqual(response.status_code, 200)
@@ -223,8 +244,9 @@ class AccountsRegisterViewTests(TestCase):
             self.assertContains(response, 'This field is required.')
 
 
+@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
 class AccountsRegisterIntegrityTests(TestCase):
-    databases = DB
+    databases = ['default', SECOND_DB]
 
     def test_register_redirects_back_to_app(self):
         response_register = self.client.post(
@@ -239,7 +261,7 @@ class AccountsRegisterIntegrityTests(TestCase):
         self.assertTrue(response_get_register.context['user'].is_authenticated)
 
 
-class AccountsResourcesTests(TestCase):
+class AccountsResourcesTests(SimpleTestCase):
     app_dir = settings.ALL_PROJECT_APPS['accounts']['app_dir']
     resources = [
         app_dir / 'readme.md',

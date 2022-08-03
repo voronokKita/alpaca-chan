@@ -1,7 +1,7 @@
 import markdown2
 
-from django.test import TestCase
-from django.urls import reverse, reverse_lazy
+from django.test import TestCase, SimpleTestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
@@ -22,8 +22,8 @@ from .forms import EntryForm, DeleteEntryForm
 + check resources
 + check navbar
 """
-
 DB = settings.PROJECT_MAIN_APPS['encyclopedia']['db']['name']
+PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
 def get_url(path_name, slug=None):
@@ -112,6 +112,7 @@ class WikiIndexViewTests(TestCase):
             response.context['wiki_entries'], [article1, article2]
         )
 
+    @override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
     def test_wiki_navbar(self):
         response_anon = self.client.get(get_url('index'))
         self.assertContains(response_anon, 'Home')
@@ -124,7 +125,7 @@ class WikiIndexViewTests(TestCase):
             self.assertContains(response_anon, ell['text'])
 
         User.objects.create(username='Mirai', password=make_password('qwerty'))
-        login = self.client.login(username='Mirai', password='qwerty')
+        self.client.login(username='Mirai', password='qwerty')
         response_user = self.client.get(get_url('index'))
         self.assertContains(response_user, 'Mirai')
         self.assertContains(response_user, 'Logout')
@@ -327,8 +328,7 @@ class WikiDeleteEntryViewTests(TestCase):
         check_default_navbar(self, 'delete_entry', 'domine')
 
 
-class WikiResourcesTests(TestCase):
-    databases = [DB]
+class WikiResourcesTests(SimpleTestCase):
     app_dir = settings.PROJECT_MAIN_APPS['encyclopedia']['app_dir']
     resources = [
         app_dir / 'readme.md',
@@ -338,6 +338,7 @@ class WikiResourcesTests(TestCase):
         app_dir / 'encyclopedia' / 'static' / 'encyclopedia' / 'logo.jpg',
         app_dir / 'encyclopedia' / 'templates' / 'encyclopedia' / 'base_wiki.html',
     ]
+
     def test_base_resources_exists(self):
         """ Check that I didn't miss anything. """
         from .db_router import WikiRouter

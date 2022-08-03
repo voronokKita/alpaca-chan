@@ -1,9 +1,8 @@
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
-
 
 # + resources check
 # + core index page
@@ -11,13 +10,10 @@ from django.contrib.auth.models import User
 #   + list of applications test
 #   + project resources check
 # + check navbar
-
-DB = ['default']
-for appname in settings.PROJECT_MAIN_APPS:
-    DB.append(settings.PROJECT_MAIN_APPS[appname]['db']['name'])
+PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
-class CoreResourcesTests(TestCase):
+class CoreResourcesTests(SimpleTestCase):
     app_dir = settings.ALL_PROJECT_APPS['core']['app_dir']
     resources = [
         app_dir / 'readme.md',
@@ -32,7 +28,7 @@ class CoreResourcesTests(TestCase):
             self.assertTrue(item.exists(), msg=item)
 
 
-class ProjectResourcesTests(TestCase):
+class ProjectResourcesTests(SimpleTestCase):
     prjct_dir = settings.PROJECT_ROOT_DIR
     prjct_resources = [
         prjct_dir / 'Pipfile',
@@ -51,6 +47,7 @@ class ProjectResourcesTests(TestCase):
         base_dir / 'templates' / '_messages.html',
     ]
     main_apps = settings.ALL_PROJECT_APPS
+
     def test_base_resources_exists(self):
         """ Check that I didn't miss anything. """
         for item in self.prjct_resources + self.base_resources:
@@ -60,6 +57,8 @@ class ProjectResourcesTests(TestCase):
 
 
 class CoreIndexViewTests(TestCase):
+    databases = ['default']
+
     def test_index_loads(self):
         """ The index page loads and is displaying apps. """
         response = self.client.get(reverse('core:index'))
@@ -69,6 +68,7 @@ class CoreIndexViewTests(TestCase):
         for card in response.context['main_app_list']:
             self.assertIn(card['app_name'], settings.PROJECT_MAIN_APPS, card['app_name'])
 
+    @override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
     def test_core_navbar(self):
         response_anon = self.client.get(reverse('core:index'))
         self.assertContains(response_anon, 'Register')
@@ -82,7 +82,8 @@ class CoreIndexViewTests(TestCase):
 
 
 class ProjectBaseIntegrityTests(TestCase):
-    databases = DB
+    databases = '__all__'
+
     def test_index_loads(self):
         """ The index view of all the apps loads well? """
         url_patterns = [f'{app}:index' for app in settings.ALL_PROJECT_APPS]
