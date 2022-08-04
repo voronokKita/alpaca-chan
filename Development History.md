@@ -4,7 +4,7 @@ I began to fixate the development process. <br>
 Last commit _a3f46ccac92ae354cb6f846f848ef0ce78a7ab0a_
 
 1st half of the day: <br>
-Wrote all the tests to the accounts' app.
+Wrote all the tests to the accounts app.
 
 2nd half of the day: <br>
 The application database name in presets.py. <br>
@@ -19,3 +19,7 @@ This is where I finished writing the tests, for now. But I will still read the d
 
 2nd half of the day: <br>
 Some small tests optimization. Special reduced logger configuration for tests. <br>
+
+### 2022.AUG.4
+
+Reading documentation and writing models for the auctions app.

@@ -5,8 +5,9 @@ name = "pypi"
 
 [packages]
 Django = "4.0"
-markdown2 = "2.4"
 django-debug-toolbar = "3.5"
+Pillow = "9.2"
+markdown2 = "2.4"
 
 [dev-packages]
 
