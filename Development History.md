@@ -23,3 +23,14 @@ Some small tests optimization. Special reduced logger configuration for tests. <
 ### 2022.AUG.4
 
 Reading documentation and writing models for the auctions app.
+
+### 2022.AUG.5
+
+1st half of the day: <br>
+Found and fixed an unpleasant hidden bug in the accounts app - redirect after success. <br>
+Stuck on trying to link an auctions app user profile to a user entry in django.
+
+2nd half of the day: <br>
+Optimized database routes. <br>
+I learned that django doesn't support relationships between multiple databases. <br>
+Implemented the creation of auctions profiles through signals, after a new user created.
