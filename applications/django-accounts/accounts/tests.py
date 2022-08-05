@@ -27,7 +27,7 @@ class ProxyUserModelTests(TestCase):
 
     def test_entry_normal_case(self):
         """ Test that the proxy model is working fine. """
-        user = ProxyUser.objects.create(
+        user = ProxyUser.manager.create(
             username='Rockhopper', first_name='Iwatobi', last_name='the Penguin',
             email='rockhopper@japaripark.int', is_staff=True, password='qwerty'
         )
@@ -82,7 +82,7 @@ class UserLoginFormTests(TestCase):
     databases = ['default']
 
     def test_login_form_normal_case(self):
-        user = ProxyUser.objects.create(username='Tsuchinoko',
+        user = ProxyUser.manager.create(username='Tsuchinoko',
                                         password=make_password('qwerty'))
         form_data = {'username': 'Tsuchinoko', 'password': 'qwerty'}
         form = UserLoginForm(data=form_data)
@@ -121,7 +121,7 @@ class AccountsLoginViewTests(TestCase):
 
     def test_login_normal(self):
         """ Login process works well? """
-        self.user = ProxyUser.objects.create(username='Toki-chan',
+        self.user = ProxyUser.manager.create(username='Toki-chan',
                                              password=make_password('qwerty'))
         response_post = self.client.post(
             reverse('accounts:login'),
@@ -157,7 +157,7 @@ class AccountsLogoutViewTests(TestCase):
 
     def test_logout_normal(self):
         """ Logout process works well? """
-        self.user = ProxyUser.objects.create(username='Tairikuookami',
+        self.user = ProxyUser.manager.create(username='Tairikuookami',
                                              password=make_password('qwerty'))
         response_login = self.client.post(
             reverse('accounts:login'),
@@ -179,10 +179,10 @@ class AccountsLoginLogoutIntegrityTests(TestCase):
     databases = ['default', SECOND_DB]
 
     def test_login_and_logout_redirects_back_to_app(self):
-        user = ProxyUser.objects.create(username='Kitakitsune',
+        user = ProxyUser.manager.create(username='Kitakitsune',
                                         password=make_password('qwerty'))
         response_login = self.client.post(
-            reverse('accounts:login', args=['polls']),
+            reverse('accounts:login_and_next', args=['polls']),
             data={'username': 'Kitakitsune',
                   'password': 'qwerty'}
         )
@@ -190,7 +190,7 @@ class AccountsLoginLogoutIntegrityTests(TestCase):
         response_get_login = self.client.get(reverse('core:index'))
         self.assertTrue(response_get_login.context['user'].is_authenticated)
 
-        response_logout = self.client.get(reverse('accounts:logout', args=['polls']))
+        response_logout = self.client.get(reverse('accounts:logout_and_next', args=['polls']))
         self.assertRedirects(response_logout, reverse('polls:index'))
         response_get_logout = self.client.get(reverse('core:index'))
         self.assertFalse(response_get_logout.context['user'].is_authenticated)
@@ -250,7 +250,7 @@ class AccountsRegisterIntegrityTests(TestCase):
 
     def test_register_redirects_back_to_app(self):
         response_register = self.client.post(
-            reverse('accounts:register', args=['polls']),
+            reverse('accounts:register_and_next', args=['polls']),
             data={'username': 'Fennec-chan',
                   'password1': 'qwerty',
                   'password2': 'qwerty'}

@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 def redirect_on_success(source_app):
     """ Make sure that the redirect happens to the index of installed apps.
         source_app :: str from the url, like example.com/[source_app]/login """
-    if source_app in settings.PROJECT_MAIN_APPS:
+    if source_app is not None and source_app in settings.PROJECT_MAIN_APPS:
         return reverse_lazy(f'{source_app}:index')
     else:
-        return reverse_lazy('core:index')
+        return None
 
 
 class IndexView(generic.TemplateView):
@@ -32,9 +32,10 @@ class RegisterView(SuccessMessageMixin, generic.CreateView):
     success_message = "Hello, %(username)s!"
 
     def form_valid(self, form):
-        self.success_url = redirect_on_success(self.kwargs.get('next'))
-        valid = super().form_valid(form)
+        next_ = redirect_on_success(self.kwargs.get('next'))
+        if next_: self.success_url = next_
 
+        valid = super().form_valid(form)
         new_user = authenticate(
             username=form.cleaned_data.get('username'),
             password=form.cleaned_data.get('password1')
@@ -50,7 +51,8 @@ class LoginView(SuccessMessageMixin, views.LoginView):
     success_message = "Welcome, %(username)s!"
 
     def get_success_url(self):
-        self.next_page = redirect_on_success(self.kwargs.get('next'))
+        next_ = redirect_on_success(self.kwargs.get('next'))
+        if next_: self.next_page = next_
         return super().get_success_url()
 
 
@@ -63,6 +65,7 @@ class LogoutView(views.LogoutView):
             messages.add_message(self.request, messages.INFO, f'Farewell, {username}!')
         return super().dispatch(request, *args, **kwargs)
 
-    def get_next_page(self):
-        self.next_page = redirect_on_success(self.kwargs.get('next'))
-        return super().get_next_page()
+    def get_success_url(self):
+        next_ = redirect_on_success(self.kwargs.get('next'))
+        if next_: self.next_page = next_
+        return super().get_success_url()

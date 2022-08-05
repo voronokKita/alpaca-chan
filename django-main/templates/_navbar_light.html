@@ -21,14 +21,15 @@
             {{ user.username }}
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'accounts:logout' request.resolver_match.app_name %}">Logout</a>
+            <a class="nav-link" href="{% url 'accounts:logout_and_next' request.resolver_match.app_name %}">Logout</a>
           </li>
           {% else %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'accounts:register' request.resolver_match.app_name %}">Register</a>
+            <a class="nav-link"
+               href="{% url 'accounts:register_and_next' request.resolver_match.app_name %}">Register</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'accounts:login' request.resolver_match.app_name %}">Login</a>
+            <a class="nav-link" href="{% url 'accounts:login_and_next' request.resolver_match.app_name %}">Login</a>
           </li>
           {% endif %}
         </ul>

@@ -1,10 +1,16 @@
+from django.db import models
 from django.contrib.auth.models import User
 
 
 class ProxyUser(User):
-    """ Used as a simple hook. """
-    def __str__(self): return self.username
+    """ Interface to the main User model. """
+    manager = models.Manager()
 
     class Meta:
         proxy = True
-        ordering = ['first_name', 'username']
+        db_table = 'proxy_user'
+        verbose_name = 'persona'
+        verbose_name_plural = 'persons'
+        ordering = ['username']
+
+    def __str__(self): return self.username
