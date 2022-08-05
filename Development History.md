@@ -33,4 +33,5 @@ Stuck on trying to link an auctions app user profile to a user entry in django.
 2nd half of the day: <br>
 Optimized database routes. <br>
 I learned that django doesn't support relationships between multiple databases. <br>
-Implemented the creation of auctions profiles through signals, after a new user created.
+Implemented the creation of auctions profiles through signals, after a new user created. <br>
+Few model tests.
