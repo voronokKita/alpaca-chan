@@ -125,7 +125,7 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/#topics-db-multi-db-routing
-DATABASE_ROUTERS = []
+DATABASE_ROUTERS = ['alpaca.db_router.DefaultRouter']
 
 for app in ALL_PROJECT_APPS:
     if ALL_PROJECT_APPS[app]['db'] is not False:
