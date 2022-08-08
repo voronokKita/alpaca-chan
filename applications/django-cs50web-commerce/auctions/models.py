@@ -18,6 +18,17 @@ from core.utils import unique_slugify
 
 SLUG_MAX_LEN = 16
 
+LOG_REGISTRATION = 'Date of your registration.'
+LOG_MONEY_ADDED = 'Wallet topped up with %s coins.'
+LOG_NEW_LISTING = 'The item [%s] has been added to your listings.'
+LOG_YOU_WON = 'The listing [%s] has been taken into possession.'
+LOG_LOT_PUBLISHED = 'You have created an auction — [%s].'
+LOG_NEW_BID = 'Made a bet on [%s]. Value — %d.'
+LOG_WITHDRAWN = 'You have withdrawn [%s] from the auction.'
+LOG_YOU_LOSE = 'You lost the auction — [%s].'
+LOG_OWNER_REMOVER = 'The owner removed the lot [%s] from the auction.'
+LOG_ITEM_SOLD = 'You closed the auction — [%s]. The winner is %s.'
+
 
 def user_media_path(listing, filename):
     """ Files will be uploaded to MEDIA_ROOT/auctions/2022.08.08_<listing_slug>/ """
@@ -48,12 +59,12 @@ class Profile(Model):
         super().save(*args, **kwargs)
         if log is True:
             date = date_joined if date_joined else timezone.localtime()
-            self.logs.create(entry='Date of your registration.', date=date)
+            self.logs.create(entry=LOG_REGISTRATION, date=date)
 
     def add_money(self, amount):
         self.money += amount
         self.save()
-        self.logs.create(entry=f'Wallet topped up with {amount} coins.')
+        self.logs.create(entry=LOG_MONEY_ADDED % amount)
 
     def __str__(self): return self.username
 
@@ -66,17 +77,6 @@ class Log(Model):
     profile = ForeignKey(Profile, on_delete=models.CASCADE, related_name='logs')
 
     class Meta:
-        """
-        0. YYYY.MM.DD Date of your registration.
-        1. YYYY.MM.DD Wallet topped up with <money> coins.
-        2. YYYY.MM.DD The item <listing> has been added to your listings.
-        3. YYYY.MM.DD The <listing> has been taken into possession.
-        4. YYYY.MM.DD You have created an auction — <listing>.
-        5. YYYY.MM.DD You have withdrawn <listing> from the auction.
-        6. YYYY.MM.DD Made a bet on <listing>. Value — <bid_value>.
-        7. YYYY.MM.DD You lost the auction — <listing>.
-        8. YYYY.MM.DD You closed the auction — <listing>. The winner is <user>.
-        """
         db_table = 'auctions_logs'
         verbose_name = 'auctioneer log'
         verbose_name_plural = 'auctioneer logs'
@@ -171,12 +171,11 @@ class Listing(Model):
             if self.slug: s = str(self.slug)
             else: s = slugify(self.title)
             unique_slugify(self, s)
+            self.owner.logs.create(entry=LOG_NEW_LISTING % self.title)
 
         super().save(*args, **kwargs)
         if self.in_watchlist.contains(self.owner) is False:
             self.in_watchlist.add(self.owner)
-        entry = f'The item [{self.title}] has been added to your listings.'
-        self.owner.logs.create(entry=entry)
 
     def publish_the_lot(self) -> bool:
         """ Make the listing available on the auction. """
@@ -186,8 +185,7 @@ class Listing(Model):
             self.date_published = timezone.localtime()
             self.is_active = True
             self.save()
-            entry = f'You have created an auction — [{self.title}].'
-            self.owner.logs.create(entry=entry)
+            self.owner.logs.create(entry=LOG_LOT_PUBLISHED % self.title)
             return True
 
     def withdraw(self, item_sold=False) -> bool:
@@ -199,14 +197,18 @@ class Listing(Model):
             self.is_active = False
             self.save()
 
-            if item_sold is False:
-                entry = f'You have withdrawn [{self.title}] from the auction.'
-                self.owner.logs.create(entry=entry)
-            elif self.potential_buyers.count() > 0:
-                for profile in self.potential_buyers.all():
-                    profile.logs.create(entry=f'You lost the auction — [{self.title}].')
+            if item_sold is True:
+                log_entry_for_others = LOG_YOU_LOSE % self.title
+            else:
+                self.owner.logs.create(entry=LOG_WITHDRAWN % self.title)
+                log_entry_for_others = LOG_OWNER_REMOVER % self.title
 
-            self.potential_buyers.clear()
+            if self.potential_buyers.count() > 0:
+                for profile in self.potential_buyers.all():
+                    if profile != self.owner:
+                        profile.logs.create(entry=log_entry_for_others)
+                self.potential_buyers.clear()
+
             return True
 
 
@@ -250,8 +252,7 @@ class Listing(Model):
             self.in_watchlist.add(auctioneer)
         auctioneer.placed_bets.add(self, through_defaults={'bid_value': bid_value})
 
-        entry = f'Made a bet on [{self.title}]. Value — {bid_value}.'
-        auctioneer.logs.create(entry=entry)
+        auctioneer.logs.create(entry=LOG_NEW_BID % (self.title, bid_value))
         return True
 
     def change_the_owner(self) -> bool:
@@ -262,8 +263,7 @@ class Listing(Model):
         else:
             highest_bid = self.bid_set.latest()
             new_owner = highest_bid.auctioneer
-            entry = f'You closed the auction — [{self.title}]. ' \
-                    f'The winner is {new_owner.username}.'
+            entry = LOG_ITEM_SOLD % (self.title, new_owner.username)
             self.owner.logs.create(entry=entry)
 
             self.owner = new_owner
@@ -271,10 +271,9 @@ class Listing(Model):
             if not self.in_watchlist.contains(new_owner):
                 # don't really need that, but just in case...
                 self.in_watchlist.add(new_owner)
-            self.withdraw()
+            self.withdraw(item_sold=True)
 
-            entry = f'The listing [{self.title}] has been taken into possession.'
-            self.owner.logs.create(entry=entry)
+            self.owner.logs.create(entry=LOG_YOU_WON % self.title)
             return True
 
 

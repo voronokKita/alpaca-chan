@@ -44,3 +44,6 @@ Wrote a few model tests and the auctions models extensions.
 
 1st half of the day: <br>
 Finished auctions' models tests. Added unique_slugify util.
+
+2nd half of the day: <br>
+Made a Log model for auctions, integrated its logic and wrote all the tests.

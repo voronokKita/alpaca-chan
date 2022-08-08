@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from django.contrib.auth.models import User
-from auctions.models import Profile, ListingCategory, Comment, Listing, Watchlist, Bid
+from auctions.models import Profile, ListingCategory, Comment, Listing, Watchlist, Bid, Log
 
 
 SECOND_DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
@@ -53,18 +53,18 @@ class UserProfileTests(TestCase):
     databases = ['default', SECOND_DB]
 
     def test_new_user_gets_new_profile_in_correct_db(self):
-        User.objects.create(username='user1')
+        User.objects.create(username='Serval')
         self.assertFalse(
-            User.objects.db_manager(SECOND_DB).filter(username='user1').exists()
+            User.objects.db_manager(SECOND_DB).filter(username='Serval').exists()
         )
         self.assertTrue(
-            User.objects.db_manager('default').filter(username='user1').exists()
+            User.objects.db_manager('default').filter(username='Serval').exists()
         )
 
         self.assertTrue(
-            Profile.manager.db_manager(SECOND_DB).filter(username='user1').exists()
+            Profile.manager.db_manager(SECOND_DB).filter(username='Serval').exists()
         )
-        try: Profile.manager.db_manager('default').get(username='user1')
+        try: Profile.manager.db_manager('default').get(username='Serval')
         except Exception: pass
         else: raise Exception('found auctions_profile table and a profile on defaults db')
 
@@ -76,6 +76,12 @@ class UserProfileTests(TestCase):
         profile.refresh_from_db()
         self.assertTrue(profile.lots_owned.contains(listing))
         self.assertTrue(profile.comment_set.contains(comment))
+        profile.logs.get(entry='Date of your registration.')
+
+    def test_profile_method_money(self):
+        profile = get_profile()
+        profile.add_money(10)
+        self.assertTrue(profile.money == 10)
 
 
 class ListingCategoryTests(TestCase):
@@ -288,3 +294,48 @@ class CommentTests(TestCase):
         Comment.manager.create(text=text, listing=self.listing, author=self.profile)
         self.assertTrue(self.listing.comment_set.filter(text=text).exists())
         self.assertTrue(self.profile.comment_set.filter(text=text).exists())
+
+
+class LogTests(TestCase):
+    databases = ['default', SECOND_DB]
+
+    def test_auctions_logs(self):
+        from auctions.models import (
+            LOG_REGISTRATION, LOG_NEW_LISTING, LOG_YOU_WON,
+            LOG_LOT_PUBLISHED, LOG_NEW_BID, LOG_WITHDRAWN,
+            LOG_YOU_LOSE, LOG_OWNER_REMOVER, LOG_ITEM_SOLD,
+            LOG_MONEY_ADDED
+        )
+        user = User.objects.create(username='Lucky Beast')
+        # registration
+        self.assertTrue(Log.manager.filter(entry=LOG_REGISTRATION).exists())
+        profile = Profile.manager.get(username='Lucky Beast')
+        # money
+        profile.add_money(10)
+        self.assertTrue(Log.manager.filter(entry=LOG_MONEY_ADDED % 10).exists())
+        # new listing
+        title = 'Japari Bun'
+        listing = get_listing(profile=profile, title=title)
+        self.assertTrue(Log.manager.filter(entry=LOG_NEW_LISTING % title).exists())
+        # auction created
+        listing.publish_the_lot()
+        self.assertTrue(Log.manager.filter(entry=LOG_LOT_PUBLISHED % title).exists())
+        # made a bet
+        profile_two = get_profile(username='Moose')
+        listing.make_a_bid(profile_two, 10)
+        self.assertTrue(Log.manager.filter(entry=LOG_NEW_BID % (title, 10)).exists())
+        # auction closed - one win, one lose
+        profile_three = get_profile(username='Lion')
+        listing.make_a_bid(profile_three, 20)
+        listing.change_the_owner()
+        self.assertTrue(Log.manager.filter(entry=LOG_ITEM_SOLD % (title, 'Lion')).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_YOU_LOSE % title, profile=profile_two).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_YOU_WON % title, profile=profile_three).exists())
+        # withdrawn
+        listing.publish_the_lot()
+        listing.make_a_bid(profile_two, 30)
+        listing.withdraw()
+        self.assertTrue(Log.manager.filter(entry=LOG_WITHDRAWN % title).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_OWNER_REMOVER % title).exists())
+        # count
+        self.assertTrue(Log.manager.count() == 15)
