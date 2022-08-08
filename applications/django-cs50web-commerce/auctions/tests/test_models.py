@@ -174,11 +174,6 @@ class BidTests(TestCase):
         profile.placed_bets.add(listing1, through_defaults={'bid_value': 1})
         profile.placed_bets.add(listing2, through_defaults={'bid_value': 2})
 
-        profile1 = get_profile('Toki')
-        profile1.placed_bets.add(listing2, through_defaults={'bid_value': 3})
-        l = listing2.bid_set.latest()
-        print('A', l.bid_value)
-
         self.assertEqual(len(Bid.manager.all()), 2)
         self.assertTrue(profile.placed_bets.get(slug='friends'))
         self.assertTrue(listing1.potential_buyers.get(username='Shoujoutoki'))

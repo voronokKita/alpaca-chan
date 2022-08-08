@@ -8,6 +8,7 @@ from django.db.models import (
     DateTimeField, BooleanField,
     ForeignKey, ManyToManyField, OneToOneField
 )
+from core.utils import unique_slugify
 
 # TODO
 # get_absolute_url
@@ -21,19 +22,6 @@ SLUG_MAX_LEN = 16
 def user_media_path(listing, filename):
     """ Files will be uploaded to MEDIA_ROOT/auctions/2022.08.08_<listing_slug>/ """
     return f'auctions/%Y.%m.%d_{listing.slug}/{filename}'
-
-
-def get_unique_slug_or_none(model_, slug):
-    attempt = slug[:SLUG_MAX_LEN]
-    for i in range(SLUG_MAX_ATTEMPTS):
-        try:
-            model_.manager.get(slug=attempt)
-        except Exception:
-            return attempt
-        else:
-            attempt = f'{slug}'[:SLUG_MAX_LEN-1] + str(i+1)
-    else:
-        return None
 
 
 class Profile(Model):
@@ -136,16 +124,15 @@ class Listing(Model):
         ]
 
     def save(self, *args, **kwargs):
-        if self.slug: s = str(self.slug)
-        else: s = slugify(self.title)
+        """ Auto get a unique slug and
+            add a new listing to the owner watchlist. """
+        if not self.pk:
+            if self.slug: s = str(self.slug)
+            else: s = slugify(self.title)
+            unique_slugify(self, s)
 
-        result = get_unique_slug_or_none(Listing, s.lower())
-        if not result:
-            return
-        else:
-            self.slug = result
-            super().save(*args, **kwargs)
-            # add to the profile's watchlist
+        super().save(*args, **kwargs)
+        if self.in_watchlist.contains(self.owner) is False:
             self.in_watchlist.add(self.owner)
 
     def publish_the_lot(self) -> bool:
