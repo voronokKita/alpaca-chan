@@ -124,7 +124,7 @@ class Listing(Model):
 
     def save(self, *args, **kwargs):
         """ Auto get a unique slug and
-            add a new listing to the owner watchlist. """
+            add a new listing to owner's watchlist. """
         if not self.pk:
             if self.slug: s = str(self.slug)
             else: s = slugify(self.title)
@@ -145,12 +145,12 @@ class Listing(Model):
             return False
 
     def withdraw(self) -> bool:
-        """ Get the listing back from the auction without selling it. """
+        """ Get the listing back from the auction. """
         if self.is_active is True:
             self.date_published = None
-            self.potential_buyers.clear()
             self.is_active = False
             self.save()
+            self.potential_buyers.clear()
             return True
         else:
             return False
@@ -158,30 +158,56 @@ class Listing(Model):
     def unwatch(self, profile) -> bool:
         """ Remove from watchlist if
             the user is not the owner or potential buyer of the lot. """
-        if profile == self.owner or self.potential_buyers.contains(profile):
+        if self.is_active is False or \
+                profile == self.owner or \
+                self.potential_buyers.contains(profile):
             return False
         else:
             self.in_watchlist.remove(profile)
             return True
 
-    def make_a_bid(self, auctioneer, bid_value):
-        """ Also add the lot to the user watchlist. """
+    def bid_possibility(self, auctioneer, return_highest_bid=None) -> bool:
+        if not self.is_active:
+            return False
+        elif self.owner == auctioneer:
+            return False
+        elif self.potential_buyers.count() > 0:
+            highest_bid = self.bid_set.latest()
+            if highest_bid.auctioneer == auctioneer:
+                return False
+            elif return_highest_bid:
+                return_highest_bid = highest_bid
+
+        return True if not return_highest_bid else return_highest_bid
+
+    def make_a_bid(self, auctioneer, bid_value) -> bool:
+        """ Also add the lot to user's watchlist. """
+        highest_bid = self.bid_possibility(auctioneer, return_highest_bid=True)
+        if highest_bid is False:
+            return False
+        elif self.potential_buyers.count() == 0:
+            if bid_value <= self.starting_price:
+                return False
+        elif highest_bid.bid_value >= bid_value:
+            return False
+
         if not self.in_watchlist.contains(auctioneer):
             self.in_watchlist.add(auctioneer)
         auctioneer.placed_bets.add(self, through_defaults={'bid_value': bid_value})
+        return True
 
     def change_the_owner(self) -> bool:
+        """ Sell the lot to the auctioneer that offers the highest bid and
+            withdraw the lot from the auction. """
         if self.is_active is True and self.potential_buyers.count() != 0:
             highest_bid = self.bid_set.latest()
             new_owner = highest_bid.auctioneer
             self.owner = new_owner
             if not self.in_watchlist.contains(new_owner):
+                # don't really need that, but just in case...
                 self.in_watchlist.add(new_owner)
             self.starting_price = highest_bid.bid_value
-            self.potential_buyers.clear()
-            self.date_published = None
-            self.is_active = False
-            self.save()
+            self.withdraw()
             return True
         else:
             return False

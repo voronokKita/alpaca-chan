@@ -123,20 +123,115 @@ class ListingTests(TestCase):
         self.assertEqual(listing.potential_buyers.count(), 0)
         self.assertTrue(listing.in_watchlist.contains(self.profile))
 
-    def test_listing_methods(self):
-        listing = get_listing()
-
-        listing.publish_the_lot()
-        listing.refresh_from_db()
-        self.assertTrue(listing.is_active)
-
-        # change_the_owner
-
     def test_listing_backref(self):
         listing = self.listing
         comment = Comment.manager.create(text='Japari bun is the best bun!', listing=listing)
         listing.refresh_from_db()
         self.assertTrue(listing.comment_set.contains(comment))
+
+    def test_listing_method_publish_the_lot(self):
+        listing = get_listing()
+        time_now = timezone.localtime()
+        # ok
+        self.assertTrue(listing.publish_the_lot())
+        listing.refresh_from_db()
+        self.assertTrue(listing.is_active)
+        self.assertTrue(listing.date_published >= time_now <= timezone.localtime())
+        # already published
+        self.assertFalse(listing.publish_the_lot())
+        # too low starting price
+        listing2 = get_listing()
+        listing2.starting_price = 0
+        listing2.save()
+        self.assertFalse(listing2.publish_the_lot())
+
+    def test_listing_method_withdraw(self):
+        listing = get_listing()
+        listing.is_active = True
+        listing.save()
+        listing.potential_buyers.add(get_profile(), through_defaults={'bid_value': 2})
+        # ok
+        self.assertTrue(listing.withdraw())
+        listing.refresh_from_db()
+        self.assertFalse(listing.is_active)
+        self.assertIsNone(listing.date_published)
+        self.assertEqual(listing.potential_buyers.count(), 0)
+        # not published
+        self.assertFalse(listing.withdraw())
+
+    def test_listing_method_unwatch(self):
+        profile = get_profile()
+        listing = get_listing(profile=profile)
+        listing.is_active = True
+        listing.save()
+        # owner
+        self.assertFalse(listing.unwatch(profile))
+        # potential buyer
+        profile2 = get_profile()
+        listing.potential_buyers.add(profile2, through_defaults={'bid_value': 2})
+        self.assertFalse(listing.unwatch(profile2))
+        # ok
+        profile3 = get_profile()
+        listing.in_watchlist.add(profile3)
+        self.assertTrue(listing.unwatch(profile3))
+        self.assertFalse(listing.in_watchlist.contains(profile3))
+
+    def test_listing_method_bid_possibility(self):
+        profile = get_profile()
+        listing = get_listing(profile=profile)
+        listing.is_active = True
+        listing.save()
+        # owner
+        self.assertFalse(listing.bid_possibility(profile))
+        # already on top
+        profile2 = get_profile()
+        listing.potential_buyers.add(profile2, through_defaults={'bid_value': 2})
+        self.assertFalse(listing.bid_possibility(profile2))
+        # ok
+        profile3 = get_profile()
+        self.assertTrue(listing.bid_possibility(profile3))
+
+    def test_listing_method_make_a_bid(self):
+        profile = get_profile()
+        listing = get_listing(profile=profile)
+        listing.is_active = True
+        listing.save()
+        # owner
+        self.assertFalse(listing.make_a_bid(profile, 99))
+        # lower or equal than listing's starting price
+        listing.save()
+        profile2 = get_profile()
+        self.assertFalse(listing.make_a_bid(profile2, 0.99))
+        self.assertFalse(listing.make_a_bid(profile2, 1))
+        # ok
+        self.assertTrue(listing.make_a_bid(profile2, 1.1))
+        self.assertTrue(listing.in_watchlist.contains(profile2))
+        # lower or equal than listing's highest bid
+        profile3 = get_profile()
+        self.assertFalse(listing.make_a_bid(profile3, 1))
+        self.assertFalse(listing.make_a_bid(profile3, 1.1))
+
+    def test_listing_method_change_the_owner(self):
+        seller = get_profile()
+        listing = get_listing(profile=seller)
+        # not published
+        self.assertFalse(listing.change_the_owner())
+        # without potential buyers
+        listing.is_active = True
+        listing.save()
+        self.assertFalse(listing.change_the_owner())
+        # ok
+        bid_value = 2
+        buyer = get_profile()
+        listing.potential_buyers.add(buyer, through_defaults={'bid_value': bid_value})
+        self.assertTrue(listing.change_the_owner())
+        self.assertFalse(listing.is_active)
+        self.assertIsNone(listing.date_published)
+        self.assertTrue(listing.starting_price == bid_value)
+        self.assertTrue(listing.potential_buyers.count() == 0)
+        self.assertFalse(seller.lots_owned.contains(listing))
+        self.assertTrue(buyer.lots_owned.contains(listing))
+        self.assertTrue(buyer.items_watched.contains(listing))
 
 
 class WatchlistTests(TestCase):
@@ -168,8 +263,8 @@ class BidTests(TestCase):
         listing2 = get_listing(title='buns')
 
         profile = get_profile('Shoujoutoki')
-        profile.placed_bets.add(listing1, through_defaults={'bid_value': 1})
-        profile.placed_bets.add(listing2, through_defaults={'bid_value': 2})
+        profile.placed_bets.add(listing1, through_defaults={'bid_value': 2})
+        profile.placed_bets.add(listing2, through_defaults={'bid_value': 3})
 
         self.assertEqual(Bid.manager.count(), 2)
         self.assertTrue(profile.placed_bets.filter(slug='friends').exists())
@@ -179,7 +274,7 @@ class BidTests(TestCase):
                                    placed_bets__slug='buns').exists()
         )
         bid = profile.bid_set.get(lot=listing2)
-        self.assertEqual(bid.bid_value, 2)
+        self.assertEqual(bid.bid_value, 3)
         self.assertTrue(bid.bid_date >= time_now <= timezone.localtime())
 
 

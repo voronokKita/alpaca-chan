@@ -38,4 +38,9 @@ Few model tests.
 
 ### 2022.AUG.7
 
-Wrote a few model tests and the auctions model extensions.
+Wrote a few model tests and the auctions models extensions.
+
+### 2022.AUG.8
+
+1st half of the day: <br>
+Finished auctions' models tests. Added unique_slugify util.
