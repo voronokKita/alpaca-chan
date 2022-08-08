@@ -13,8 +13,9 @@ from core.utils import unique_slugify
 # TODO
 # get_absolute_url
 # user history
-# different money types
 # admin model
+# deletion mechanism with signal
+
 SLUG_MAX_LEN = 16
 
 
@@ -35,12 +36,53 @@ class Profile(Model):
         profile >-- watchlist --< items_watched (listing)
         profile --< lots_owned (listing)
         profile --< comment_set
+        profile --< logs
         """
         db_table = 'auctions_profile'
         verbose_name = 'auctioneer'
         verbose_name_plural = 'auctioneers'
 
+    def save(self, date_joined=None, log=False, *args, **kwargs):
+        if not self.pk:
+            log = True
+        super().save(*args, **kwargs)
+        if log is True:
+            date = date_joined if date_joined else timezone.localtime()
+            self.logs.create(entry='Date of your registration.', date=date)
+
+    def add_money(self, amount):
+        self.money += amount
+        self.save()
+        self.logs.create(entry=f'Wallet topped up with {amount} coins.')
+
     def __str__(self): return self.username
+
+
+class Log(Model):
+    manager = models.Manager()
+
+    entry = CharField(max_length=100)
+    date = DateTimeField(default=timezone.localtime)
+    profile = ForeignKey(Profile, on_delete=models.CASCADE, related_name='logs')
+
+    class Meta:
+        """
+        0. YYYY.MM.DD Date of your registration.
+        1. YYYY.MM.DD Wallet topped up with <money> coins.
+        2. YYYY.MM.DD The item <listing> has been added to your listings.
+        3. YYYY.MM.DD The <listing> has been taken into possession.
+        4. YYYY.MM.DD You have created an auction — <listing>.
+        5. YYYY.MM.DD You have withdrawn <listing> from the auction.
+        6. YYYY.MM.DD Made a bet on <listing>. Value — <bid_value>.
+        7. YYYY.MM.DD You lost the auction — <listing>.
+        8. YYYY.MM.DD You closed the auction — <listing>. The winner is <user>.
+        """
+        db_table = 'auctions_logs'
+        verbose_name = 'auctioneer log'
+        verbose_name_plural = 'auctioneer logs'
+        ordering = ['-date']
+
+    def __str__(self): return f'log-entry #{self.pk}'
 
 
 class ListingCategory(Model):
@@ -61,8 +103,8 @@ class ListingCategory(Model):
 class Bid(Model):
     manager = models.Manager()
 
-    bid_value = FloatField()
-    bid_date = DateTimeField(default=timezone.localtime, db_index=True)
+    bid_value = FloatField('value', db_index=True)
+    bid_date = DateTimeField('date', default=timezone.localtime)
 
     auctioneer = ForeignKey(Profile, on_delete=models.CASCADE)
     lot = ForeignKey('Listing', on_delete=models.CASCADE)
@@ -133,27 +175,40 @@ class Listing(Model):
         super().save(*args, **kwargs)
         if self.in_watchlist.contains(self.owner) is False:
             self.in_watchlist.add(self.owner)
+        entry = f'The item [{self.title}] has been added to your listings.'
+        self.owner.logs.create(entry=entry)
 
     def publish_the_lot(self) -> bool:
         """ Make the listing available on the auction. """
-        if self.starting_price >= 1 and self.is_active is False:
+        if self.starting_price < 1 or self.is_active is True:
+            return False
+        else:
             self.date_published = timezone.localtime()
             self.is_active = True
             self.save()
+            entry = f'You have created an auction — [{self.title}].'
+            self.owner.logs.create(entry=entry)
             return True
-        else:
-            return False
 
-    def withdraw(self) -> bool:
+    def withdraw(self, item_sold=False) -> bool:
         """ Get the listing back from the auction. """
-        if self.is_active is True:
+        if self.is_active is False:
+            return False
+        else:
             self.date_published = None
             self.is_active = False
             self.save()
+
+            if item_sold is False:
+                entry = f'You have withdrawn [{self.title}] from the auction.'
+                self.owner.logs.create(entry=entry)
+            elif self.potential_buyers.count() > 0:
+                for profile in self.potential_buyers.all():
+                    profile.logs.create(entry=f'You lost the auction — [{self.title}].')
+
             self.potential_buyers.clear()
             return True
-        else:
-            return False
+
 
     def unwatch(self, profile) -> bool:
         """ Remove from watchlist if
@@ -194,23 +249,34 @@ class Listing(Model):
         if not self.in_watchlist.contains(auctioneer):
             self.in_watchlist.add(auctioneer)
         auctioneer.placed_bets.add(self, through_defaults={'bid_value': bid_value})
+
+        entry = f'Made a bet on [{self.title}]. Value — {bid_value}.'
+        auctioneer.logs.create(entry=entry)
         return True
 
     def change_the_owner(self) -> bool:
         """ Sell the lot to the auctioneer that offers the highest bid and
             withdraw the lot from the auction. """
-        if self.is_active is True and self.potential_buyers.count() != 0:
+        if self.is_active is False or self.potential_buyers.count() == 0:
+            return False
+        else:
             highest_bid = self.bid_set.latest()
             new_owner = highest_bid.auctioneer
+            entry = f'You closed the auction — [{self.title}]. ' \
+                    f'The winner is {new_owner.username}.'
+            self.owner.logs.create(entry=entry)
+
             self.owner = new_owner
+            self.starting_price = highest_bid.bid_value
             if not self.in_watchlist.contains(new_owner):
                 # don't really need that, but just in case...
                 self.in_watchlist.add(new_owner)
-            self.starting_price = highest_bid.bid_value
             self.withdraw()
+
+            entry = f'The listing [{self.title}] has been taken into possession.'
+            self.owner.logs.create(entry=entry)
             return True
-        else:
-            return False
+
 
     def delete(self, **kwargs):
         self.image.delete()

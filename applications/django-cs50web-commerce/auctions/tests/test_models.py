@@ -1,22 +1,12 @@
-import datetime
-from unittest.mock import patch, PropertyMock
-
 from django.conf import settings
-from django.test import TestCase, SimpleTestCase, override_settings
-from django.urls import reverse
+from django.test import TestCase
 from django.utils import timezone
-from django.utils.text import slugify
-from django.contrib.auth.hashers import make_password
 
 from django.contrib.auth.models import User
 from auctions.models import Profile, ListingCategory, Comment, Listing, Watchlist, Bid
 
-""" 
-ⓘ The application folder must be added to the "sources" 
-for PyCharm to stop swearing on the models import.
-"""
+
 SECOND_DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
-PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
 def get_category(label='precious') -> ListingCategory:
