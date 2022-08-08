@@ -14,6 +14,7 @@ from django.db.models import (
 # user history
 # different money types
 # admin model
+SLUG_MAX_ATTEMPTS = 10
 SLUG_MAX_LEN = 16
 
 
@@ -24,13 +25,13 @@ def user_media_path(listing, filename):
 
 def get_unique_slug_or_none(model_, slug):
     attempt = slug[:SLUG_MAX_LEN]
-    for i in range(10):
+    for i in range(SLUG_MAX_ATTEMPTS):
         try:
-            model_.manager.get(attempt)
+            model_.manager.get(slug=attempt)
         except Exception:
             return attempt
         else:
-            attempt = f'{slug}'[:SLUG_MAX_LEN-1] + str(i)
+            attempt = f'{slug}'[:SLUG_MAX_LEN-1] + str(i+1)
     else:
         return None
 
@@ -43,9 +44,9 @@ class Profile(Model):
 
     class Meta:
         """
-        profile >-- bid --< listings
-        profile >-- watchlist --< listings
-        profile --< listings_owned
+        profile >-- bid --< placed_bets (listing)
+        profile >-- watchlist --< items_watched (listing)
+        profile --< lots_owned (listing)
         profile --< comment_set
         """
         db_table = 'auctions_profile'
@@ -85,7 +86,7 @@ class Bid(Model):
         verbose_name = 'placed bid'
         verbose_name_plural = 'placed bets'
         ordering = ['-bid_date']
-        get_latest_by = ['-bid_date']
+        get_latest_by = ['bid_value']
 
     def __str__(self): return f'{self.auctioneer} >-- bid --< {self.lot}'
 
@@ -119,18 +120,9 @@ class Listing(Model):
     is_active = BooleanField('is listing published?', default=False)
 
     category = ForeignKey(ListingCategory, on_delete=models.PROTECT)
-    owner = ForeignKey(
-        Profile, on_delete=models.RESTRICT,
-        related_name='lots_owned', related_query_name='lot_owned'
-    )
-    potential_buyers = ManyToManyField(
-        Profile, through=Bid,
-        related_name='placed_bets', related_query_name='bid_placed'
-    )
-    in_watchlist = ManyToManyField(
-        Profile, through=Watchlist,
-        related_name='items_watched', related_query_name='watched_item'
-    )
+    owner = ForeignKey(Profile, on_delete=models.RESTRICT, related_name='lots_owned')
+    potential_buyers = ManyToManyField(Profile, through=Bid, related_name='placed_bets')
+    in_watchlist = ManyToManyField(Profile, through=Watchlist, related_name='items_watched')
 
     class Meta:
         """ listing --< comment_set """
@@ -138,7 +130,6 @@ class Listing(Model):
         verbose_name = 'listing'
         verbose_name_plural = 'listings'
         ordering = ['-date_published', '-date_created']
-        get_latest_by = ['-date_published', '-date_created']
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['date_published', 'date_created']),
@@ -148,16 +139,57 @@ class Listing(Model):
         if self.slug: s = str(self.slug)
         else: s = slugify(self.title)
 
-        result = get_unique_slug_or_none(Listing, s.lover())
-        if not result: return
-        else: self.slug = result
+        result = get_unique_slug_or_none(Listing, s.lower())
+        if not result:
+            return
+        else:
+            self.slug = result
+            super().save(*args, **kwargs)
+            # add to the profile's watchlist
+            self.in_watchlist.add(self.owner)
 
-        return super().save(*args, **kwargs)
+    def publish_the_lot(self) -> bool:
+        if self.starting_price >= 1 and self.is_active is False:
+            self.date_published = timezone.localtime()
+            self.is_active = True
+            self.save()
+            return True
+        else:
+            return False
 
-    def delete_file(self):
+    def unwatch(self, profile) -> bool:
+        if profile == self.owner or profile in self.potential_buyers.all():
+            return False
+        else:
+            self.in_watchlist.remove(profile)
+            return True
+
+    def make_a_bid(self, auctioneer, bid):
+        if auctioneer not in self.in_watchlist.all():
+            self.in_watchlist.add(auctioneer)
+        auctioneer.placed_bets.add(self, through_defaults={'bid_value': bid})
+
+    def change_the_owner(self) -> bool:
+        if self.is_active is True and len(self.potential_buyers.all()) > 0:
+            highest_bid = self.bid_set.latest()
+            new_owner = highest_bid.auctioneer
+            self.owner = new_owner
+            if new_owner not in self.in_watchlist.all():
+                self.in_watchlist.add(new_owner)
+            self.starting_price = highest_bid.bid_value
+            self.potential_buyers.clear()
+            self.date_published = None
+            self.is_active = False
+            self.save()
+            return True
+        else:
+            return False
+
+    def delete(self, **kwargs):
         self.image.delete()
+        return super().delete(**kwargs)
 
-    def __str__(self): return self.slug
+    def __str__(self): return self.slug if self.slug else self.title
 
 
 class Comment(Model):
@@ -174,6 +206,5 @@ class Comment(Model):
         verbose_name = 'comment'
         verbose_name_plural = 'comments'
         ordering = ['-pub_date']
-        get_latest_by = ['-pub_date']
 
     def __str__(self): return f'comment #{self.pk}'

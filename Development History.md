@@ -35,3 +35,7 @@ Optimized database routes. <br>
 I learned that django doesn't support relationships between multiple databases. <br>
 Implemented the creation of auctions profiles through signals, after a new user created. <br>
 Few model tests.
+
+### 2022.AUG.7
+
+Wrote a few model tests and the auctions model extensions.
