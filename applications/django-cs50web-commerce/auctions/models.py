@@ -15,7 +15,6 @@ from core.utils import unique_slugify
 # user history
 # different money types
 # admin model
-SLUG_MAX_ATTEMPTS = 10
 SLUG_MAX_LEN = 16
 
 
@@ -136,6 +135,7 @@ class Listing(Model):
             self.in_watchlist.add(self.owner)
 
     def publish_the_lot(self) -> bool:
+        """ Make the listing available on the auction. """
         if self.starting_price >= 1 and self.is_active is False:
             self.date_published = timezone.localtime()
             self.is_active = True
@@ -144,24 +144,38 @@ class Listing(Model):
         else:
             return False
 
+    def withdraw(self) -> bool:
+        """ Get the listing back from the auction without selling it. """
+        if self.is_active is True:
+            self.date_published = None
+            self.potential_buyers.clear()
+            self.is_active = False
+            self.save()
+            return True
+        else:
+            return False
+
     def unwatch(self, profile) -> bool:
-        if profile == self.owner or profile in self.potential_buyers.all():
+        """ Remove from watchlist if
+            the user is not the owner or potential buyer of the lot. """
+        if profile == self.owner or self.potential_buyers.contains(profile):
             return False
         else:
             self.in_watchlist.remove(profile)
             return True
 
-    def make_a_bid(self, auctioneer, bid):
-        if auctioneer not in self.in_watchlist.all():
+    def make_a_bid(self, auctioneer, bid_value):
+        """ Also add the lot to the user watchlist. """
+        if not self.in_watchlist.contains(auctioneer):
             self.in_watchlist.add(auctioneer)
-        auctioneer.placed_bets.add(self, through_defaults={'bid_value': bid})
+        auctioneer.placed_bets.add(self, through_defaults={'bid_value': bid_value})
 
     def change_the_owner(self) -> bool:
-        if self.is_active is True and len(self.potential_buyers.all()) > 0:
+        if self.is_active is True and self.potential_buyers.count() != 0:
             highest_bid = self.bid_set.latest()
             new_owner = highest_bid.auctioneer
             self.owner = new_owner
-            if new_owner not in self.in_watchlist.all():
+            if not self.in_watchlist.contains(new_owner):
                 self.in_watchlist.add(new_owner)
             self.starting_price = highest_bid.bid_value
             self.potential_buyers.clear()
