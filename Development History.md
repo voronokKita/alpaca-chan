@@ -51,4 +51,5 @@ Made a Log model for auctions, integrated its logic and wrote all the tests.
 ### 2022.AUG.9
 
 1st half of the day: <br>
-Finished the auctions image upload logic and adapted the tests for it.
+Auctions :: Image upload & deletion logic and adapted the tests for it. <br>
+Auctions :: Profile cascade deletion (and tests).

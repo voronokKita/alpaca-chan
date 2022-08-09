@@ -13,7 +13,7 @@ from core.utils import unique_slugify
 # TODO
 # get_absolute_url
 # admin model
-# deletion mechanism with signal
+# bid logic
 
 SLUG_MAX_LEN = 16
 
@@ -38,7 +38,7 @@ def user_media_path(listing, filename):
 class Profile(Model):
     manager = models.Manager()
 
-    username = CharField('category label', db_index=True, max_length=30)
+    username = CharField('category label', max_length=30, db_index=True)
     money = FloatField('money on account', default=0)
 
     class Meta:
@@ -68,6 +68,10 @@ class Profile(Model):
         self.money += amount
         self.save()
         self.logs.create(entry=LOG_MONEY_ADDED % amount)
+
+    def display_money(self):
+        # current + in all the bets
+        pass
 
     def __str__(self): return self.username
 
@@ -112,6 +116,10 @@ class Bid(Model):
     auctioneer = ForeignKey(Profile, on_delete=models.CASCADE)
     lot = ForeignKey('Listing', on_delete=models.CASCADE)
 
+    def delete(self, **kwargs):
+        print('return the money')
+        return super().delete(**kwargs)
+
     class Meta:
         """ profiles >-- bid --< listings """
         db_table = 'auctions_bids'
@@ -152,7 +160,7 @@ class Listing(Model):
     is_active = BooleanField('is listing published?', default=False)
 
     category = ForeignKey(ListingCategory, on_delete=models.PROTECT)
-    owner = ForeignKey(Profile, on_delete=models.RESTRICT, related_name='lots_owned')
+    owner = ForeignKey(Profile, on_delete=models.CASCADE, related_name='lots_owned')
     potential_buyers = ManyToManyField(Profile, through=Bid, related_name='placed_bets')
     in_watchlist = ManyToManyField(Profile, through=Watchlist, related_name='items_watched')
 

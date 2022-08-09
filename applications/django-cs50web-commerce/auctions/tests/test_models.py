@@ -44,6 +44,14 @@ def get_listing(category=None, profile=None,
     return listing
 
 
+def get_comment(listing=None, author=None, text='Japari bun is the best bun!'):
+    if author is None:
+        author = get_profile()
+    if listing is None:
+        listing = get_listing(profile=author)
+    return Comment.manager.create(listing=listing, author=author, text=text)
+
+
 class UniqueSlugTests(TestCase):
     databases = [SECOND_DB]
 
@@ -81,8 +89,7 @@ class UserProfileTests(TestCase):
     def test_profile_backref(self):
         profile = get_profile()
         listing = get_listing(profile=profile)
-        comment = Comment.manager.create(listing=listing, author=profile,
-                                         text='Japari bun is the best bun!')
+        comment = get_comment(listing, profile)
         profile.refresh_from_db()
         self.assertTrue(profile.lots_owned.contains(listing))
         self.assertTrue(profile.comment_set.contains(comment))
@@ -92,6 +99,38 @@ class UserProfileTests(TestCase):
         profile = get_profile()
         profile.add_money(10)
         self.assertTrue(profile.money == 10)
+
+    def test_profile_integrity_cascade_deletion(self):
+        user = User.objects.create(username='Pallas')
+        profile_one = Profile.manager.get(username='Pallas')
+        profile_two = get_profile('Manul')
+        category = get_category()
+
+        listing_one = get_listing(category, profile_one)
+        listing_one.publish_the_lot()
+        listing_two = get_listing(category, profile_two)
+        listing_two.publish_the_lot()
+
+        listing_one.make_a_bid(profile_two, 10)
+        listing_two.make_a_bid(profile_one, 20)
+        self.assertTrue(Bid.manager.count() == 2)
+        self.assertTrue(Watchlist.manager.count() == 4)
+
+        comment_one = get_comment(listing_one, profile_two)
+        comment_two = get_comment(listing_two, profile_one)
+
+        user.delete()
+        self.assertFalse(Profile.manager.filter(username='Pallas').exists())
+        self.assertTrue(Profile.manager.filter(username='Manul').exists())
+        self.assertTrue(ListingCategory.manager.contains(category))
+        self.assertFalse(Listing.manager.contains(listing_one))
+        self.assertTrue(Listing.manager.contains(listing_two))
+        self.assertTrue(Bid.manager.count() == 0)
+        self.assertTrue(Watchlist.manager.count() == 1)
+        self.assertFalse(Comment.manager.contains(comment_one))
+        self.assertTrue(Comment.manager.contains(comment_two))
+        comment_two.refresh_from_db()
+        self.assertIsNone(comment_two.author)
 
 
 class ListingCategoryTests(TestCase):
@@ -129,6 +168,7 @@ class ListingTests(TestCase):
     def tearDownClass(cls):
         if cls.image_path.exists():
             cls.image_path.unlink()
+        if not [f for f in cls.image_path.parent.iterdir()]:
             cls.image_path.parent.rmdir()
         super().tearDownClass()
 
@@ -142,11 +182,14 @@ class ListingTests(TestCase):
         self.assertEqual(listing.potential_buyers.count(), 0)
         self.assertTrue(listing.in_watchlist.contains(self.profile))
         self.assertTrue(self.image_path.exists())
+        # delete
+        listing.delete()
+        self.assertFalse(self.image_path.exists())
+
 
     def test_listing_backref(self):
-        listing = self.listing
-        comment = Comment.manager.create(listing=listing,
-                                         text='Japari bun is the best bun!')
+        listing = get_listing()
+        comment = get_comment(listing)
         listing.refresh_from_db()
         self.assertTrue(listing.comment_set.contains(comment))
 
@@ -310,13 +353,12 @@ class CommentTests(TestCase):
         cls.listing = get_listing(profile=cls.profile)
 
     def test_comment_normal_case(self):
-        Comment.manager.create(text='japari bun is the best bun', listing=self.listing)
-        comment = Comment.manager.get(pk=1)
+        comment = get_comment(self.listing)
         self.assertTrue(comment.pub_date >= self.time_now <= timezone.localtime())
 
     def test_comment_backref(self):
         text = 'japari bun is the best bun'
-        Comment.manager.create(text=text, listing=self.listing, author=self.profile)
+        get_comment(self.listing, self.profile, text)
         self.assertTrue(self.listing.comment_set.filter(text=text).exists())
         self.assertTrue(self.profile.comment_set.filter(text=text).exists())
 
