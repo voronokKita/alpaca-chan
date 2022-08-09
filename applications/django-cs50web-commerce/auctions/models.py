@@ -12,7 +12,6 @@ from core.utils import unique_slugify
 
 # TODO
 # get_absolute_url
-# user history
 # admin model
 # deletion mechanism with signal
 
@@ -31,8 +30,9 @@ LOG_ITEM_SOLD = 'You closed the auction — [%s]. The winner is %s.'
 
 
 def user_media_path(listing, filename):
-    """ Files will be uploaded to MEDIA_ROOT/auctions/2022.08.08_<listing_slug>/ """
-    return f'auctions/%Y.%m.%d_{listing.slug}/{filename}'
+    """ Files will be uploaded to MEDIA_ROOT/auctions/listings/2022.08.08__<listing_slug>/ """
+    date = timezone.localdate().strftime('%Y.%m.%d')
+    return f'auctions/listings/{date}__{listing.slug}/{filename}'
 
 
 class Profile(Model):
@@ -60,6 +60,9 @@ class Profile(Model):
         if log is True:
             date = date_joined if date_joined else timezone.localtime()
             self.logs.create(entry=LOG_REGISTRATION, date=date)
+
+    def delete(self, **kwargs):
+        return super().delete(**kwargs)
 
     def add_money(self, amount):
         self.money += amount
@@ -177,6 +180,10 @@ class Listing(Model):
         if self.in_watchlist.contains(self.owner) is False:
             self.in_watchlist.add(self.owner)
 
+    def delete(self, **kwargs):
+        self.image.delete()
+        return super().delete(**kwargs)
+
     def publish_the_lot(self) -> bool:
         """ Make the listing available on the auction. """
         if self.starting_price < 1 or self.is_active is True:
@@ -275,11 +282,6 @@ class Listing(Model):
 
             self.owner.logs.create(entry=LOG_YOU_WON % self.title)
             return True
-
-
-    def delete(self, **kwargs):
-        self.image.delete()
-        return super().delete(**kwargs)
 
     def __str__(self): return self.slug if self.slug else self.title
 

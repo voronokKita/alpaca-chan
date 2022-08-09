@@ -1,11 +1,21 @@
+import tempfile
+from pathlib import Path
+
 from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from django.contrib.auth.models import User
 from auctions.models import Profile, ListingCategory, Comment, Listing, Watchlist, Bid, Log
 
-
+small_gif = (
+    b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00'
+    b'\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00'
+    b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
+)
+TEST_IMAGE = SimpleUploadedFile('dot.gif', small_gif, content_type='image/gif')
+TMP_IMAGE = tempfile.NamedTemporaryFile(suffix=".jpg").name
 SECOND_DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
 
 
@@ -18,7 +28,7 @@ def get_profile(username='Toki') -> Profile:
 
 
 def get_listing(category=None, profile=None,
-                title='Japari bun', image='photo.jpg',
+                title='Japari bun', image=TMP_IMAGE,
                 description='An endless source of energy!') -> Listing:
     if category is None:
         category = get_category()
@@ -107,7 +117,20 @@ class ListingTests(TestCase):
         cls.time_now = timezone.localtime()
         cls.category = get_category()
         cls.profile = get_profile('Toki')
-        cls.listing = get_listing(category=cls.category, profile=cls.profile)
+        cls.listing = get_listing(category=cls.category, title='Japari bun',
+                                  profile=cls.profile, image=TEST_IMAGE)
+        date = timezone.localdate().strftime('%Y.%m.%d')
+        cls.image_path = Path(
+            settings.MEDIA_ROOT / 'auctions' /
+            'listings' / f'{date}__japari-bun' / 'dot.gif'
+        ).resolve()
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.image_path.exists():
+            cls.image_path.unlink()
+            cls.image_path.parent.rmdir()
+        super().tearDownClass()
 
     def test_listing_normal_case(self):
         listing = self.listing
@@ -118,10 +141,12 @@ class ListingTests(TestCase):
         self.assertFalse(listing.is_active)
         self.assertEqual(listing.potential_buyers.count(), 0)
         self.assertTrue(listing.in_watchlist.contains(self.profile))
+        self.assertTrue(self.image_path.exists())
 
     def test_listing_backref(self):
         listing = self.listing
-        comment = Comment.manager.create(text='Japari bun is the best bun!', listing=listing)
+        comment = Comment.manager.create(listing=listing,
+                                         text='Japari bun is the best bun!')
         listing.refresh_from_db()
         self.assertTrue(listing.comment_set.contains(comment))
 
