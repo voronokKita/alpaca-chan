@@ -48,8 +48,10 @@ Finished auctions' models tests. Added unique_slugify util.
 2nd half of the day: <br>
 Made a Log model for auctions, integrated its logic and wrote all the tests.
 
-### 2022.AUG.9
+### 2022.AUG.9 :: Auctions
 
-1st half of the day: <br>
-Auctions :: Image upload & deletion logic and adapted the tests for it. <br>
-Auctions :: Profile cascade deletion (and tests).
+###### 1st half of the day
+Image upload & deletion logic and adapted the tests for it. <br>
+Profile cascade deletion (and tests). Pre_delete signal.
+###### 2nd half of the day
+Money and bets logic. Logs function. All the tests.

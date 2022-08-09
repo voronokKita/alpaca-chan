@@ -23,8 +23,8 @@ def get_category(label='precious') -> ListingCategory:
     return ListingCategory.manager.create(label=label)
 
 
-def get_profile(username='Toki') -> Profile:
-    return Profile.manager.create(username=username)
+def get_profile(username='Toki', money=100) -> Profile:
+    return Profile.manager.create(username=username, money=money)
 
 
 def get_listing(category=None, profile=None,
@@ -96,9 +96,14 @@ class UserProfileTests(TestCase):
         profile.logs.get(entry='Date of your registration.')
 
     def test_profile_method_money(self):
-        profile = get_profile()
+        profile = get_profile(money=0)
         profile.add_money(10)
         self.assertTrue(profile.money == 10)
+
+        listing = get_listing()
+        listing.publish_the_lot()
+        listing.make_a_bid(profile, 5)
+        self.assertEqual(profile.display_money(), (5, 5.0))
 
     def test_profile_integrity_cascade_deletion(self):
         user = User.objects.create(username='Pallas')
@@ -111,6 +116,7 @@ class UserProfileTests(TestCase):
         listing_two = get_listing(category, profile_two)
         listing_two.publish_the_lot()
 
+        profile_one.add_money(100)
         listing_one.make_a_bid(profile_two, 10)
         listing_two.make_a_bid(profile_one, 20)
         self.assertTrue(Bid.manager.count() == 2)
@@ -246,14 +252,20 @@ class ListingTests(TestCase):
         listing.is_active = True
         listing.save()
         # owner
-        self.assertFalse(listing.bid_possibility(profile))
+        self.assertFalse(listing.bid_possibility(profile), 'you are the owner')
+        # starting price
+        profile2 = get_profile(money=0.1)
+        self.assertFalse(listing.bid_possibility(profile2), 'lower than the starting price')
         # already on top
-        profile2 = get_profile()
-        listing.potential_buyers.add(profile2, through_defaults={'bid_value': 2})
-        self.assertFalse(listing.bid_possibility(profile2))
+        profile2.add_money(10)
+        listing.potential_buyers.add(profile2, through_defaults={'bid_value': 10})
+        self.assertFalse(listing.bid_possibility(profile2), 'already on top')
+        # low on money
+        profile3 = get_profile(money=9)
+        self.assertFalse(listing.bid_possibility(profile3), 'low on money')
         # ok
-        profile3 = get_profile()
-        self.assertTrue(listing.bid_possibility(profile3))
+        profile3.add_money(2)
+        self.assertTrue(listing.bid_possibility(profile3), 'normal')
 
     def test_listing_method_make_a_bid(self):
         profile = get_profile()
@@ -370,7 +382,7 @@ class LogTests(TestCase):
         from auctions.models import (
             LOG_REGISTRATION, LOG_NEW_LISTING, LOG_YOU_WON,
             LOG_LOT_PUBLISHED, LOG_NEW_BID, LOG_WITHDRAWN,
-            LOG_YOU_LOSE, LOG_OWNER_REMOVER, LOG_ITEM_SOLD,
+            LOG_YOU_LOSE, LOG_OWNER_REMOVED, LOG_ITEM_SOLD,
             LOG_MONEY_ADDED
         )
         user = User.objects.create(username='Lucky Beast')
@@ -396,13 +408,16 @@ class LogTests(TestCase):
         listing.make_a_bid(profile_three, 20)
         listing.change_the_owner()
         self.assertTrue(Log.manager.filter(entry=LOG_ITEM_SOLD % (title, 'Lion')).exists())
-        self.assertTrue(Log.manager.filter(entry=LOG_YOU_LOSE % title, profile=profile_two).exists())
-        self.assertTrue(Log.manager.filter(entry=LOG_YOU_WON % title, profile=profile_three).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_MONEY_ADDED % 20.0, profile=profile).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_YOU_LOSE % (title, 10.0), profile=profile_two).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_YOU_WON % (title, 20.0), profile=profile_three).exists())
         # withdrawn
         listing.publish_the_lot()
         listing.make_a_bid(profile_two, 30)
         listing.withdraw()
         self.assertTrue(Log.manager.filter(entry=LOG_WITHDRAWN % title).exists())
-        self.assertTrue(Log.manager.filter(entry=LOG_OWNER_REMOVER % title).exists())
+        self.assertTrue(Log.manager.filter(entry=LOG_OWNER_REMOVED % (title, 30.0)).exists())
         # count
-        self.assertTrue(Log.manager.count() == 15)
+        self.assertTrue(Log.manager.count() == 16, 'total log entries')
+        # from pprint import pprint
+        # pprint([i for i in Log.manager.all()])
