@@ -1,9 +1,38 @@
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views import generic
 
 
-class IndexView(generic.TemplateView):
+class AuctionsIndexView(generic.TemplateView):
     template_name = 'auctions/index.html'
+
+
+class ProfileView(generic.TemplateView):
+    template_name = 'auctions/profile.html'
+
+
+class UserHistoryView(generic.TemplateView):
+    template_name = 'auctions/user_history.html'
+
+
+class WatchlistView(generic.TemplateView):
+    template_name = 'auctions/watchlist.html'
+
+
+class CreateListingView(generic.TemplateView):
+    template_name = 'auctions/listing_create.html'
+
+
+class ListingView(generic.TemplateView):
+    template_name = 'auctions/listing.html'
+
+
+class CommentsView(generic.TemplateView):
+    template_name = 'auctions/comments.html'
+
+
+class AuctionLotView(generic.TemplateView):
+    template_name = 'auctions/listing_published.html'
+
 
 """ TODO
 https://cs50.harvard.edu/web/2020/projects/2/commerce/
@@ -14,8 +43,7 @@ https://cs50.harvard.edu/web/2020/projects/2/commerce/
 
 # ACTIVE LISTINGS PAGE
 * The default route of your web application should let users view all of the currently active auction listings. 
-  For each active listing, this page should display the title, description, current price, and photo.
-  
+  For each active listing, this page should display the title, description, current price, and photo.  
 * The page should display a list of categories, clicking on any of which will display the items in that category.
 
 # USER PAGE
@@ -48,13 +76,12 @@ https://cs50.harvard.edu/web/2020/projects/2/commerce/
 * Users who are signed in should be able to visit a Watchlist page, 
   which should display all of the listings that a user has added to their watchlist. 
   Clicking on any of those listings should take the user to that listing’s page.
-
 * The page should display all of the listings that are owned by the user: created and purchased.
 
-# NOTIFICATION PAGE
+# MY :: NOTIFICATION PAGE
 * A registered user can go to the page and read notifications about closed auctions.
   
-# DJANGO ADMIN INTERFACE
+# MY :: DJANGO ADMIN INTERFACE
 * Via the Django admin interface, a site administrator should be able to view, 
   add, edit, and delete any listings, comments, and bids made on the site.
 """

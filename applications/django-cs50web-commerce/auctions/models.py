@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.urls import reverse
 from django.utils.text import slugify
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -11,7 +12,6 @@ from django.db.models import (
 from core.utils import unique_slugify
 
 # TODO
-# get_absolute_url
 # admin model
 # Query Expressions
 # logging
@@ -70,6 +70,9 @@ class Profile(Model):
         db_table = 'auctions_profile'
         verbose_name = 'auctioneer'
         verbose_name_plural = 'auctioneers'
+
+    def get_absolute_url(self):
+        return reverse('auctions:profile', args=[self.pk])
 
     def save(self, date_joined=None, log=False, *args, **kwargs):
         if not self.pk:
@@ -181,6 +184,9 @@ class Watchlist(Model):
         verbose_name = 'watchlist'
         verbose_name_plural = 'watchlists'
 
+    def get_absolute_url(self):
+        return reverse('auctions:watchlist', args=[self.profile.pk])
+
     def __str__(self): return f'{self.profile} >-- watchlist --< {self.listing}'
 
 
@@ -212,6 +218,9 @@ class Listing(Model):
             models.Index(fields=['slug']),
             models.Index(fields=['date_published', 'date_created']),
         ]
+
+    def get_absolute_url(self):
+        return reverse('auctions:listing', args=[self.slug])
 
     def save(self, *args, **kwargs):
         """ Auto get a unique slug and

@@ -54,4 +54,6 @@ Made a Log model for auctions, integrated its logic and wrote all the tests.
 Image upload & deletion logic and adapted the tests for it. <br>
 Profile cascade deletion (and tests). Pre_delete signal.
 ###### 2nd half of the day
-Money and bets logic. Logs function. All the tests.
+Money and bets logic. Logs function. Base_urls. <br>
+Base views, urls and templates. <br>
+All the tests.

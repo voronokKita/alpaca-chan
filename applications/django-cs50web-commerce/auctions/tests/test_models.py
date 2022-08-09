@@ -6,8 +6,12 @@ from django.test import TestCase
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from auctions.models import (
+    Profile, ListingCategory, Comment,
+    Listing, Watchlist, Bid, Log
+)
 from django.contrib.auth.models import User
-from auctions.models import Profile, ListingCategory, Comment, Listing, Watchlist, Bid, Log
+
 
 small_gif = (
     b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00'
