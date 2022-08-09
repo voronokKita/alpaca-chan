@@ -74,10 +74,10 @@ class Profile(Model):
     def get_absolute_url(self):
         return reverse('auctions:profile', args=[self.pk])
 
-    def save(self, date_joined=None, log=False, *args, **kwargs):
+    def save(self, date_joined=None, log=False, update_fields=None, *args, **kwargs):
         if not self.pk:
             log = True
-        super().save(*args, **kwargs)
+        super().save(*args, update_fields=update_fields, **kwargs)
         if log is True:
             date = date_joined if date_joined else timezone.localtime()
             self.logs.create(entry=LOG_REGISTRATION, date=date)
@@ -87,14 +87,14 @@ class Profile(Model):
 
     def add_money(self, amount, silent=False):
         self.money += amount
-        self.save()
+        self.save(update_fields=['money'])
         if silent is False:
             log_entry(self, 'money_added', coins=amount)
 
     def get_money(self, value) -> (int, LowOnMoney):
         if self.money >= value:
             self.money -= value
-            self.save()
+            self.save(update_fields=['money'])
             return value
         else:
             raise LowOnMoney
@@ -333,13 +333,16 @@ class Listing(Model):
             self.owner.add_money(money)
             highest_bid.delete()
 
-            self.owner = new_owner
+            self._save_new_owner(new_owner)
             self.starting_price = money
-            self.save()
             self.withdraw(item_sold=True)
 
             log_entry(self.owner, 'you_won', self.title, coins=money)
             return True
+
+    def _save_new_owner(self, new_owner):
+        self.owner = new_owner
+        super().save(update_fields=['owner'])
 
     def __str__(self): return self.slug if self.slug else self.title
 
