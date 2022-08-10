@@ -90,6 +90,14 @@ class UserProfileTests(TestCase):
         except Exception: pass
         else: raise Exception('found auctions_profile table and a profile on defaults db')
 
+    def test_profile_username_updated_with_user_username(self):
+        user = User.objects.create(username='Manul')
+        self.assertTrue(Profile.manager.filter(username='Manul').exists())
+        user.username = 'Manul Cat'
+        user.save()
+        self.assertTrue(Profile.manager.filter(username='Manul Cat').exists())
+        self.assertFalse(Profile.manager.filter(username='Manul').exists())
+
     def test_profile_backref(self):
         profile = get_profile()
         listing = get_listing(profile=profile)

@@ -1,3 +1,5 @@
+from copy import copy
+
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
@@ -198,7 +200,7 @@ class Listing(Model):
     starting_price = FloatField(default=1)
 
     date_created = DateTimeField('created', default=timezone.localtime)
-    date_published = DateTimeField('published', null=True, default=None)
+    date_published = DateTimeField('published', null=True, blank=True, default=None)
     is_active = BooleanField('is listing published?', default=False)
 
     category = ForeignKey(ListingCategory, on_delete=models.PROTECT)

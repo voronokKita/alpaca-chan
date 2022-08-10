@@ -5,10 +5,11 @@ class AuctionsConfig(AppConfig):
     name = 'auctions'
 
     def ready(self):
-        from django.db.models.signals import post_save, pre_delete, post_delete
+        from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
         from django.contrib.auth.models import User
-        from .signals import new_user_saved_signal, user_pre_delete_signal
-        post_save.connect(new_user_saved_signal, sender=User, dispatch_uid='user-save')
+        from .signals import user_saved_signal, user_pre_saved_signal, user_pre_delete_signal
+        post_save.connect(user_saved_signal, sender=User, dispatch_uid='user-saved')
+        pre_save.connect(user_pre_saved_signal, sender=User, dispatch_uid='user-pre-save')
         pre_delete.connect(user_pre_delete_signal, sender=User, dispatch_uid='user-delete')
 
         import sys

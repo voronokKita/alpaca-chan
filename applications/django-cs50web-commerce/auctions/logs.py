@@ -8,6 +8,8 @@ def log_profile_save(instance, created, update_fields=None, **kwargs):
         logger.info(f'profile [{instance}] created')
     elif update_fields and 'money' in update_fields:
         logger.info(f'profile [{instance}] money changed, now has {instance.money} coins')
+    elif update_fields and 'username' in update_fields:
+        logger.info(f'profile [{instance}, pk-{instance.pk}] username updated')
 
 
 def log_profile_deleted(instance, **kwargs):

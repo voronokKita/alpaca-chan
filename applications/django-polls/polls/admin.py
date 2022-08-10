@@ -8,6 +8,7 @@ class ChoiceInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ['question_text']}),
@@ -17,6 +18,3 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ('question_text', 'pub_date', 'published_recently')
     list_filter = ['pub_date']
     search_fields = ['question_text']
-
-
-admin.site.register(Question, QuestionAdmin)
