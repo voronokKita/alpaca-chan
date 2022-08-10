@@ -64,5 +64,5 @@ All the tests.
 Some misc with logs and navbar header.
 
 ###### Auctions
-Profile now can change its username after User model.
-Admin.
+Profile now can change its username after it's User model. <br>
+Admin models.

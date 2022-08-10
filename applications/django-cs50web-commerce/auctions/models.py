@@ -1,5 +1,6 @@
 from copy import copy
 
+from django.contrib import admin
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
@@ -14,7 +15,8 @@ from core.utils import unique_slugify
 
 # TODO
 # admin model
-# Query Expressions
+# Query Expressions F
+# optimization
 
 class LowOnMoney(Exception): pass
 
@@ -56,7 +58,7 @@ def user_media_path(listing, filename):
 class Profile(Model):
     manager = models.Manager()
 
-    username = CharField('category label', max_length=30, db_index=True)
+    username = CharField(max_length=30, db_index=True)
     money = FloatField('money on account', default=0.0)
 
     class Meta:
@@ -107,6 +109,18 @@ class Profile(Model):
                 bets_total += bid.bid_value
         return self.money, bets_total
 
+    @admin.display(description='items owned')
+    def items_owned_count(self):
+        return self.lots_owned.count()
+
+    @admin.display(description='comments')
+    def comments_written_count(self):
+        return self.comment_set.count()
+
+    @admin.display(description='placed bets')
+    def placed_bets_count(self):
+        return self.bid_set.count()
+
     def __str__(self): return self.username
 
 
@@ -137,6 +151,10 @@ class ListingCategory(Model):
         verbose_name = 'category'
         verbose_name_plural = 'categories'
         ordering = ['label']
+
+    @admin.display(description='items in category')
+    def items_in_category(self):
+        return self.listing_set.count()
 
     def __str__(self): return self.label
 
