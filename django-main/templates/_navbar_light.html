@@ -13,7 +13,7 @@
         <ul class="navbar-nav me-auto">
           {% if request.resolver_match.app_name != 'core' %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'core:index' %}">Alpaca’s Caffe</a>
+            <a class="nav-link" href="{% url 'core:index' %}">Alpaca’s Cafe</a>
           </li>
           {% endif %}
           {% if request.user.is_authenticated %}
