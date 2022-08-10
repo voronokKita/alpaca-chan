@@ -2,5 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def log_model_updated(sender, **kwargs):
-    logger.info(f"updated model Choice[{kwargs['instance']}]")
+
+def log_choice_save(instance, created, **kwargs):
+    if created is False:
+        logger.info(f'question [{instance.question}] choice [{instance}] updated')

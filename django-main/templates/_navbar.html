@@ -26,7 +26,7 @@
 
         <span class='navbar-text'>
           <a href="{% url 'core:index' %}"
-             style="color: #a1887f; text-decoration: none;">Home</a>
+             style="color: #a1887f; text-decoration: none;">Alpaca’s Caffe</a>
           {% if request.user.is_authenticated %}
           | <span style="color: black;">{{ user.username }}</span>
           | <a href="{% url 'accounts:logout_and_next' request.resolver_match.app_name %}"

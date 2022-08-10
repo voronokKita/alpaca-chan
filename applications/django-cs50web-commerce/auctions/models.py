@@ -1,20 +1,18 @@
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import (
     Model, CharField, TextField,
     SlugField, FloatField, ImageField,
     DateTimeField, BooleanField,
-    ForeignKey, ManyToManyField, OneToOneField
+    ForeignKey, ManyToManyField
 )
 from core.utils import unique_slugify
 
 # TODO
 # admin model
 # Query Expressions
-# logging
 
 class LowOnMoney(Exception): pass
 

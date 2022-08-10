@@ -1,13 +1,14 @@
-import sys
 from django.apps import AppConfig
-from django.db.models.signals import post_save, post_delete
 
 
 class AccountsConfig(AppConfig):
     name = 'accounts'
 
     def ready(self):
+        import sys
         if 'test' not in sys.argv:
-            from .logs import log_model_create_or_update, log_model_delete
-            post_save.connect(log_model_create_or_update, sender='accounts.ProxyUser')
-            post_delete.connect(log_model_delete, sender='accounts.ProxyUser')
+            from django.db.models.signals import post_save, post_delete
+            from .logs import log_proxy_user_save, log_proxy_user_delete
+            from .models import ProxyUser
+            post_save.connect(log_proxy_user_save, sender=ProxyUser, dispatch_uid='proxy-save')
+            post_delete.connect(log_proxy_user_delete, sender=ProxyUser, dispatch_uid='proxy-delete')

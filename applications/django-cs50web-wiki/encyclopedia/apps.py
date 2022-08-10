@@ -1,13 +1,14 @@
-import sys
 from django.apps import AppConfig
-from django.db.models.signals import post_save, post_delete
 
 
 class EncyclopediaConfig(AppConfig):
     name = 'encyclopedia'
 
     def ready(self):
+        import sys
         if 'test' not in sys.argv:
-            from .logs import log_model_create_or_update, log_model_delete
-            post_save.connect(log_model_create_or_update, sender='encyclopedia.Entry')
-            post_delete.connect(log_model_delete, sender='encyclopedia.Entry')
+            from django.db.models.signals import post_save, post_delete
+            from .logs import log_entry_save, log_entry_delete
+            from .models import Entry
+            post_save.connect(log_entry_save, sender=Entry, dispatch_uid='entry-save')
+            post_delete.connect(log_entry_delete, sender=Entry, dispatch_uid='entry-update')

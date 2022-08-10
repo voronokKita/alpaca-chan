@@ -3,11 +3,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def log_model_create_or_update(sender, **kwargs):
-    if kwargs['created']: s = 'created'
-    else: s = 'updated'
-    logger.info(f"{s} {sender} [{kwargs['instance']}]")
+def log_proxy_user_save(instance, created, **kwargs):
+    if created:
+        logger.info(f'proxy user [{instance}] created')
+    else:
+        logger.info(f'proxy user [{instance}] updated')
 
 
-def log_model_delete(sender, **kwargs):
-    logger.info(f"deleted {sender} [{kwargs['instance']}]")
+def log_proxy_user_delete(instance, **kwargs):
+    logger.info(f'proxy user [{instance}] deleted')

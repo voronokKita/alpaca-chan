@@ -57,3 +57,10 @@ Profile cascade deletion (and tests). Pre_delete signal.
 Money and bets logic. User logs function. Base_urls. Signal logger on some models. <br>
 Base views, urls and templates. <br>
 All the tests.
+
+### 2022.AUG.10
+
+###### Project
+Some misc with logs and navbar header.
+
+###### Auctions
