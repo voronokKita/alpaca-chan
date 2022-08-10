@@ -65,4 +65,5 @@ Some misc with logs and navbar header.
 
 ###### Auctions
 Profile now can change its username after it's User model. <br>
-Admin models.
+Admin models. <br>
+Bid values aggregation and some other misc.

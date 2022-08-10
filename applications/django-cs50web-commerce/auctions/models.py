@@ -9,12 +9,12 @@ from django.db.models import (
     Model, CharField, TextField,
     SlugField, FloatField, ImageField,
     DateTimeField, BooleanField,
-    ForeignKey, ManyToManyField
+    ForeignKey, ManyToManyField,
+    Sum
 )
 from core.utils import unique_slugify
 
 # TODO
-# admin model
 # Query Expressions F
 # optimization
 
@@ -84,16 +84,13 @@ class Profile(Model):
             date = date_joined if date_joined else timezone.localtime()
             self.logs.create(entry=LOG_REGISTRATION, date=date)
 
-    def delete(self, **kwargs):
-        return super().delete(**kwargs)
-
     def add_money(self, amount, silent=False):
         self.money += amount
         self.save(update_fields=['money'])
         if silent is False:
             log_entry(self, 'money_added', coins=amount)
 
-    def get_money(self, value) -> (int, LowOnMoney):
+    def get_money(self, value) -> (float, LowOnMoney):
         if self.money >= value:
             self.money -= value
             self.save(update_fields=['money'])
@@ -101,12 +98,12 @@ class Profile(Model):
         else:
             raise LowOnMoney
 
-    def display_money(self) -> tuple:
+    def display_money(self) -> (float, float):
         """ Current + in all the bets. """
         bets_total = 0
         if self.bid_set.count() > 0:
-            for bid in self.bid_set.all():
-                bets_total += bid.bid_value
+            result = self.bid_set.aggregate(Sum('bid_value'))
+            bets_total = result['bid_value__sum']
         return self.money, bets_total
 
     @admin.display(description='items owned')
