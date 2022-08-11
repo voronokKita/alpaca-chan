@@ -109,11 +109,13 @@ class UserProfileTests(TestCase):
     def test_profile_method_money(self):
         profile = get_profile(money=0)
         profile.add_money(10)
+        profile.refresh_from_db()
         self.assertTrue(profile.money == 10)
 
         listing = get_listing()
         listing.publish_the_lot()
         listing.make_a_bid(profile, 5)
+        profile.refresh_from_db()
         self.assertEqual(profile.display_money(), (5, 5.0))
 
     def test_profile_integrity_cascade_deletion(self):
@@ -128,6 +130,7 @@ class UserProfileTests(TestCase):
         listing_two.publish_the_lot()
 
         profile_one.add_money(100)
+        profile_one.refresh_from_db()
         listing_one.make_a_bid(profile_two, 10)
         listing_two.make_a_bid(profile_one, 20)
         self.assertTrue(Bid.manager.count() == 2)
@@ -265,6 +268,7 @@ class ListingTests(TestCase):
         self.assertFalse(listing.bid_possibility(profile2), 'lower than the starting price')
         # already on top
         profile2.add_money(10)
+        profile2.refresh_from_db()
         listing.potential_buyers.add(profile2, through_defaults={'bid_value': 10})
         self.assertFalse(listing.bid_possibility(profile2), 'already on top')
         # low on money
@@ -272,6 +276,7 @@ class ListingTests(TestCase):
         self.assertFalse(listing.bid_possibility(profile3), 'low on money')
         # ok
         profile3.add_money(2)
+        profile3.refresh_from_db()
         self.assertTrue(listing.bid_possibility(profile3), 'normal')
 
     def test_listing_method_make_a_bid(self):
@@ -410,10 +415,12 @@ class LogTests(TestCase):
         # made a bet
         profile_two = get_profile(username='Moose')
         listing.make_a_bid(profile_two, 10)
+        profile_two.refresh_from_db()
         self.assertTrue(Log.manager.filter(entry=LOG_NEW_BID % (title, 10)).exists())
         # auction closed - one win, one lose
         profile_three = get_profile(username='Lion')
         listing.make_a_bid(profile_three, 20)
+        profile_three.refresh_from_db()
         listing.change_the_owner()
         self.assertTrue(Log.manager.filter(entry=LOG_ITEM_SOLD % (title, 'Lion')).exists())
         self.assertTrue(Log.manager.filter(entry=LOG_MONEY_ADDED % 20.0, profile=profile).exists())
@@ -422,6 +429,7 @@ class LogTests(TestCase):
         # withdrawn
         listing.publish_the_lot()
         listing.make_a_bid(profile_two, 30)
+        profile_two.refresh_from_db()
         listing.withdraw()
         self.assertTrue(Log.manager.filter(entry=LOG_WITHDRAWN % title).exists())
         self.assertTrue(Log.manager.filter(entry=LOG_OWNER_REMOVED % (title, 30.0)).exists())

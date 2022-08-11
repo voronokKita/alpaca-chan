@@ -67,3 +67,8 @@ Some misc with logs and navbar header.
 Profile now can change its username after it's User model. <br>
 Admin models. <br>
 Bid values aggregation and some other misc.
+
+### 2022.AUG.11
+###### Auctions
+Atomic transactions. <br>
+F queries with profile's money.

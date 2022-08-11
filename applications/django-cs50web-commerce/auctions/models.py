@@ -1,16 +1,14 @@
-from copy import copy
-
 from django.contrib import admin
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
-from django.db import models
+from django.db import models, transaction
 from django.db.models import (
     Model, CharField, TextField,
     SlugField, FloatField, ImageField,
     DateTimeField, BooleanField,
     ForeignKey, ManyToManyField,
-    Sum
+    Sum, F
 )
 from core.utils import unique_slugify
 
@@ -85,14 +83,14 @@ class Profile(Model):
             self.logs.create(entry=LOG_REGISTRATION, date=date)
 
     def add_money(self, amount, silent=False):
-        self.money += amount
+        self.money = F('money') + amount
         self.save(update_fields=['money'])
         if silent is False:
             log_entry(self, 'money_added', coins=amount)
 
     def get_money(self, value) -> (float, LowOnMoney):
         if self.money >= value:
-            self.money -= value
+            self.money = F('money') - value
             self.save(update_fields=['money'])
             return value
         else:
@@ -259,10 +257,11 @@ class Listing(Model):
         if self.starting_price < 1 or self.is_active is True:
             return False
         else:
-            self.date_published = timezone.localtime()
-            self.is_active = True
-            self.save()
-            log_entry(self.owner, 'published', self.title)
+            with transaction.atomic('auctions_db', savepoint=False):
+                self.date_published = timezone.localtime()
+                self.is_active = True
+                self.save()
+                log_entry(self.owner, 'published', self.title)
             return True
 
     def withdraw(self, item_sold=False) -> bool:
@@ -270,17 +269,18 @@ class Listing(Model):
         if self.is_active is False:
             return False
         else:
-            self.date_published = None
-            self.is_active = False
+            with transaction.atomic('auctions_db', savepoint=False):
+                self.date_published = None
+                self.is_active = False
 
-            if item_sold is False:
-                log_entry(self.owner, 'withdrawn', self.title)
+                if item_sold is False:
+                    log_entry(self.owner, 'withdrawn', self.title)
 
-            if self.potential_buyers.count() > 0:
-                for bid in self.bid_set.all():
-                    bid.delete(refund=True, item_sold=item_sold)
+                if self.potential_buyers.count() > 0:
+                    for bid in self.bid_set.iterator():
+                        bid.delete(refund=True, item_sold=item_sold)
 
-            self.save()
+                self.save()
             return True
 
     def unwatch(self, profile) -> bool:
@@ -294,20 +294,21 @@ class Listing(Model):
             self.in_watchlist.remove(profile)
             return True
 
-    def bid_possibility(self, auctioneer, return_highest_bid=False) -> bool:
-        if not self.is_active:
+    def bid_possibility(self, auctioneer, return_highest_bid=False) -> bool or Bid:
+        """ Initial check of the possibility to place a bid.
+            Can return bool or the highest bid. """
+        if not self.is_active or \
+                self.owner == auctioneer or \
+                (self.potential_buyers.count() == 0 and
+                 auctioneer.money < self.starting_price):
             return False
-        elif self.owner == auctioneer:
-            return False
-        elif self.potential_buyers.count() == 0 and \
-                auctioneer.money < self.starting_price:
-            return False
+
         elif self.potential_buyers.count() > 0:
             highest_bid = self.bid_set.latest()
-            if highest_bid.auctioneer == auctioneer:
+            if highest_bid.auctioneer == auctioneer or \
+                    auctioneer.money < highest_bid.bid_value:
                 return False
-            elif auctioneer.money < highest_bid.bid_value:
-                return False
+
             if return_highest_bid:
                 return_highest_bid = highest_bid
 
@@ -315,24 +316,21 @@ class Listing(Model):
 
     def make_a_bid(self, auctioneer, bid_value) -> bool:
         """ Also add the lot to user's watchlist. """
-        highest_bid = self.bid_possibility(auctioneer, return_highest_bid=True)
-        if highest_bid is False:
-            return False
-        elif self.potential_buyers.count() == 0:
-            if bid_value <= self.starting_price:
-                return False
-        elif highest_bid.bid_value >= bid_value:
-            return False
-        elif auctioneer.money < bid_value:
+        result = self.bid_possibility(auctioneer, return_highest_bid=True)
+        if result is False or \
+                auctioneer.money < bid_value or \
+                (self.potential_buyers.count() == 0 and bid_value <= self.starting_price) or \
+                (type(result) is Bid and result.bid_value >= bid_value):
             return False
 
-        if not self.in_watchlist.contains(auctioneer):
-            self.in_watchlist.add(auctioneer)
+        with transaction.atomic('auctions_db', savepoint=False):
+            if not self.in_watchlist.contains(auctioneer):
+                self.in_watchlist.add(auctioneer)
 
-        money = auctioneer.get_money(bid_value)
-        auctioneer.placed_bets.add(self, through_defaults={'bid_value': money})
+            money = auctioneer.get_money(bid_value)
+            auctioneer.placed_bets.add(self, through_defaults={'bid_value': money})
 
-        log_entry(auctioneer, 'bid', self.title, coins=money)
+            log_entry(auctioneer, 'bid', self.title, coins=money)
         return True
 
     def change_the_owner(self) -> bool:
@@ -344,15 +342,16 @@ class Listing(Model):
             highest_bid = self.bid_set.latest()
             new_owner = highest_bid.auctioneer
             money = highest_bid.bid_value
-            log_entry(self.owner, 'sold', self.title, new_owner)
-            self.owner.add_money(money)
-            highest_bid.delete()
+            with transaction.atomic('auctions_db', savepoint=False):
+                log_entry(self.owner, 'sold', self.title, new_owner)
+                self.owner.add_money(money)
+                highest_bid.delete()
 
-            self._save_new_owner(new_owner)
-            self.starting_price = money
-            self.withdraw(item_sold=True)
+                self._save_new_owner(new_owner)
+                self.starting_price = money
+                self.withdraw(item_sold=True)
 
-            log_entry(self.owner, 'you_won', self.title, coins=money)
+                log_entry(self.owner, 'you_won', self.title, coins=money)
             return True
 
     def _save_new_owner(self, new_owner):
