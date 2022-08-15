@@ -74,5 +74,10 @@ Atomic transactions. <br>
 F queries with profile's money.
 
 ### 2022.AUG.15
+
+###### Project
+Navbar & the active_nav template tag fixes.
+
 ###### Auctions
-Set default starting price after item sold.
+Set default starting price after item sold. <br>
+NavbarMixin & AuctionsAuthMixin.

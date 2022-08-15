@@ -22,7 +22,13 @@
   <div class='container'>
     <div class='row'><h1>{% block top_header %}{% endblock %}</h1></div>
     {% if messages %}{% include '_messages.html' %}{% endif %}
-    {% block navbar %}{% if navbar_list %}{% include '_navbar.html' %}{% endif %}{% endblock %}
+    {% block navbar %}
+      {% if navbar_list %}
+        {% include '_navbar.html' %}
+      {% else %}
+        {% include '_navbar_light.html' %}
+      {% endif %}
+    {% endblock %}
     <main>{% block main_content %}{% endblock %}</main>
   </div>
 

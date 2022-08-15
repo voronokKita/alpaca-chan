@@ -94,6 +94,8 @@ TEMPLATES = [
         },
     },
 ]
+LOGIN_URL = 'accounts/login'
+
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 # https://docs.djangoproject.com/en/4.0/ref/settings/#static-files
 # https://docs.djangoproject.com/en/4.0/howto/static-files/deployment/

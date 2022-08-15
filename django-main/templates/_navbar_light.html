@@ -11,14 +11,16 @@
 
       <div class="collapse navbar-collapse" id="navbarText">
         <ul class="navbar-nav me-auto">
+
           {% if request.resolver_match.app_name != 'core' %}
           <li class="nav-item">
             <a class="nav-link" href="{% url 'core:index' %}">Alpaca’s Cafe</a>
           </li>
           {% endif %}
+
           {% if request.user.is_authenticated %}
-          <li class="navbar-brand">
-            {{ user.username }}
+          <li class="navbar-text">
+            <span style="color: #607d8b;">{{ user.username }}</span>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'accounts:logout_and_next' request.resolver_match.app_name %}">Logout</a>
@@ -32,6 +34,7 @@
             <a class="nav-link" href="{% url 'accounts:login_and_next' request.resolver_match.app_name %}">Login</a>
           </li>
           {% endif %}
+
         </ul>
       </div>
 

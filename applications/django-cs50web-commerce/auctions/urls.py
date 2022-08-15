@@ -12,6 +12,6 @@ urlpatterns = [
     path('/<int:user_pk>/watchlist', views.WatchlistView.as_view(), name='watchlist'),
     path('/create_listing', views.CreateListingView.as_view(), name='create_listing'),
     path('/listings/<slug:slug>', views.ListingView.as_view(), name='listing'),
-    path('/listings/<slug:slug>/comments', views.CommentsView.as_view(), name='comments'),
     path('/lots/<slug:slug>', views.AuctionLotView.as_view(), name='auction_lot'),
+    path('/listings/<slug:slug>/comments', views.CommentsView.as_view(), name='comments'),
 ]

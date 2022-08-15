@@ -1,37 +1,77 @@
 from django.urls import reverse, reverse_lazy
 from django.views import generic
+from django.http import HttpResponseRedirect
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+from .models import Profile
 
 
-class AuctionsIndexView(generic.TemplateView):
+class NavbarMixin:
+    @staticmethod
+    def _get_default_nav() -> list:
+        return [{'url': reverse_lazy('auctions:index'), 'text': 'Active Listings'}, ]
+
+    @staticmethod
+    def _get_auth_user_nav(pk: int) -> list:
+        return [
+            {'url': reverse_lazy('auctions:watchlist', args=[pk]), 'text': 'Watchlist'},
+            {'url': reverse_lazy('auctions:create_listing'), 'text': 'Create Listing'},
+            {'url': reverse_lazy('auctions:profile', args=[pk]), 'text': 'Wallet'},
+            {'url': reverse_lazy('auctions:user_history', args=[pk]), 'text': 'History'},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['expand_navbar'] = True
+        context['navbar_list'] = self._get_default_nav()
+        if self.request.user.is_authenticated:
+            profile = Profile.manager.filter(
+                username=self.request.user.username
+            ).first()
+            if profile:
+                context['navbar_list'] += self._get_auth_user_nav(profile.pk)
+
+        return context
+
+
+class AuctionsAuthMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('accounts:login_and_next', args=['auctions']))
+        else:
+            return super().dispatch(request, *args, **kwargs)
+
+
+class AuctionsIndexView(NavbarMixin, generic.TemplateView):
     template_name = 'auctions/index.html'
 
 
-class ProfileView(generic.TemplateView):
+class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/profile.html'
 
 
-class UserHistoryView(generic.TemplateView):
+class UserHistoryView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/user_history.html'
 
 
-class WatchlistView(generic.TemplateView):
+class WatchlistView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):  # auctions/7/watchlist
     template_name = 'auctions/watchlist.html'
 
 
-class CreateListingView(generic.TemplateView):
+class CreateListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/listing_create.html'
 
 
-class ListingView(generic.TemplateView):
+class ListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/listing.html'
 
 
-class CommentsView(generic.TemplateView):
-    template_name = 'auctions/comments.html'
-
-
-class AuctionLotView(generic.TemplateView):
+class AuctionLotView(NavbarMixin, generic.TemplateView):
     template_name = 'auctions/listing_published.html'
+
+
+class CommentsView(NavbarMixin, generic.TemplateView):
+    template_name = 'auctions/comments.html'
 
 
 """ TODO
