@@ -1,9 +1,8 @@
 from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.http import HttpResponseRedirect
-from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .models import Profile
+from .models import Profile, Listing
 
 
 class NavbarMixin:
@@ -42,8 +41,13 @@ class AuctionsAuthMixin:
             return super().dispatch(request, *args, **kwargs)
 
 
-class AuctionsIndexView(NavbarMixin, generic.TemplateView):
+class AuctionsIndexView(NavbarMixin, generic.ListView):
     template_name = 'auctions/index.html'
+    model = Listing
+    context_object_name = 'published_listings'
+
+    def get_queryset(self):
+        return Listing.manager.filter(is_active=True)
 
 
 class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):

@@ -80,4 +80,5 @@ Navbar & the active_nav template tag fixes.
 
 ###### Auctions
 Set default starting price after item sold. <br>
-NavbarMixin & AuctionsAuthMixin.
+NavbarMixin & AuctionsAuthMixin. <br>
+IndexView.

@@ -1,5 +1,24 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% load static %}
+{% block main_content %}
+<h3>Active listings</h3>
 
-{% block main_content %}{% endblock %}
+<div class="row row-cols-1 row-cols-md-5 g-2">
+  {% for lot in published_listings %}
+  <div class="col">
+    <a href="{{ lot.get_absolute_url }}" style='color: black; text-decoration: none;'>
+      <div class="card h-100">
+        <img src="media/{{ lot.image }}"
+             class="card-img-top" alt="{{ lot.slug }}">
+        <div class="card-body">
+          <h5 class='card-title'>{{ lot.title|truncatechars:20 }}</h5>
+          <p class='card-text'>{{ lot.description|truncatechars:100 }}</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% empty %}
+  No items on the auction.
+  {% endfor %}
+</div>
+{% endblock %}
