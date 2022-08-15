@@ -356,6 +356,13 @@ class Listing(Model):
         self.owner = new_owner
         super().save(update_fields=['owner'])
 
+    def get_highest_price(self):  # TODO test
+        if self.potential_buyers.count() == 0:
+            return self.starting_price
+        else:
+            highest_bid = self.bid_set.latest()
+            return highest_bid.bid_value
+
     def __str__(self): return self.slug if self.slug else self.title
 
 

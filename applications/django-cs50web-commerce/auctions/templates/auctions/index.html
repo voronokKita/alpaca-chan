@@ -12,7 +12,9 @@
              class="card-img-top" alt="{{ lot.slug }}">
         <div class="card-body">
           <h5 class='card-title'>{{ lot.title|truncatechars:20 }}</h5>
+          <p class='card-text'>Price: 🪙{{ lot.get_highest_price }}</p>
           <p class='card-text'>{{ lot.description|truncatechars:100 }}</p>
+          <span class='card-text'><small>Published: {{ lot.date_published }}</small></span>
         </div>
       </div>
     </a>
