@@ -8,7 +8,7 @@
   <div class='col'>
 
     <a class='card h-100' href='{{ lot.get_absolute_url }}' style='color: black; text-decoration: none;'>
-      <img src='media/{{ lot.image }}' class='card-img-top' alt='{{ lot.slug }}'>
+      <img src='/media/{{ lot.image }}' class='card-img-top' alt='{{ lot.slug }}'>
       <div class='card-body'>
         <h5 class='card-title'>{{ lot.title|truncatechars:20 }}</h5>
         <h6 class='card-subtitle  mb-2'>Price: 🪙{{ lot.get_highest_price }}</h6>

@@ -12,9 +12,13 @@ logger = logging.getLogger(__name__)
 class NavbarMixin:
     @staticmethod
     def _get_default_nav() -> list:
+        category_list = []
+        for category in ListingCategory.manager.iterator():
+            url = reverse('auctions:category', args=[category.pk])
+            category_list.append({'label': category.label, 'url': url})
         return [
             {'url': reverse_lazy('auctions:index'), 'text': 'Active Listings'},
-            {'url': reverse_lazy('auctions:index'), 'text': 'Category'},
+            {'text': 'Category', 'category_list': category_list, 'category': True},
         ]
 
     @staticmethod
@@ -54,7 +58,11 @@ class AuctionsIndexView(NavbarMixin, generic.ListView):
     context_object_name = 'published_listings'
 
     def get_queryset(self):
-        return Listing.manager.filter(is_active=True)
+        if self.kwargs.get('category_pk'):
+            return Listing.manager.filter(category__pk=self.kwargs['category_pk'],
+                                          is_active=True)
+        else:
+            return Listing.manager.filter(is_active=True)
 
 
 class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):

@@ -14,14 +14,32 @@
 
         <ul class="navbar-nav me-auto">
           {% for ell in navbar_list %}
-          <li class="nav-item">
+
             {% if ell.focus %}
-              <a class="nav-link active" href="{{ ell.url }}">{{ ell.text }}</a>
+              <li class="nav-item">
+                <a class="nav-link active" href="{{ ell.url }}">{{ ell.text }}</a>
+              </li>
+
+            {% elif ell.category %}
+              <li class="nav-item dropdown">
+                <div class="nav-link dropdown-toggle" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                  {{ ell.text }}
+                </div>
+                <ul class="dropdown-menu">
+                  {% for category in ell.category_list %}
+                  <li><a class="dropdown-item" href="{{ category.url }}">{{ category.label }}</a></li>
+                  {% endfor %}
+                </ul>
+              </li>
+
             {% else %}
-              {% load active_nav_tag %}
-              <a class="nav-link {% active ell.url request.path %}" href="{{ ell.url }}">{{ ell.text }}</a>
+              <li class="nav-item">
+                {% load active_nav_tag %}
+                <a class="nav-link {% active ell.url request.path %}" href="{{ ell.url }}">{{ ell.text }}</a>
+              </li>
             {% endif %}
-          </li>
+
           {% endfor %}
         </ul>
 

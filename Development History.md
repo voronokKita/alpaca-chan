@@ -81,4 +81,4 @@ Navbar & the active_nav template tag fixes. NavbarMixin.
 ###### Auctions
 Set default starting price after item sold. <br>
 NavbarMixin & AuctionsAuthMixin. <br>
-IndexView. Listing cards.
+IndexView. Listing cards. View by category.

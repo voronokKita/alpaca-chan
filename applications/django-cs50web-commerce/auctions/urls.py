@@ -7,6 +7,7 @@ app_name = 'auctions'
 urlpatterns = [
     path('', views.AuctionsIndexView.as_view(), name='index'),
     path('/', views.AuctionsIndexView.as_view(), name='index_slash'),
+    path('/category/<int:category_pk>', views.AuctionsIndexView.as_view(), name='category'),
     path('/<int:user_pk>', views.ProfileView.as_view(), name='profile'),
     path('/<int:user_pk>/history', views.UserHistoryView.as_view(), name='user_history'),
     path('/<int:user_pk>/watchlist', views.WatchlistView.as_view(), name='watchlist'),
