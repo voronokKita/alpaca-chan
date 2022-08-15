@@ -300,8 +300,11 @@ class ListingTests(TestCase):
         self.assertFalse(listing.make_a_bid(profile3, 1.1), 'not enough')
 
     def test_listing_method_change_the_owner(self):
+        from auctions.models import DEFAULT_STARTING_PRICE
         seller = get_profile()
         listing = get_listing(profile=seller)
+        listing.starting_price = 1.5
+        listing.save()
         # not published
         self.assertFalse(listing.change_the_owner(), 'not published')
         # without potential buyers
@@ -315,7 +318,7 @@ class ListingTests(TestCase):
         self.assertTrue(listing.change_the_owner())
         self.assertFalse(listing.is_active)
         self.assertIsNone(listing.date_published)
-        self.assertTrue(listing.starting_price == bid_value)
+        self.assertTrue(listing.starting_price == DEFAULT_STARTING_PRICE)
         self.assertTrue(listing.potential_buyers.count() == 0)
         self.assertFalse(seller.lots_owned.contains(listing))
         self.assertTrue(buyer.lots_owned.contains(listing))

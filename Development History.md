@@ -72,3 +72,7 @@ Bid values aggregation and some other misc.
 ###### Auctions
 Atomic transactions. <br>
 F queries with profile's money.
+
+### 2022.AUG.15
+###### Auctions
+Set default starting price after item sold.

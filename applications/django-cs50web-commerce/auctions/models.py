@@ -12,13 +12,11 @@ from django.db.models import (
 )
 from core.utils import unique_slugify
 
-# TODO
-# Query Expressions F
-# optimization
 
 class LowOnMoney(Exception): pass
 
 SLUG_MAX_LEN = 16
+DEFAULT_STARTING_PRICE = 1
 
 LOG_REGISTRATION = 'Date of your registration.'
 LOG_MONEY_ADDED = 'Wallet topped up with %d coins.'
@@ -210,7 +208,7 @@ class Listing(Model):
     title = CharField('listing title', max_length=300)
     description = TextField('listing description')
     image = ImageField('visual presentation', upload_to=user_media_path, max_length=500)
-    starting_price = FloatField(default=1)
+    starting_price = FloatField(default=DEFAULT_STARTING_PRICE)
 
     date_created = DateTimeField('created', default=timezone.localtime)
     date_published = DateTimeField('published', null=True, blank=True, default=None)
@@ -348,7 +346,7 @@ class Listing(Model):
                 highest_bid.delete()
 
                 self._save_new_owner(new_owner)
-                self.starting_price = money
+                self.starting_price = DEFAULT_STARTING_PRICE
                 self.withdraw(item_sold=True)
 
                 log_entry(self.owner, 'you_won', self.title, coins=money)
