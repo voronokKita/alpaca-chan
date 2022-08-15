@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.http import HttpResponseRedirect
 
-from .models import Profile, Listing
+from .models import Profile, Listing, ListingCategory
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,10 @@ logger = logging.getLogger(__name__)
 class NavbarMixin:
     @staticmethod
     def _get_default_nav() -> list:
-        return [{'url': reverse_lazy('auctions:index'), 'text': 'Active Listings'}, ]
+        return [
+            {'url': reverse_lazy('auctions:index'), 'text': 'Active Listings'},
+            {'url': reverse_lazy('auctions:index'), 'text': 'Category'},
+        ]
 
     @staticmethod
     def _get_auth_user_nav(pk: int) -> list:
