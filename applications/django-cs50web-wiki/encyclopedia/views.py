@@ -1,7 +1,7 @@
 import logging
 import markdown2
 
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.views import generic
 
 from .models import Entry
@@ -10,8 +10,15 @@ from .forms import EntryForm, DeleteEntryForm
 logger = logging.getLogger(__name__)
 
 
-def get_default_nav():
-    return [{'url': reverse_lazy('encyclopedia:index'), 'text': 'Main page', 'focus': True}, ]
+class NavbarMixin:
+    @staticmethod
+    def _get_default_nav():
+        return [{'url': reverse_lazy('encyclopedia:index'), 'text': 'Wiki main', 'focus': True}, ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['navbar_list'] = self._get_default_nav()
+        return context
 
 
 class IndexView(generic.ListView):
@@ -24,42 +31,37 @@ class IndexView(generic.ListView):
         }
 
 
-class DetailView(generic.DetailView):
+class DetailView(NavbarMixin, generic.DetailView):
     template_name = 'encyclopedia/detail.html'
     model = Entry
     context_object_name = 'article'
-    extra_context = {
-        'navbar_list': [
-            {'url': reverse_lazy('encyclopedia:index'), 'text': 'Go back', 'focus': True},
-            {'url': '', 'text': 'Edit this article'},
-            {'url': '', 'text': 'Delete this article'},
-        ]
-    }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['entry_text_html'] = markdown2.markdown(
             context['article'].entry_text
         )
+
         slug = context['article'].slug
-        url_edit = reverse_lazy('encyclopedia:edit_entry', kwargs={'slug': slug})
-        url_delete = reverse_lazy('encyclopedia:delete_entry', kwargs={'slug': slug})
-        self.extra_context['navbar_list'][1]['url'] = url_edit
-        self.extra_context['navbar_list'][2]['url'] = url_delete
+        url_edit = reverse_lazy('encyclopedia:edit_entry', args=[slug])
+        url_delete = reverse_lazy('encyclopedia:delete_entry', args=[slug])
+        context['navbar_list'] += [
+            {'url': url_edit, 'text': 'Edit this article'},
+            {'url': url_delete, 'text': 'Delete this article'},
+        ]
         return context
 
 
-class AddNewEntry(generic.CreateView):
+class AddNewEntry(NavbarMixin, generic.CreateView):
     template_name = 'encyclopedia/entry_form.html'
     form_class = EntryForm
-    extra_context = {'title': 'Add new article', 'navbar_list': get_default_nav()}
+    extra_context = {'title': 'Add new article'}
 
 
-class EditEntry(generic.UpdateView):
+class EditEntry(NavbarMixin, generic.UpdateView):
     template_name = 'encyclopedia/entry_form.html'
     form_class = EntryForm
     model = Entry
-    extra_context = {'navbar_list': get_default_nav()}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -67,15 +69,15 @@ class EditEntry(generic.UpdateView):
         return context
 
 
-class DeleteEntry(generic.DeleteView):
+class DeleteEntry(NavbarMixin, generic.DeleteView):
     template_name = 'encyclopedia/entry_form.html'
     form_class = DeleteEntryForm
     model = Entry
     success_url = reverse_lazy('encyclopedia:index')
-    extra_context = {'navbar_list': get_default_nav()}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Delete an article :: {context["entry"].entry_name}'
-        context['delete_conformation'] = f'Are you sure you want to delete \"{context["entry"].entry_name}\"?'
+        context['delete_conformation'] = \
+            f'Are you sure you want to delete \"{context["entry"].entry_name}\"?'
         return context

@@ -1,8 +1,12 @@
+import logging
+
 from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.http import HttpResponseRedirect
 
 from .models import Profile, Listing
+
+logger = logging.getLogger(__name__)
 
 
 class NavbarMixin:

@@ -12,9 +12,9 @@ from .forms import UserRegisterForm, UserLoginForm
 logger = logging.getLogger(__name__)
 
 
-def redirect_on_success(source_app):
+def redirect_on_success(source_app: str):
     """ Make sure that the redirect happens to the index of installed apps.
-        source_app :: str from the url, like example.com/[source_app]/login """
+        :source_app: app to redirect, like example.com/[source_app]/login """
     if source_app is not None and source_app in settings.PROJECT_MAIN_APPS:
         return reverse_lazy(f'{source_app}:index')
     else:

@@ -76,7 +76,7 @@ F queries with profile's money.
 ### 2022.AUG.15
 
 ###### Project
-Navbar & the active_nav template tag fixes.
+Navbar & the active_nav template tag fixes. NavbarMixin.
 
 ###### Auctions
 Set default starting price after item sold. <br>

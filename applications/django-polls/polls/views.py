@@ -10,8 +10,15 @@ from .forms import ChoiceSetForm
 logger = logging.getLogger(__name__)
 
 
-def get_default_nav():
-    return [{'url': reverse_lazy('polls:index'), 'text': 'Polls main', 'focus': True}, ]
+class NavbarMixin:
+    @staticmethod
+    def _get_default_nav():
+        return [{'url': reverse_lazy('polls:index'), 'text': 'Polls main', 'focus': True}, ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['navbar_list'] = self._get_default_nav()
+        return context
 
 
 class IndexView(generic.ListView):
@@ -22,12 +29,11 @@ class IndexView(generic.ListView):
         return Question.objects.filter(pub_date__lte=timezone.localtime())
 
 
-class DetailView(generic.UpdateView):
+class DetailView(NavbarMixin, generic.UpdateView):
     template_name = 'polls/detail.html'
     form_class = ChoiceSetForm
     model = Question
     success_url = reverse_lazy('polls:index')
-    extra_context = {'navbar_list': get_default_nav()}
 
     def get_queryset(self):
         return Question.objects.filter(pub_date__lte=timezone.localtime())
@@ -37,10 +43,9 @@ class DetailView(generic.UpdateView):
         return super().form_valid(form)
 
 
-class ResultsView(generic.DetailView):
+class ResultsView(NavbarMixin, generic.DetailView):
     template_name = 'polls/results.html'
     model = Question
-    extra_context = {'navbar_list': get_default_nav()}
 
     def get_queryset(self):
         return Question.objects.filter(pub_date__lte=timezone.localtime())
