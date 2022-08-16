@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import (
     Model, CharField, TextField,
@@ -12,6 +13,7 @@ from django.db.models import (
 )
 from core.utils import unique_slugify
 
+# TODO get listing out from watchlists of all the users if it has been sold, except for the new owner
 
 class LowOnMoney(Exception): pass
 
@@ -199,6 +201,22 @@ class Watchlist(Model):
     def get_absolute_url(self):
         return reverse('auctions:watchlist', args=[self.profile.pk])
 
+    def generate_watchlist(self) -> (list, list, list):  # TODO test
+        """ Will return 3 lists: items owned,
+            items owned and published, and just watched. """
+        items_owned = []
+        items_owned_and_published = []
+        just_watched = []
+        for item in self.profile.items_watched.all():
+            if item.owner == self.profile:
+                if item.is_active:
+                    items_owned_and_published.append(item)
+                else:
+                    items_owned.append(item)
+            else:
+                just_watched.append(item)
+        return items_owned, items_owned_and_published, just_watched
+
     def __str__(self): return f'{self.profile} >-- watchlist --< {self.listing}'
 
 
@@ -232,7 +250,10 @@ class Listing(Model):
         ]
 
     def get_absolute_url(self):
-        return reverse('auctions:listing', args=[self.slug])
+        if self.is_active:
+            return reverse('auctions:auction_lot', args=[self.slug])
+        else:
+            return reverse('auctions:listing', args=[self.slug])
 
     def save(self, *args, **kwargs):
         """ Auto get a unique slug and
@@ -358,11 +379,12 @@ class Listing(Model):
         super().save(update_fields=['owner'])
 
     def get_highest_price(self):
-        highest_bid = self.bid_set.latest()
-        if highest_bid:
-            return highest_bid.bid_value
-        else:
+        try:
+            highest_bid = self.bid_set.latest()
+        except ObjectDoesNotExist:
             return self.starting_price
+        else:
+            return highest_bid.bid_value
 
     def __str__(self): return self.slug if self.slug else self.title
 

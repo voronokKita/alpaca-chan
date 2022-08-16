@@ -11,6 +11,7 @@
       <img src='/media/{{ lot.image }}' class='card-img-top' alt='{{ lot.slug }}'>
       <div class='card-body'>
         <h5 class='card-title'>{{ lot.title|truncatechars:20 }}</h5>
+        <h6 class='card-subtitle  mb-2'>Category: {{ lot.category|lower }}</h6>
         <h6 class='card-subtitle  mb-2'>Price: 🪙{{ lot.get_highest_price|floatformat:"-2" }}</h6>
         <p class='card-text'>{{ lot.description|truncatechars:150 }}</p>
       </div>

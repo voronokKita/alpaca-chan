@@ -87,4 +87,4 @@ IndexView. Listing cards. View by category.
 
 ###### Auctions
 ProfileView with TransferMoneyForm. Fixed bug with float numbers format in the user logs. <br>
-UserHistoryView.
+UserHistoryView. WatchlistView.

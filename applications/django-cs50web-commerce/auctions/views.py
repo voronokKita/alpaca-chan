@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.http import HttpResponseRedirect
 
-from .models import Profile, Listing, ListingCategory, Log
+from .models import Profile, Listing, ListingCategory, Log, Watchlist
 from .forms import TransferMoneyForm
 
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ class NavbarMixin:
             ).first()
             if profile:
                 context['navbar_list'] += self._get_auth_user_nav(profile.pk)
+                context['auctioneer'] = profile
 
         return context
 
@@ -89,8 +90,17 @@ class UserHistoryView(NavbarMixin, AuctionsAuthMixin, generic.ListView):
         return Log.manager.filter(profile__pk=self.kwargs.get('pk'))
 
 
-class WatchlistView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):  # auctions/7/watchlist
+class WatchlistView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/watchlist.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        watchlist = Watchlist.manager.filter(profile__pk=self.kwargs.get('pk')).first()
+        items_owned, owned_and_published, just_watched = watchlist.generate_watchlist()
+        context['listing_owned'] = items_owned
+        context['owned_and_published'] = owned_and_published
+        context['listing_watched'] = just_watched
+        return context
 
 
 class CreateListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):

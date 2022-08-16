@@ -1,3 +1,74 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% block main_content %}{% endblock %}
+{% block title %}Auctions :: Watchlist{% endblock %}
+
+{% block main_content %}
+<h3 class='row'>Watchlist</h3>
+
+<h5 class='row mt-5'>Listings owned</h5>
+<div class='row row-cols-1  row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6 g-2'>
+  {% for listing in listing_owned %}
+  <div class='col'>
+
+    <a class='card h-100' href='{{ listing.get_absolute_url }}' style='color: black; text-decoration: none;'>
+      <img src='/media/{{ listing.image }}' class='card-img-top' alt='{{ listing.slug }}'>
+      <div class='card-body'>
+        <h5 class='card-title'>{{ listing.title|truncatechars:20 }}</h5>
+        <h6 class='card-subtitle  mb-2'>Category: {{ listing.category|lower }}</h6>
+        <h6 class='card-subtitle  mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
+        <p class='card-text'>{{ listing.description|truncatechars:50 }}</p>
+      </div>
+      <span class='card-footer'><small>Not Published</small></span>
+    </a>
+
+  </div>
+  {% empty %}
+  <p><b>No items owned.</b></p>
+  {% endfor %}
+</div>
+
+<h5 class='row mt-5'>Listings owned and published on auction</h5>
+<div class='row row-cols-1  row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6 g-2'>
+  {% for listing in owned_and_published %}
+  <div class='col'>
+
+    <a class='card h-100' href='{{ listing.get_absolute_url }}' style='color: black; text-decoration: none;'>
+      <img src='/media/{{ listing.image }}' class='card-img-top' alt='{{ listing.slug }}'>
+      <div class='card-body'>
+        <h5 class='card-title'>{{ listing.title|truncatechars:20 }}</h5>
+        <h6 class='card-subtitle  mb-2'>Category: {{ listing.category|lower }}</h6>
+        <h6 class='card-subtitle  mb-2'>Price: 🪙{{ listing.get_highest_price|floatformat:"-2" }}</h6>
+        <p class='card-text'>{{ listing.description|truncatechars:50 }}</p>
+      </div>
+      <span class='card-footer'><small>Published: {{ listing.date_published }}</small></span>
+    </a>
+
+  </div>
+  {% empty %}
+  <p><b>No lots on auction.</b></p>
+  {% endfor %}
+</div>
+
+<h5 class='row mt-5'>Auction lots are tracked</h5>
+<div class='row row-cols-1  row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6 g-2 mb-5'>
+  {% for listing in listing_watched %}
+  <div class='col'>
+
+    <a class='card h-100' href='{{ listing.get_absolute_url }}' style='color: black; text-decoration: none;'>
+      <img src='/media/{{ listing.image }}' class='card-img-top' alt='{{ listing.slug }}'>
+      <div class='card-body'>
+        <h5 class='card-title'>{{ listing.title|truncatechars:20 }}</h5>
+        <h6 class='card-subtitle  mb-2'>Category: {{ listing.category|lower }}</h6>
+        <h6 class='card-subtitle  mb-2'>Price: 🪙{{ listing.get_highest_price|floatformat:"-2" }}</h6>
+        <p class='card-text'>{{ listing.description|truncatechars:150 }}</p>
+      </div>
+      <span class='card-footer'><small>Published: {{ listing.date_published }}</small></span>
+    </a>
+
+  </div>
+  {% empty %}
+  <p><b>No items watched.</b></p>
+  {% endfor %}
+</div>
+
+{% endblock %}
