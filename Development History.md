@@ -82,3 +82,8 @@ Navbar & the active_nav template tag fixes. NavbarMixin.
 Set default starting price after item sold. <br>
 NavbarMixin & AuctionsAuthMixin. <br>
 IndexView. Listing cards. View by category.
+
+### 2022.AUG.16
+
+###### Auctions
+ProfileView with TransferMoneyForm.

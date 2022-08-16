@@ -1,7 +1,7 @@
 {% extends 'auctions/base_auctions.html' %}
 
 {% block main_content %}
-<h3>Active listings</h3>
+<h3 class='row'>Active listings</h3>
 
 <div class='row row-cols-1  row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6 g-2'>
   {% for lot in published_listings %}
@@ -11,7 +11,7 @@
       <img src='/media/{{ lot.image }}' class='card-img-top' alt='{{ lot.slug }}'>
       <div class='card-body'>
         <h5 class='card-title'>{{ lot.title|truncatechars:20 }}</h5>
-        <h6 class='card-subtitle  mb-2'>Price: 🪙{{ lot.get_highest_price }}</h6>
+        <h6 class='card-subtitle  mb-2'>Price: 🪙{{ lot.get_highest_price|floatformat:"-2" }}</h6>
         <p class='card-text'>{{ lot.description|truncatechars:150 }}</p>
       </div>
       <span class='card-footer'><small>Published: {{ lot.date_published }}</small></span>

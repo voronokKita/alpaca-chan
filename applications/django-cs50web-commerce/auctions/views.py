@@ -5,6 +5,7 @@ from django.views import generic
 from django.http import HttpResponseRedirect
 
 from .models import Profile, Listing, ListingCategory
+from .forms import TransferMoneyForm
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +66,19 @@ class AuctionsIndexView(NavbarMixin, generic.ListView):
             return Listing.manager.filter(is_active=True)
 
 
-class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
+class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/profile.html'
+    model = Profile
+    form_class = TransferMoneyForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_pk = self.kwargs.get('pk')
+        profile = Profile.manager.filter(pk=user_pk).first()
+        money, bets_total = profile.display_money()
+        context['user_money'] = money
+        context['bets_total'] = bets_total
+        return context
 
 
 class UserHistoryView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):

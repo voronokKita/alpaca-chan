@@ -1,7 +1,27 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% load static %}
+{% block main_content %}
+<h3 class='row'>Your Wallet</h3>
 
-{% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
+<table class="table-sm">
+  <tbody>
+    <tr>
+      <th scope="row">Available money:</th>
+      <td>🪙{{ user_money|floatformat:"-2" }}</td>
+    </tr>
+    <tr>
+      <th scope="row">Total bets:</th>
+      <td>🪙{{ bets_total|floatformat:"-2" }}</td>
+    </tr>
+  </tbody>
+</table>
 
-{% block main_content %}{% endblock %}
+<h4 class='row mt-5'>Transfer money to account</h4>
+<div class='row'>
+  <form method='POST' class='col-12 col-sm-5 col-md-3'>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type='submit' class='btn btn-primary'>Transfer</button>
+  </form>
+</div>
+{% endblock %}

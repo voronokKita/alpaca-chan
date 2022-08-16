@@ -19,14 +19,14 @@ SLUG_MAX_LEN = 16
 DEFAULT_STARTING_PRICE = 1
 
 LOG_REGISTRATION = 'Date of your registration.'
-LOG_MONEY_ADDED = 'Wallet topped up with %d coins.'
+LOG_MONEY_ADDED = 'Wallet topped up with %0.2f coins.'
 LOG_NEW_LISTING = 'The item [%s] has been added to your listings.'
-LOG_YOU_WON = 'The listing [%s] has been taken into possession. Price — %d.'
+LOG_YOU_WON = 'The listing [%s] has been taken into possession. Price — %0.2f.'
 LOG_LOT_PUBLISHED = 'You have created an auction — [%s].'
-LOG_NEW_BID = 'Made a bet on [%s]. Value — %d.'
+LOG_NEW_BID = 'Made a bet on [%s]. Value — %0.2f.'
 LOG_WITHDRAWN = 'You have withdrawn [%s] from the auction.'
-LOG_YOU_LOSE = 'You lost the auction — [%s]. Refund %d coins.'
-LOG_OWNER_REMOVED = 'The owner removed the lot [%s] from the auction. Refund %d coins.'
+LOG_YOU_LOSE = 'You lost the auction — [%s]. Refund %0.2f coins.'
+LOG_OWNER_REMOVED = 'The owner removed the lot [%s] from the auction. Refund %0.2f coins.'
 LOG_ITEM_SOLD = 'You closed the auction — [%s]. The winner is %s.'
 
 
@@ -81,10 +81,11 @@ class Profile(Model):
             self.logs.create(entry=LOG_REGISTRATION, date=date)
 
     def add_money(self, amount, silent=False):
-        self.money = F('money') + amount
-        self.save(update_fields=['money'])
-        if silent is False:
-            log_entry(self, 'money_added', coins=amount)
+        with transaction.atomic('auctions_db', savepoint=False):
+            self.money = F('money') + amount
+            self.save(update_fields=['money'])
+            if silent is False:
+                log_entry(self, 'money_added', coins=amount)
 
     def get_money(self, value) -> (float, LowOnMoney):
         if self.money >= value:
