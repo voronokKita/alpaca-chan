@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.http import HttpResponseRedirect
 
-from .models import Profile, Listing, ListingCategory
+from .models import Profile, Listing, ListingCategory, Log
 from .forms import TransferMoneyForm
 
 logger = logging.getLogger(__name__)
@@ -73,16 +73,20 @@ class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_pk = self.kwargs.get('pk')
-        profile = Profile.manager.filter(pk=user_pk).first()
+        profile = context['object']
         money, bets_total = profile.display_money()
         context['user_money'] = money
         context['bets_total'] = bets_total
         return context
 
 
-class UserHistoryView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
+class UserHistoryView(NavbarMixin, AuctionsAuthMixin, generic.ListView):
     template_name = 'auctions/user_history.html'
+    model = Log
+    context_object_name = 'profile_logs'
+
+    def get_queryset(self):
+        return Log.manager.filter(profile__pk=self.kwargs.get('pk'))
 
 
 class WatchlistView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):  # auctions/7/watchlist

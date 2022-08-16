@@ -86,4 +86,5 @@ IndexView. Listing cards. View by category.
 ### 2022.AUG.16
 
 ###### Auctions
-ProfileView with TransferMoneyForm.
+ProfileView with TransferMoneyForm. Fixed bug with float numbers format in the user logs. <br>
+UserHistoryView.

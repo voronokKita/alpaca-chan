@@ -1,7 +1,16 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% load static %}
+{% block title %}Auctions :: Your History{% endblock %}
 
-{% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
+{% block main_content %}
+<h3 class='row'>Your History</h3>
 
-{% block main_content %}{% endblock %}
+<ul class="list-group list-group-flush col-12">
+  {% for log_entry in profile_logs %}
+  <li class="list-group-item d-flex flex-wrap mb-1">
+    <span class="d-inline-flex" style='min-width: 180px; color: #424242;'>{{ log_entry.date }}</span>
+    <span class="d-inline-flex">{{ log_entry.entry }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
