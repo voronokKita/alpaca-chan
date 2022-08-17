@@ -5,7 +5,7 @@ from django.views import generic
 from django.http import HttpResponseRedirect
 
 from .models import Profile, Listing, ListingCategory, Log, Watchlist
-from .forms import TransferMoneyForm, CreateListingForm
+from .forms import TransferMoneyForm, CreateListingForm, PublishListingForm
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class ProfileView(NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
 
 
 class UserHistoryView(NavbarMixin, AuctionsAuthMixin, generic.ListView):
-    template_name = 'auctions/user_history.html'
+    template_name = 'auctions/profile_history.html'
     model = Log
     context_object_name = 'profile_logs'
 
@@ -115,12 +115,43 @@ class CreateListingView(NavbarMixin, AuctionsAuthMixin, generic.CreateView):
         return form
 
 
-class ListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
+class ListingView(NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/listing.html'
+    model = Listing
+    form_class = PublishListingForm
+    context_object_name = 'listing'
+
+    def get_object(self, queryset=None):
+        """ Not published listing only. """
+        instance = super().get_object(queryset)
+        if instance.is_active:
+            return HttpResponseRedirect(reverse('accounts:auction_lot', args=[instance.slug]))
+        else:
+            return instance
+
+
+class EditListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
+    template_name = 'auctions/listing_edit.html'
+
+    def get_object(self, queryset=None):
+        """ Not published listing only. """
+        instance = super().get_object(queryset)
+        if instance.is_active:
+            return HttpResponseRedirect(reverse('accounts:auction_lot', args=[instance.slug]))
+        else:
+            return instance
 
 
 class AuctionLotView(NavbarMixin, generic.TemplateView):
     template_name = 'auctions/listing_published.html'
+
+    def get_object(self, queryset=None):
+        """ Published listing only. """
+        instance = super().get_object(queryset)
+        if instance.is_active:
+            return HttpResponseRedirect(reverse('accounts:listing', args=[instance.slug]))
+        else:
+            return instance
 
 
 class CommentsView(NavbarMixin, generic.TemplateView):

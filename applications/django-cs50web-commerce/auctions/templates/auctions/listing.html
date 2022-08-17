@@ -1,7 +1,54 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% load static %}
+{% block title %}Auctions :: Listings :: {{ listing.title }}{% endblock %}
 
-{% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
+{% block main_content %}
+<div class='row mt-5'>
 
-{% block main_content %}{% endblock %}
+  <div class='col-0 col-md-0 col-lg-1 col-xl-2 col-xxl-3'></div>
+  <div class='col-12 col-md-12 col-lg-10 col-xl-8 col-xxl-6'>
+
+    <div class='card'>
+      <div class='card-body'>
+        <div class='row row-cols-1 row-cols-sm-2'>
+          <img class='col mb-2' src='/media/{{ listing.image }}' alt='{{ listing.slug }}'
+               style='width: fit-content; min-width: 120px; max-width: 200px;'>
+          <div class='col'>
+            <h3 class='card-title mb-3'>{{ listing.title }}</h3>
+            <h6 class='card-subtitle mb-3'>Category: {{ listing.category|lower }}</h6>
+            <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
+          </div>
+        </div>
+        <p class='card-text'>{{ listing.description }}</p>
+        <div class='d-inline'>
+          <a href='{% url "auctions:edit_listing" listing.slug %}' class='btn btn-secondary'>Edit</a>
+        </div>
+        <form method='POST' class='d-inline'>
+          {% csrf_token %}{{ form }}
+          <button type='submit' class='btn btn-warning'>Publish on the auction</button>
+        </form>
+      </div>
+      <span class='card-footer'><small>Created: {{ listing.date_created }}</small></span>
+    </div>
+
+    <h4 class='mt-5 mb-3'>
+      <a href='{% url "auctions:comments" listing.slug %}' style='text-decoration: none;'>Comments</a>
+    </h4>
+    <ul class="list-group ">
+      {% for comment in listing.comment_set.all %}
+      <li class="list-group-item d-flex justify-content-between align-items-start">
+        <div class="ms-2 me-auto">
+          <div class="fw-bold">{{ comment.author }}</div>
+          {{ comment.text }}
+        </div>
+        <span class="badge bg-secondary ">{{ comment.pub_date }}</span>
+      </li>
+      {% empty %}
+      <li class="list-group-item">No comments yet...</li>
+      {% endfor %}
+    </ul>
+
+  </div>
+
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils import timezone
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.text import slugify
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
@@ -245,7 +245,7 @@ class Listing(Model):
         db_table = 'auctions_listing'
         verbose_name = 'listing'
         verbose_name_plural = 'listings'
-        ordering = ['-date_published', '-date_created']
+        ordering = ['-date_published', '-date_created', 'slug']
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['date_published', 'date_created']),

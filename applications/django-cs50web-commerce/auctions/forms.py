@@ -1,11 +1,13 @@
 import logging
 
+from django.utils import timezone
 from django.forms import (
     ModelForm, Textarea,
     FloatField, NumberInput,
     CharField, TextInput,
     ImageField, ClearableFileInput,
-    ModelChoiceField, Select, HiddenInput
+    ModelChoiceField, Select, HiddenInput,
+    BooleanField, DateTimeField
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
@@ -30,6 +32,21 @@ class TransferMoneyForm(ModelForm):  # TODO test
         money = self.cleaned_data['transfer_money']
         self.instance.add_money(money)
         return money
+
+
+class PublishListingForm(ModelForm):  # TODO test
+    is_active = BooleanField(required=False, disabled=True, widget=HiddenInput())
+    date_published = DateTimeField(required=False, disabled=True, widget=HiddenInput())
+
+    class Meta:
+        model = Listing
+        fields = ['is_active', 'date_published']
+
+    def clean_is_active(self):
+        return True
+
+    def clean_date_published(self):
+        return timezone.localtime()
 
 
 class CreateListingForm(ModelForm):  # TODO test
@@ -77,7 +94,6 @@ class CreateListingForm(ModelForm):  # TODO test
         queryset=None,
         widget=HiddenInput()
     )
-
     class Meta:
         model = Listing
         fields = ['slug', 'title', 'category', 'starting_price',

@@ -92,4 +92,5 @@ UserHistoryView. WatchlistView.
 ### 2022.AUG.17
 
 ###### Auctions
-CreateListingView with CreateListingForm. That was surprisingly tough!
+CreateListingView with CreateListingForm. That was surprisingly tough! <br>
+ListingView with PublishListingForm.
