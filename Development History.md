@@ -88,3 +88,8 @@ IndexView. Listing cards. View by category.
 ###### Auctions
 ProfileView with TransferMoneyForm. Fixed bug with float numbers format in the user logs. <br>
 UserHistoryView. WatchlistView.
+
+### 2022.AUG.17
+
+###### Auctions
+CreateListingView with CreateListingForm. That was surprisingly tough!

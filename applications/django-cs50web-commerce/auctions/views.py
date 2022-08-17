@@ -5,7 +5,7 @@ from django.views import generic
 from django.http import HttpResponseRedirect
 
 from .models import Profile, Listing, ListingCategory, Log, Watchlist
-from .forms import TransferMoneyForm
+from .forms import TransferMoneyForm, CreateListingForm
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class NavbarMixin:
     def _get_auth_user_nav(pk: int) -> list:
         return [
             {'url': reverse_lazy('auctions:watchlist', args=[pk]), 'text': 'Watchlist'},
-            {'url': reverse_lazy('auctions:create_listing'), 'text': 'Create Listing'},
+            {'url': reverse_lazy('auctions:create_listing', args=[pk]), 'text': 'Create Listing'},
             {'url': reverse_lazy('auctions:profile', args=[pk]), 'text': 'Wallet'},
             {'url': reverse_lazy('auctions:user_history', args=[pk]), 'text': 'History'},
         ]
@@ -41,7 +41,6 @@ class NavbarMixin:
             ).first()
             if profile:
                 context['navbar_list'] += self._get_auth_user_nav(profile.pk)
-                context['auctioneer'] = profile
 
         return context
 
@@ -103,8 +102,17 @@ class WatchlistView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
         return context
 
 
-class CreateListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
+class CreateListingView(NavbarMixin, AuctionsAuthMixin, generic.CreateView):
     template_name = 'auctions/listing_create.html'
+    model = Listing
+    form_class = CreateListingForm
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        profile = Profile.manager.filter(pk=self.kwargs['pk'])
+        form.fields['owner'].queryset = profile
+        form.fields['owner'].initial = profile[0]
+        return form
 
 
 class ListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):

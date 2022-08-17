@@ -1,6 +1,18 @@
-from django.forms import ModelForm, FloatField, NumberInput
+import logging
 
-from .models import Profile
+from django.forms import (
+    ModelForm, Textarea,
+    FloatField, NumberInput,
+    CharField, TextInput,
+    ImageField, ClearableFileInput,
+    ModelChoiceField, Select, HiddenInput
+)
+from .models import (
+    SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
+    Profile, Listing, ListingCategory
+)
+
+logger = logging.getLogger(__name__)
 
 
 class TransferMoneyForm(ModelForm):  # TODO test
@@ -18,3 +30,55 @@ class TransferMoneyForm(ModelForm):  # TODO test
         money = self.cleaned_data['transfer_money']
         self.instance.add_money(money)
         return money
+
+
+class CreateListingForm(ModelForm):  # TODO test
+    slug = CharField(
+        label='SLUG (optional)',
+        required=False,
+        widget=TextInput(
+            attrs={'class': 'form-control', 'autocomplete': 'off',
+                   'placeholder': f'{SLUG_MAX_LEN} characters max',}
+        ),
+    )
+    title = CharField(
+        label='Listing title',
+        widget=TextInput(
+            attrs={'class': 'form-control', 'autocomplete': 'off',
+                   'placeholder': f'{LOT_TITLE_MAX_LEN} characters max',}
+        ),
+    )
+    category = ModelChoiceField(
+        label='Category',
+        queryset=ListingCategory.manager.all(),  # TODO filter ghost
+        widget=Select(attrs={'class': 'form-control',})
+    )
+    starting_price = FloatField(
+        label='Starting 🪙 price',
+        min_value=0.01,
+        initial=DEFAULT_STARTING_PRICE,
+        widget=NumberInput(
+            attrs={'class': 'form-control',}
+        ),
+    )
+    description = CharField(
+        label='Description',
+        min_length=10,
+        widget=Textarea(
+            attrs={'class': 'form-control',}
+        ),
+    )
+    image = ImageField(
+        label='Item image',
+        widget=ClearableFileInput(attrs={'class': 'form-control',})
+    )
+    owner = ModelChoiceField(
+        disabled=True,
+        queryset=None,
+        widget=HiddenInput()
+    )
+
+    class Meta:
+        model = Listing
+        fields = ['slug', 'title', 'category', 'starting_price',
+                  'description', 'image', 'owner']

@@ -18,6 +18,7 @@ from core.utils import unique_slugify
 class LowOnMoney(Exception): pass
 
 SLUG_MAX_LEN = 16
+LOT_TITLE_MAX_LEN = 300
 DEFAULT_STARTING_PRICE = 1
 
 LOG_REGISTRATION = 'Date of your registration.'
@@ -48,7 +49,8 @@ def log_entry(profile, msg, listing='None', user='None', coins=0):
 
 
 def user_media_path(listing, filename):
-    """ Files will be uploaded to MEDIA_ROOT/auctions/listings/2022.08.08__<listing_slug>/ """
+    """ Files will be uploaded to
+        MEDIA_ROOT/auctions/listings/2022.08.08__<listing.slug>/<filename> """
     date = timezone.localdate().strftime('%Y.%m.%d')
     return f'auctions/listings/{date}__{listing.slug}/{filename}'
 
@@ -224,10 +226,10 @@ class Listing(Model):
     manager = models.Manager()
 
     slug = SlugField('slug', unique=True, blank=True, max_length=SLUG_MAX_LEN)
-    title = CharField('listing title', max_length=300)
+    title = CharField('listing title', max_length=LOT_TITLE_MAX_LEN)
     description = TextField('listing description')
-    image = ImageField('visual presentation', upload_to=user_media_path, max_length=500)
-    starting_price = FloatField(default=DEFAULT_STARTING_PRICE)
+    image = ImageField('visual presentation', upload_to=user_media_path, max_length=300)
+    starting_price = FloatField(default=DEFAULT_STARTING_PRICE, blank=True)
 
     date_created = DateTimeField('created', default=timezone.localtime)
     date_published = DateTimeField('published', null=True, blank=True, default=None)
@@ -258,19 +260,21 @@ class Listing(Model):
     def save(self, *args, **kwargs):
         """ Auto get a unique slug and
             add a new listing to owner's watchlist. """
-        if not self.pk:
-            if self.slug: s = str(self.slug)
-            else: s = slugify(self.title)
-            unique_slugify(self, s)
-            log_entry(self.owner, 'new_item', self.title)
+        with transaction.atomic('auctions_db', savepoint=False):
+            if not self.pk:
+                if self.slug: s = str(self.slug)
+                else: s = slugify(self.title)
+                unique_slugify(self, s)
+                log_entry(self.owner, 'new_item', self.title)
 
-        super().save(*args, **kwargs)
-        if self.in_watchlist.contains(self.owner) is False:
-            self.in_watchlist.add(self.owner)
+            super().save(*args, **kwargs)
+            if self.in_watchlist.contains(self.owner) is False:
+                self.in_watchlist.add(self.owner)
 
     def delete(self, **kwargs):
-        self.image.delete()
-        return super().delete(**kwargs)
+        with transaction.atomic('auctions_db', savepoint=False):
+            self.image.delete()
+            return super().delete(**kwargs)
 
     def publish_the_lot(self) -> bool:
         """ Make the listing available on the auction. """
