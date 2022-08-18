@@ -5,7 +5,7 @@ from django.views import generic
 from django.shortcuts import redirect
 
 from .models import Profile, Listing, ListingCategory, Log
-from .forms import TransferMoneyForm, CreateListingForm, EditListingForm, PublishListingForm
+from .forms import TransferMoneyForm, CreateListingForm, EditListingForm, PublishListingForm, AuctionLotForm
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileMixin:
+    # TODO session
     profile = None
 
     def dispatch(self, request, *args, **kwargs):
@@ -70,13 +71,15 @@ class AuctionsIndexView(ProfileMixin, NavbarMixin, generic.ListView):
 
     def get_queryset(self):
         if self.kwargs.get('category_pk'):
-            return Listing.manager.filter(category__pk=self.kwargs['category_pk'],
-                                          is_active=True).all()
+            return Listing.manager.filter(
+                category__pk=self.kwargs['category_pk'], is_active=True
+            ).all()
         else:
             return Listing.manager.filter(is_active=True).all()
 
 
-class ProfileView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
+class ProfileView(ProfileMixin, NavbarMixin,
+                  AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/profile.html'
     model = Profile
     context_object_name = 'profile'
@@ -93,7 +96,8 @@ class ProfileView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.UpdateVi
         return context
 
 
-class UserHistoryView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.ListView):
+class UserHistoryView(ProfileMixin, NavbarMixin,
+                      AuctionsAuthMixin, generic.ListView):
     template_name = 'auctions/profile_history.html'
     model = Log
     context_object_name = 'profile_logs'
@@ -102,7 +106,8 @@ class UserHistoryView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.List
         return self.profile.logs.all()
 
 
-class WatchlistView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
+class WatchlistView(ProfileMixin, NavbarMixin,
+                    AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/watchlist.html'
 
     def get_context_data(self, **kwargs):
@@ -119,7 +124,8 @@ class WatchlistView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.Templa
         return context
 
 
-class CreateListingView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.CreateView):
+class CreateListingView(ProfileMixin, NavbarMixin,
+                        AuctionsAuthMixin, generic.CreateView):
     template_name = 'auctions/listing_create.html'
     model = Listing
     form_class = CreateListingForm
@@ -131,36 +137,40 @@ class CreateListingView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.Cr
         return form
 
 
-class ListingView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
+class ListingView(ProfileMixin, NavbarMixin,
+                  AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/listing.html'
     model = Listing
-    form_class = PublishListingForm
     context_object_name = 'listing'
-
-    def get_queryset(self):
-        return Listing.manager.select_related('category').all()
+    form_class = PublishListingForm
 
 
-class EditListingView(ProfileMixin, NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
+class EditListingView(ProfileMixin, NavbarMixin,
+                      AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/listing_edit.html'
     model = Listing
-    form_class = EditListingForm
     context_object_name = 'listing'
-
-    def get_queryset(self):
-        return Listing.manager.select_related('category').all()
+    form_class = EditListingForm
 
 
-class AuctionLotView(ProfileMixin, NavbarMixin, generic.DetailView):
+class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
     # TODO anon, owner, other - separate logic
     template_name = 'auctions/listing_published.html'
     model = Listing
     context_object_name = 'listing'
+    form_class = AuctionLotForm
 
-    def get_queryset(self):
-        return Listing.manager.\
-            select_related('owner', 'category').\
-            filter(slug=self.kwargs.get('slug'))
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        form.fields['auctioneer'].initial = self.profile.username
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.object.bid_possibility(self.profile) is False:
+            context['form'].fields['bid_value'].disabled = True
+            context['bid_forbidden'] = True
+        return context
 
 
 class CommentsView(ProfileMixin, NavbarMixin, generic.TemplateView):

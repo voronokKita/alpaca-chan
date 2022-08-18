@@ -1,0 +1,39 @@
+<form method='POST' class='d-inline'>
+{% csrf_token %}
+{{ form.non_field_errors }}
+{{ form.ghost_field.errors }}
+{{ form.ghost_field }}
+
+{% if request.user.username == listing.owner.username %}
+
+  {% if listing.potential_buyers.count > 0 %}
+    <button type='submit' name='owner_closed_auction' class='btn btn-warning'>Close the auction</button>
+  {% endif %}
+  <button type='submit' name='owner_withdrew' class='btn btn-danger'>Cancel the auction</button>
+
+{% else %}
+
+  {% load listing_tags %}
+  {% in_watchlist listing request.user.username as in_watchlist_flag %}
+  {% can_unwatch listing request.user.username as can_unwatch_flag %}
+  {% can_bid listing request.user.username as can_bid_flag %}
+
+  {{ form.bid_value.errors }}
+  {{ form.bid_value }}
+
+  {% if can_bid_flag %}
+    {{ form.auctioneer.errors }}
+    {{ form.auctioneer }}
+    <button type='submit' name='user_bid' class='btn btn-warning'>Make a bid</button>
+  {% elif bid_forbidden %}
+    <span class='btn btn-warning disabled'>Can't place a bet</span>
+  {% endif %}
+
+  {% if in_watchlist_flag is False %}
+    <button type='submit' name='user_watching' class='btn btn-info'>Add to watchlist</button>
+  {% elif in_watchlist_flag and can_unwatch_flag %}
+    <button type='submit' name='user_unwatched' class='btn btn-info'>Remove form watchlist</button>
+  {% endif %}
+
+{% endif %}
+</form>

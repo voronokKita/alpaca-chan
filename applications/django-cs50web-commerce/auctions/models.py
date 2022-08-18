@@ -14,10 +14,12 @@ from django.db.models import (
 from core.utils import unique_slugify
 
 # TODO get listing out from watchlists of all the users if it has been sold, except for the new owner
+# TODO each new bid must bee higher on %
 
 class LowOnMoney(Exception): pass
 
 SLUG_MAX_LEN = 16
+USERNAME_MAX_LEN = 150
 LOT_TITLE_MAX_LEN = 300
 DEFAULT_STARTING_PRICE = 1
 
@@ -58,7 +60,7 @@ def user_media_path(listing, filename):
 class Profile(Model):
     manager = models.Manager()
 
-    username = CharField(max_length=30, db_index=True)
+    username = CharField(max_length=USERNAME_MAX_LEN, db_index=True)
     money = FloatField('money on account', default=0.0)
 
     class Meta:

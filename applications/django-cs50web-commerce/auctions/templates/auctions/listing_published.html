@@ -28,7 +28,7 @@
         </div>
         <p class='card-text'>{{ listing.description }}</p>
         {% if request.user.is_authenticated %}
-          {% include 'auctions/_listing_published_formset.html' %}
+          {% include 'auctions/_listing_published_form.html' %}
         {% endif %}
       </div>
       <span class='card-footer'><small>Published: {{ listing.date_published }}</small></span>

@@ -1,18 +1,16 @@
 import logging
 
-from django.utils import timezone
 from django.forms import (
     ModelForm, Textarea,
     FloatField, NumberInput,
     CharField, TextInput,
     ImageField, ClearableFileInput,
     ModelChoiceField, Select, HiddenInput,
-    BooleanField, DateTimeField,
-    ValidationError
+    BooleanField, ValidationError,
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
-    Profile, Listing, ListingCategory
+    USERNAME_MAX_LEN, Profile, Listing, ListingCategory
 )
 
 logger = logging.getLogger(__name__)
@@ -38,11 +36,11 @@ class TransferMoneyForm(ModelForm):  # TODO test
 
 
 class PublishListingForm(ModelForm):  # TODO test
-    foo = BooleanField(required=False, disabled=True, widget=HiddenInput())
+    ghost_field = BooleanField(required=False, disabled=True, widget=HiddenInput())
 
     class Meta:
         model = Listing
-        fields = ['foo']
+        fields = ['ghost_field']
 
     def clean(self):
         if self.instance.can_be_published() is False:
@@ -57,7 +55,26 @@ class PublishListingForm(ModelForm):  # TODO test
 
 
 class AuctionLotForm(ModelForm):  # TODO test
-    pass
+    ghost_field = BooleanField(required=False, disabled=True, widget=HiddenInput())
+    auctioneer = CharField(required=False, disabled=True,
+                           max_length=USERNAME_MAX_LEN, widget=HiddenInput())
+    bid_value = FloatField(
+        label='',
+        min_value=0.01,
+        initial=0.01,
+        required=False,
+        widget=NumberInput(attrs={'class': 'form-control d-inline', 'style': 'width: 100px;'})
+    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        highest_price = kwargs['instance'].get_highest_price() + 0.01  # TODO each new bid must bee higher on %
+        self.fields['bid_value'].initial = highest_price
+        self.fields['bid_value'].min_value = highest_price
+        self.fields['bid_value'].widget.attrs['min'] = highest_price
+
+    class Meta:
+        model = Listing
+        fields = ['ghost_field', 'bid_value']
 
 
 class EditListingForm(ModelForm):  # TODO test
