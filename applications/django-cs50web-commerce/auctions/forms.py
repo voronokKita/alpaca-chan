@@ -34,7 +34,7 @@ class TransferMoneyForm(ModelForm):  # TODO test
         return money
 
 
-class PublishListingForm(ModelForm):  # TODO test
+class PublishListingForm(ModelForm):  # TODO test, use function 'publish_the_lot'
     is_active = BooleanField(required=False, disabled=True, widget=HiddenInput())
     date_published = DateTimeField(required=False, disabled=True, widget=HiddenInput())
 
@@ -47,6 +47,26 @@ class PublishListingForm(ModelForm):  # TODO test
 
     def clean_date_published(self):
         return timezone.localtime()
+
+
+class WithdrawListingForm(ModelForm):
+    pass
+
+
+class PlaceNewBidForm(ModelForm):
+    pass
+
+
+class CloseTheAuctionForm(ModelForm):
+    pass
+
+
+class AddListingToWatchlistForm(ModelForm):
+    pass
+
+
+class RemoveListingToWatchlistForm(ModelForm):
+    pass
 
 
 class CreateListingForm(ModelForm):  # TODO test

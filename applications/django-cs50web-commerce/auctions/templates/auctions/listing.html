@@ -3,6 +3,7 @@
 {% block title %}Auctions :: Listings :: {{ listing.title }}{% endblock %}
 
 {% block main_content %}
+{% if listing.is_active is False %}
 <div class='row mt-5'>
 
   <div class='col-0 col-md-0 col-lg-1 col-xl-2 col-xxl-3'></div>
@@ -31,24 +32,10 @@
       <span class='card-footer'><small>Created: {{ listing.date_created }}</small></span>
     </div>
 
-    <h4 class='mt-5 mb-3'>
-      <a href='{% url "auctions:comments" listing.slug %}' style='text-decoration: none;'>Comments</a>
-    </h4>
-    <ul class="list-group ">
-      {% for comment in listing.comment_set.all %}
-      <li class="list-group-item d-flex justify-content-between align-items-start">
-        <div class="ms-2 me-auto">
-          <div class="fw-bold">{{ comment.author }}</div>
-          {{ comment.text }}
-        </div>
-        <span class="badge bg-secondary ">{{ comment.pub_date }}</span>
-      </li>
-      {% empty %}
-      <li class="list-group-item">No comments yet...</li>
-      {% endfor %}
-    </ul>
+    {% include 'auctions/_comment_section.html' %}
 
   </div>
 
 </div>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,16 @@
+<h4 class='mt-5 mb-3'>
+  <a href='{% url "auctions:comments" listing.slug %}' style='text-decoration: none;'>Comments</a>
+</h4>
+<ul class="list-group ">
+  {% for comment in listing.comment_set.all %}
+  <li class="list-group-item d-flex justify-content-between align-items-start">
+    <div class="ms-2 me-auto">
+      <div class="fw-bold">{{ comment.author }}</div>
+      {{ comment.text }}
+    </div>
+    <span class="badge bg-secondary ">{{ comment.pub_date }}</span>
+  </li>
+  {% empty %}
+  <li class="list-group-item">No comments yet...</li>
+  {% endfor %}
+</ul>

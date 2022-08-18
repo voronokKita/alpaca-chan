@@ -2,12 +2,14 @@ import logging
 
 from django.urls import reverse, reverse_lazy
 from django.views import generic
-from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 
 from .models import Profile, Listing, ListingCategory, Log, Watchlist
 from .forms import TransferMoneyForm, CreateListingForm, PublishListingForm
 
 logger = logging.getLogger(__name__)
+
+# TODO bets placed view
 
 
 class NavbarMixin:
@@ -41,6 +43,7 @@ class NavbarMixin:
             ).first()
             if profile:
                 context['navbar_list'] += self._get_auth_user_nav(profile.pk)
+                context['auctioneer'] = profile
 
         return context
 
@@ -48,7 +51,7 @@ class NavbarMixin:
 class AuctionsAuthMixin:
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return HttpResponseRedirect(reverse('accounts:login_and_next', args=['auctions']))
+            return redirect(reverse('accounts:login_and_next', args=['auctions']))
         else:
             return super().dispatch(request, *args, **kwargs)
 
@@ -109,7 +112,7 @@ class CreateListingView(NavbarMixin, AuctionsAuthMixin, generic.CreateView):
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        profile = Profile.manager.filter(pk=self.kwargs['pk'])
+        profile = Profile.manager.filter(pk=self.kwargs.get('pk'))
         form.fields['owner'].queryset = profile
         form.fields['owner'].initial = profile[0]
         return form
@@ -121,37 +124,21 @@ class ListingView(NavbarMixin, AuctionsAuthMixin, generic.UpdateView):
     form_class = PublishListingForm
     context_object_name = 'listing'
 
-    def get_object(self, queryset=None):
-        """ Not published listing only. """
-        instance = super().get_object(queryset)
-        if instance.is_active:
-            return HttpResponseRedirect(reverse('accounts:auction_lot', args=[instance.slug]))
-        else:
-            return instance
-
 
 class EditListingView(NavbarMixin, AuctionsAuthMixin, generic.TemplateView):
     template_name = 'auctions/listing_edit.html'
 
-    def get_object(self, queryset=None):
-        """ Not published listing only. """
-        instance = super().get_object(queryset)
-        if instance.is_active:
-            return HttpResponseRedirect(reverse('accounts:auction_lot', args=[instance.slug]))
-        else:
-            return instance
 
-
-class AuctionLotView(NavbarMixin, generic.TemplateView):
+class AuctionLotView(NavbarMixin, generic.DetailView):
+    # TODO anon, owner, other - separate logic
     template_name = 'auctions/listing_published.html'
+    model = Listing
+    context_object_name = 'listing'
 
-    def get_object(self, queryset=None):
-        """ Published listing only. """
-        instance = super().get_object(queryset)
-        if instance.is_active:
-            return HttpResponseRedirect(reverse('accounts:listing', args=[instance.slug]))
-        else:
-            return instance
+    def get_queryset(self):
+        return Listing.manager.\
+            select_related('owner', 'category').\
+            filter(slug=self.kwargs.get('slug'))
 
 
 class CommentsView(NavbarMixin, generic.TemplateView):

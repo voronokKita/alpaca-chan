@@ -94,3 +94,10 @@ UserHistoryView. WatchlistView.
 ###### Auctions
 CreateListingView with CreateListingForm. That was surprisingly tough! <br>
 ListingView with PublishListingForm.
+
+### 2022.AUG.18
+
+###### Auctions
+To implement a redirect between ListingView, EditListingView and AuctionLotView and vice versa, in order of listing.is_active logic to work, I need to request the same listing instance from the db twice. So far I don’t know how to get around this, so instead of a redirect I will display an empty page.
+
+Wrote AuctionLotView basics, with buttons templates for future forms; logic with tags. 

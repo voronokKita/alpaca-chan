@@ -1,7 +1,43 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% load static %}
+{% block title %}Auctions :: Lots :: {{ listing.title }}{% endblock %}
 
-{% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
+{% block main_content %}
+{% if listing.is_active %}
+<div class='row mt-5'>
 
-{% block main_content %}{% endblock %}
+  <div class='col-0 col-md-0 col-lg-1 col-xl-2 col-xxl-3'></div>
+  <div class='col-12 col-md-12 col-lg-10 col-xl-8 col-xxl-6'>
+
+    <div class='card'>
+      <div class='card-body'>
+        <div class='row row-cols-1 row-cols-sm-2'>
+          <img class='col mb-2' src='/media/{{ listing.image }}' alt='{{ listing.slug }}'
+               style='width: fit-content; min-width: 120px; max-width: 200px;'>
+          <div class='col'>
+            <h3 class='card-title mb-3'>{{ listing.title }}</h3>
+            <h6 class='card-subtitle mb-2'>Owner: {{ listing.owner.username }}</h6>
+            <h6 class='card-subtitle mb-3'>Category: {{ listing.category|lower }}</h6>
+            <h6 class='card-subtitle mb-2'>Bets placed: {{ listing.potential_buyers.count }}</h6>
+            {% if listing.potential_buyers.count == 0 %}
+            <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
+            {% else %}
+            <h6 class='card-subtitle mb-2'>Highest price: 🪙{{ listing.get_highest_price|floatformat:"-2" }}</h6>
+            {% endif %}
+          </div>
+        </div>
+        <p class='card-text'>{{ listing.description }}</p>
+        {% if request.user.is_authenticated %}
+          {% include 'auctions/_listing_published_formset.html' %}
+        {% endif %}
+      </div>
+      <span class='card-footer'><small>Published: {{ listing.date_published }}</small></span>
+    </div>
+
+  {% include 'auctions/_comment_section.html' %}
+
+  </div>
+
+</div>
+{% endif %}
+{% endblock %}

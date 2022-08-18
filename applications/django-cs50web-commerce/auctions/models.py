@@ -307,20 +307,38 @@ class Listing(Model):
                 self.save()
             return True
 
-    def unwatch(self, profile) -> bool:
-        """ Remove from watchlist if
-            the user is not the owner or potential buyer of the lot. """
+    def check_name_in_watchlist(self, username:str) -> bool:  # TODO test
+        for profile in self.in_watchlist.iterator():
+            if profile.username == username:
+                return True
+        else:
+            return False
+
+    def can_unwatch(self, profile=None, username=None) -> bool:  # TODO test
+        if username:
+            profile = Profile.manager.filter(username=username).first()
         if self.is_active is False or \
                 profile == self.owner or \
                 self.potential_buyers.contains(profile):
             return False
         else:
+            return True
+
+    def unwatch(self, profile) -> bool:
+        """ Remove from watchlist if
+            the user is not the owner or potential buyer of the lot. """
+        if self.can_unwatch(profile) is False:
+            return False
+        else:
             self.in_watchlist.remove(profile)
             return True
 
-    def bid_possibility(self, auctioneer, return_highest_bid=False) -> bool or Bid:
+    def bid_possibility(self, auctioneer=None, username=None, return_highest_bid=False) -> bool or Bid:  # TODO test
         """ Initial check of the possibility to place a bid.
             Can return bool or the highest bid. """
+        if username:
+            auctioneer = Profile.manager.filter(username=username).first()
+
         if not self.is_active or \
                 self.owner == auctioneer or \
                 (self.potential_buyers.count() == 0 and
@@ -382,7 +400,7 @@ class Listing(Model):
         self.owner = new_owner
         super().save(update_fields=['owner'])
 
-    def get_highest_price(self):
+    def get_highest_price(self):  # TODO test
         try:
             highest_bid = self.bid_set.latest()
         except ObjectDoesNotExist:
