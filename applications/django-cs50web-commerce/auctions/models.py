@@ -203,9 +203,10 @@ class Watchlist(Model):
     def get_absolute_url(self):
         return reverse('auctions:watchlist', args=[self.profile.pk])
 
-    def generate_watchlist(self) -> (list, list, list):  # TODO test
+    def generate_watchlist(self) -> (list, list, list):
         """ Will return 3 lists: items owned,
-            items owned and published, and just watched. """
+            items owned and published, and just watched.
+            **DEPRECATED** """
         items_owned = []
         items_owned_and_published = []
         just_watched = []
@@ -253,9 +254,9 @@ class Listing(Model):
 
     def get_absolute_url(self):
         if self.is_active:
-            return reverse('auctions:auction_lot', args=[self.slug])
+            return reverse_lazy('auctions:auction_lot', args=[self.slug])
         else:
-            return reverse('auctions:listing', args=[self.slug])
+            return reverse_lazy('auctions:listing', args=[self.slug])
 
     def save(self, *args, **kwargs):
         """ Auto get a unique slug and
@@ -276,9 +277,15 @@ class Listing(Model):
             self.image.delete()
             return super().delete(**kwargs)
 
+    def can_be_published(self) -> bool:   # TODO test
+        if self.starting_price < 1 or self.is_active is True:
+            return False
+        else:
+            return True
+
     def publish_the_lot(self) -> bool:
         """ Make the listing available on the auction. """
-        if self.starting_price < 1 or self.is_active is True:
+        if self.can_be_published() is False:
             return False
         else:
             with transaction.atomic('auctions_db', savepoint=False):
@@ -400,7 +407,7 @@ class Listing(Model):
         self.owner = new_owner
         super().save(update_fields=['owner'])
 
-    def get_highest_price(self):  # TODO test
+    def get_highest_price(self):  # TODO test or make a field
         try:
             highest_bid = self.bid_set.latest()
         except ObjectDoesNotExist:

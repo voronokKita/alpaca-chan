@@ -26,7 +26,7 @@
         </div>
         <form method='POST' class='d-inline'>
           {% csrf_token %}{{ form }}
-          <button type='submit' class='btn btn-warning'>Publish on the auction</button>
+          <button type='submit' class='btn btn-warning'>Publish and start the auction</button>
         </form>
       </div>
       <span class='card-footer'><small>Created: {{ listing.date_created }}</small></span>

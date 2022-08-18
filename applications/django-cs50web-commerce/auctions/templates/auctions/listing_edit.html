@@ -1,16 +1,17 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% block title %}Auctions :: Create New Listing{% endblock %}
+{% block title %}Auctions :: Edit Listing :: {{ listing.title }}{% endblock %}
 
 {% block main_content %}
 <div class='row'>
   <div class='col-0 col-md-1 col-lg-2 col-xl-2 col-xxl-3'></div>
   <div class='col-12 col-md-10 col-lg-8 col-xl-7 col-xxl-6'>
-    <h3>Create New Listing</h3>
+    <h3>Edit «{{ listing.title }}»</h3>
     <form method='POST' enctype='multipart/form-data'>
       {% csrf_token %}
       {{ form.as_p }}
-      <button type='submit' class='btn btn-primary'>Create</button>
+      <button type='submit' name='button_save' class='btn btn-success'>Save changes</button>
+      <button type='submit' name='button_publish' class='btn btn-warning'>Save and start the auction</button>
     </form>
   </div>
 </div>

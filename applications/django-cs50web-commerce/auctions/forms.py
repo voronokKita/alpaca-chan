@@ -7,7 +7,8 @@ from django.forms import (
     CharField, TextInput,
     ImageField, ClearableFileInput,
     ModelChoiceField, Select, HiddenInput,
-    BooleanField, DateTimeField
+    BooleanField, DateTimeField,
+    ValidationError
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
@@ -33,40 +34,73 @@ class TransferMoneyForm(ModelForm):  # TODO test
         self.instance.add_money(money)
         return money
 
+    # TODO def is_valid(self):
 
-class PublishListingForm(ModelForm):  # TODO test, use function 'publish_the_lot'
-    is_active = BooleanField(required=False, disabled=True, widget=HiddenInput())
-    date_published = DateTimeField(required=False, disabled=True, widget=HiddenInput())
+
+class PublishListingForm(ModelForm):  # TODO test
+    foo = BooleanField(required=False, disabled=True, widget=HiddenInput())
 
     class Meta:
         model = Listing
-        fields = ['is_active', 'date_published']
+        fields = ['foo']
 
-    def clean_is_active(self):
-        return True
+    def clean(self):
+        if self.instance.can_be_published() is False:
+            raise ValidationError('ERROR: this lot already published!')
+        return super().clean()
 
-    def clean_date_published(self):
-        return timezone.localtime()
+    def is_valid(self):
+        if super().is_valid():
+            return self.instance.publish_the_lot()
+        else:
+            return False
 
 
-class WithdrawListingForm(ModelForm):
+class AuctionLotForm(ModelForm):  # TODO test
     pass
 
 
-class PlaceNewBidForm(ModelForm):
-    pass
+class EditListingForm(ModelForm):  # TODO test
+    title = CharField(
+        label='Listing title',
+        help_text=f'{LOT_TITLE_MAX_LEN} characters max',
+        widget=TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'})
+    )
+    category = ModelChoiceField(
+        label='Category',
+        queryset=ListingCategory.manager.all(),  # TODO filter ghost
+        widget=Select(attrs={'class': 'form-control'})
+    )
+    starting_price = FloatField(
+        label='Starting 🪙 price',
+        min_value=0.01,
+        widget=NumberInput(attrs={'class': 'form-control'})
+    )
+    description = CharField(
+        label='Description',
+        min_length=10,
+        widget=Textarea(attrs={'class': 'form-control'})
+    )
+    image = ImageField(
+        label='Item image',
+        widget=ClearableFileInput(attrs={'class': 'form-control'})
+    )
+    class Meta:
+        model = Listing
+        fields = ['title', 'category', 'starting_price', 'description', 'image']
 
+    def clean(self):
+        if 'button_publish' in self.data and self.instance.can_be_published() is False:
+            raise ValidationError('ERROR: this lot already published!')
+        return super().clean()
 
-class CloseTheAuctionForm(ModelForm):
-    pass
-
-
-class AddListingToWatchlistForm(ModelForm):
-    pass
-
-
-class RemoveListingToWatchlistForm(ModelForm):
-    pass
+    def is_valid(self):
+        if super().is_valid() is False:
+            return False
+        elif 'button_publish' in self.data:
+            return self.instance.publish_the_lot()
+        else:
+            return True
 
 
 class CreateListingForm(ModelForm):  # TODO test
@@ -75,39 +109,35 @@ class CreateListingForm(ModelForm):  # TODO test
         required=False,
         widget=TextInput(
             attrs={'class': 'form-control', 'autocomplete': 'off',
-                   'placeholder': f'{SLUG_MAX_LEN} characters max',}
-        ),
+                   'placeholder': f'{SLUG_MAX_LEN} characters max'}
+        )
     )
     title = CharField(
         label='Listing title',
         widget=TextInput(
             attrs={'class': 'form-control', 'autocomplete': 'off',
-                   'placeholder': f'{LOT_TITLE_MAX_LEN} characters max',}
-        ),
+                   'placeholder': f'{LOT_TITLE_MAX_LEN} characters max'}
+        )
     )
     category = ModelChoiceField(
         label='Category',
         queryset=ListingCategory.manager.all(),  # TODO filter ghost
-        widget=Select(attrs={'class': 'form-control',})
+        widget=Select(attrs={'class': 'form-control'})
     )
     starting_price = FloatField(
         label='Starting 🪙 price',
         min_value=0.01,
         initial=DEFAULT_STARTING_PRICE,
-        widget=NumberInput(
-            attrs={'class': 'form-control',}
-        ),
+        widget=NumberInput(attrs={'class': 'form-control'})
     )
     description = CharField(
         label='Description',
         min_length=10,
-        widget=Textarea(
-            attrs={'class': 'form-control',}
-        ),
+        widget=Textarea(attrs={'class': 'form-control'})
     )
     image = ImageField(
         label='Item image',
-        widget=ClearableFileInput(attrs={'class': 'form-control',})
+        widget=ClearableFileInput(attrs={'class': 'form-control'})
     )
     owner = ModelChoiceField(
         disabled=True,
