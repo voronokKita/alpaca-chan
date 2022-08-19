@@ -104,10 +104,16 @@ STATIC_ROOT = BASE_DIR / 'static_for_deployment'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-# File upload
+
 # https://docs.djangoproject.com/en/4.0/topics/files/
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# https://django.fun/docs/django/ru/4.0/topics/http/sessions/
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+SESSION_COOKIE_AGE = 86400
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = True
 # </application definition>
 
 

@@ -10,6 +10,7 @@
     <form method='POST' enctype='multipart/form-data'>
       {% csrf_token %}
       {{ form.as_p }}
+      <a href='{{ listing.get_absolute_url }}' class='btn btn-secondary'>Go back</a>
       <button type='submit' name='button_save' class='btn btn-success'>Save changes</button>
       <button type='submit' name='button_publish' class='btn btn-warning'>Save and start the auction</button>
     </form>

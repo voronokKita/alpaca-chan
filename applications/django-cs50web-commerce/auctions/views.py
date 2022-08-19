@@ -18,14 +18,25 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileMixin:
-    # TODO session
-    profile = None
+    auctioneer = None
+    auctioneer_pk = None
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            self.profile = Profile.manager.filter(
-                username=request.user.username
-            ).first()
+            self.auctioneer = request.user.username
+
+            request.session.clear_expired()
+            auctioneer_pk = request.session.get('auctioneer_pk')
+
+            if auctioneer_pk:
+                self.auctioneer_pk = auctioneer_pk
+            else:
+                profile = Profile.manager.filter(
+                    username=self.auctioneer
+                ).first()
+                request.session['auctioneer_pk'] = profile.pk
+                self.auctioneer_pk = profile.pk
+
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -54,10 +65,8 @@ class NavbarMixin:
         context = super().get_context_data(**kwargs)
         context['expand_navbar'] = True
         context['navbar_list'] = self._get_default_nav()
-        if self.request.user.is_authenticated:
-            if self.profile:
-                context['navbar_list'] += self._get_auth_user_nav(self.profile.pk)
-
+        if self.auctioneer_pk:
+            context['navbar_list'] += self._get_auth_user_nav(self.auctioneer_pk)
         return context
 
 
@@ -76,11 +85,16 @@ class AuctionsIndexView(ProfileMixin, NavbarMixin, generic.ListView):
 
     def get_queryset(self):
         if self.kwargs.get('category_pk'):
-            return Listing.manager.filter(
-                category__pk=self.kwargs['category_pk'], is_active=True
-            ).all()
+            return Listing.manager\
+                .select_related('category')\
+                .filter(
+                    category__pk=self.kwargs.get('category_pk'),
+                    is_active=True
+                ).all()
         else:
-            return Listing.manager.filter(is_active=True).all()
+            return Listing.manager\
+                .select_related('category')\
+                .filter(is_active=True).all()
 
 
 class ProfileView(ProfileMixin, NavbarMixin,
@@ -90,12 +104,12 @@ class ProfileView(ProfileMixin, NavbarMixin,
     context_object_name = 'profile'
     form_class = TransferMoneyForm
 
-    def get_object(self, queryset=None):
-        return self.profile
+    def get_queryset(self):
+        return Profile.manager.filter(pk=self.auctioneer_pk)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        money, bets_total = self.profile.display_money()
+        money, bets_total = context['profile'].display_money()
         context['user_money'] = money
         context['bets_total'] = bets_total
         return context
@@ -108,24 +122,37 @@ class UserHistoryView(ProfileMixin, NavbarMixin,
     context_object_name = 'profile_logs'
 
     def get_queryset(self):
-        return self.profile.logs.all()
+        return Log.manager.filter(
+            profile__pk=self.auctioneer_pk
+        ).all()
 
 
 class WatchlistView(ProfileMixin, NavbarMixin,
-                    AuctionsAuthMixin, generic.TemplateView):
+                    AuctionsAuthMixin, generic.DetailView):
     template_name = 'auctions/watchlist.html'
+    model = Profile
+    context_object_name = 'profile'
+
+    def get_queryset(self):
+        return Profile.manager.filter(pk=self.auctioneer_pk)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['listing_owned'] = self.profile.items_watched\
+        profile = context['profile']
+        context['listing_owned'] = profile\
+            .items_watched\
             .select_related('category')\
-            .filter(owner=self.profile, is_active=False)
-        context['owned_and_published'] = self.profile.items_watched\
+            .filter(owner=profile, is_active=False)
+
+        context['owned_and_published'] = profile\
+            .items_watched\
             .select_related('category')\
-            .filter(owner=self.profile, is_active=True)
-        context['listing_watched'] = self.profile.items_watched\
+            .filter(owner=profile, is_active=True)
+
+        context['listing_watched'] = profile\
+            .items_watched\
             .select_related('category')\
-            .exclude(owner=self.profile)
+            .exclude(owner=profile)
         return context
 
 
@@ -137,8 +164,9 @@ class CreateListingView(ProfileMixin, NavbarMixin,
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        form.fields['owner'].queryset = Profile.manager.filter(pk=self.profile.pk)
-        form.fields['owner'].initial = self.profile
+        profile_set = Profile.manager.filter(pk=self.auctioneer_pk)
+        form.fields['owner'].queryset = profile_set
+        form.fields['owner'].initial = profile_set[0]
         return form
 
 
@@ -149,6 +177,9 @@ class ListingView(ProfileMixin, NavbarMixin,
     model = Listing
     context_object_name = 'listing'
     form_class = PublishListingForm
+
+    def get_queryset(self):
+        return Listing.manager.select_related('category')
 
 
 # TODO access & redirect
@@ -168,21 +199,24 @@ class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
     form_class = AuctionLotForm
     second_form_class = CommentForm
 
+    def get_queryset(self):
+        return Listing.manager.select_related('category', 'owner')
+
     def get_form(self, *args, **kwargs):
         """ Main form class. """
         form = super().get_form(*args, **kwargs)
-        initial = self.profile.username if self.profile else 'none'
+        initial = self.auctioneer if self.auctioneer else 'none'
         form.fields['auctioneer'].initial = initial
         return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         """ Secondary CommentForm class. """
-        if self.profile:
+        if self.auctioneer:
             context['form2'] = self.second_form_class(instance=context['listing'])
-            context['form2'].fields['author_hidden'].initial = self.profile.username
+            context['form2'].fields['author_hidden'].initial = self.auctioneer
 
-        if self.profile and self.object.bid_possibility(self.profile) is False:
+        if self.auctioneer and not self.object.bid_possibility(username=self.auctioneer):
             context['form'].fields['bid_value'].disabled = True
             context['bid_forbidden'] = True
         return context
@@ -196,14 +230,13 @@ class CommentsView(ProfileMixin, NavbarMixin, generic.UpdateView):
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        if self.profile:
-            form.fields['author_hidden'].initial = self.profile.username
+        if self.auctioneer:
+            form.fields['author_hidden'].initial = self.auctioneer
         return form
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['comment_view'] = True
-        return context
+        kwargs['comment_view'] = True
+        return super().get_context_data(**kwargs)
 
 
 """ TODO

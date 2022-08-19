@@ -110,3 +110,5 @@ Finished AuctionLotView and AuctionLotForm. All logic is working. <br>
 CommentsView and CommentForm done.
 
 All main parts of the application are written and working!
+
+Username & pk now stored in a session.

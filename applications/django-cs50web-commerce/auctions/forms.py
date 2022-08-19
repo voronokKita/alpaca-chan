@@ -10,7 +10,7 @@ from django.forms import (
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
-    USERNAME_MAX_LEN, Profile, Listing, ListingCategory, Comment
+    USERNAME_MAX_LEN, Profile, Listing, ListingCategory
 )
 
 logger = logging.getLogger(__name__)
@@ -122,9 +122,13 @@ class AuctionLotForm(ModelForm):  # TODO test
             return True
 
 
-class CommentForm(ModelForm):
-    author_hidden = CharField(required=False, disabled=True,
-                              max_length=USERNAME_MAX_LEN, widget=HiddenInput())
+class CommentForm(ModelForm):  # TODO test
+    author_hidden = CharField(
+        required=False,
+        disabled=True,
+        max_length=USERNAME_MAX_LEN,
+        widget=HiddenInput()
+    )
     text_field = CharField(
         label='',
         min_length=5,
@@ -144,7 +148,6 @@ class CommentForm(ModelForm):
                 author=Profile.manager.filter(username=username).first()
             )
             return True
-
 
 
 class CreateListingForm(ModelForm):  # TODO test
@@ -188,6 +191,7 @@ class CreateListingForm(ModelForm):  # TODO test
         queryset=None,
         widget=HiddenInput()
     )
+
     class Meta:
         model = Listing
         fields = ['slug', 'title', 'category', 'starting_price',
