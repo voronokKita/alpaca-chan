@@ -1,7 +1,12 @@
 {% extends 'auctions/base_auctions.html' %}
 
-{% load static %}
+{% block title %}Auctions :: Comments to {{ listing.title }}{% endblock %}
 
-{% block navbar %}{% include '_navbar_light.html' %}{% endblock %}
-
-{% block main_content %}{% endblock %}
+{% block main_content %}
+<div class='row'>
+  <div class='col-0 col-md-0 col-lg-1 col-xl-2 col-xxl-3'></div>
+  <div class='col-12 col-md-12 col-lg-10 col-xl-8 col-xxl-6'>
+    {% include 'auctions/_comment_section.html' %}
+  </div>
+</div>
+{% endblock %}

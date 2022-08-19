@@ -1,14 +1,33 @@
-<h4 class='mt-5 mb-3'>
-  <a href='{% url "auctions:comments" listing.slug %}' style='text-decoration: none;'>Comments</a>
+{% if comment_view %}
+<h3 class='mb-4'>
+  Comments to
+  «<a href='{{ listing.get_absolute_url }}' style='text-decoration: none;'>{{ listing.title }}</a>»
+</h3>
+{% else %}
+<h4 class='mt-5 mb-2'>
+  <a href='{% url "auctions:comments" listing.slug %}'
+     style='text-decoration: none;'>Comments</a>
 </h4>
+{% endif %}
+
+{% if request.user.is_authenticated and listing.is_active %}
+<form action='{% url "auctions:comments" listing.slug %}' method='POST' enctype='multipart/form-data'>
+  {% csrf_token %}
+  {% if comment_view %}{{ form.as_p }}{% else %}{{ form2.as_p }}{% endif %}
+  <button type='submit' class='btn btn-primary mb-5'>Comment on</button>
+</form>
+{% endif %}
+
+{% load comment_tags %}
+{% comment_slice listing.comment_set.all comment_view as comment_slice %}
 <ul class="list-group mb-5">
-  {% for comment in listing.comment_set.all %}
+  {% for comment in comment_slice %}
   <li class="list-group-item d-flex justify-content-between align-items-start">
     <div class="ms-2 me-auto">
       <div class="fw-bold">{{ comment.author }}</div>
       {{ comment.text }}
     </div>
-    <span class="badge bg-secondary ">{{ comment.pub_date }}</span>
+    <span class="badge bg-secondary">{{ comment.pub_date }}</span>
   </li>
   {% empty %}
   <li class="list-group-item">No comments yet...</li>

@@ -10,7 +10,7 @@ from django.forms import (
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
-    USERNAME_MAX_LEN, Profile, Listing, ListingCategory
+    USERNAME_MAX_LEN, Profile, Listing, ListingCategory, Comment
 )
 
 logger = logging.getLogger(__name__)
@@ -122,47 +122,29 @@ class AuctionLotForm(ModelForm):  # TODO test
             return True
 
 
-class EditListingForm(ModelForm):  # TODO test
-    title = CharField(
-        label='Listing title',
-        help_text=f'{LOT_TITLE_MAX_LEN} characters max',
-        widget=TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'})
-    )
-    category = ModelChoiceField(
-        label='Category',
-        queryset=ListingCategory.manager.all(),  # TODO filter ghost
-        widget=Select(attrs={'class': 'form-control'})
-    )
-    starting_price = FloatField(
-        label='Starting 🪙 price',
-        min_value=0.01,
-        widget=NumberInput(attrs={'class': 'form-control'})
-    )
-    description = CharField(
-        label='Description',
-        min_length=10,
-        widget=Textarea(attrs={'class': 'form-control'})
-    )
-    image = ImageField(
-        label='Item image',
-        widget=ClearableFileInput(attrs={'class': 'form-control'})
+class CommentForm(ModelForm):
+    author_hidden = CharField(required=False, disabled=True,
+                              max_length=USERNAME_MAX_LEN, widget=HiddenInput())
+    text_field = CharField(
+        label='',
+        min_length=5,
+        widget=Textarea(attrs={'class': 'form-control', 'rows': 5})
     )
     class Meta:
         model = Listing
-        fields = ['title', 'category', 'starting_price', 'description', 'image']
-
-    def clean(self):
-        if 'button_publish' in self.data and self.instance.can_be_published() is False:
-            raise ValidationError('ERROR: this lot already published!')
-        return super().clean()
+        fields = ['text_field', 'author_hidden']
 
     def is_valid(self):
         if super().is_valid() is False:
             return False
-        elif 'button_publish' in self.data:
-            return self.instance.publish_the_lot()
         else:
+            username = self.cleaned_data['author_hidden']
+            self.instance.comment_set.create(
+                text=self.cleaned_data['text_field'],
+                author=Profile.manager.filter(username=username).first()
+            )
             return True
+
 
 
 class CreateListingForm(ModelForm):  # TODO test
@@ -210,3 +192,46 @@ class CreateListingForm(ModelForm):  # TODO test
         model = Listing
         fields = ['slug', 'title', 'category', 'starting_price',
                   'description', 'image', 'owner']
+
+
+class EditListingForm(ModelForm):  # TODO test
+    title = CharField(
+        label='Listing title',
+        help_text=f'{LOT_TITLE_MAX_LEN} characters max',
+        widget=TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'})
+    )
+    category = ModelChoiceField(
+        label='Category',
+        queryset=ListingCategory.manager.all(),  # TODO filter ghost
+        widget=Select(attrs={'class': 'form-control'})
+    )
+    starting_price = FloatField(
+        label='Starting 🪙 price',
+        min_value=0.01,
+        widget=NumberInput(attrs={'class': 'form-control'})
+    )
+    description = CharField(
+        label='Description',
+        min_length=10,
+        widget=Textarea(attrs={'class': 'form-control'})
+    )
+    image = ImageField(
+        label='Item image',
+        widget=ClearableFileInput(attrs={'class': 'form-control'})
+    )
+    class Meta:
+        model = Listing
+        fields = ['title', 'category', 'starting_price', 'description', 'image']
+
+    def clean(self):
+        if 'button_publish' in self.data and self.instance.can_be_published() is False:
+            raise ValidationError('ERROR: this lot already published!')
+        return super().clean()
+
+    def is_valid(self):
+        if super().is_valid() is False:
+            return False
+        elif 'button_publish' in self.data:
+            return self.instance.publish_the_lot()
+        else:
+            return True

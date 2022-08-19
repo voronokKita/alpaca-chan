@@ -4,8 +4,12 @@ from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.shortcuts import redirect
 
+from .forms import (
+    TransferMoneyForm, CreateListingForm,
+    EditListingForm, PublishListingForm,
+    AuctionLotForm, CommentForm
+)
 from .models import Profile, Listing, ListingCategory, Log
-from .forms import TransferMoneyForm, CreateListingForm, EditListingForm, PublishListingForm, AuctionLotForm
 
 logger = logging.getLogger(__name__)
 
@@ -162,8 +166,10 @@ class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
     model = Listing
     context_object_name = 'listing'
     form_class = AuctionLotForm
+    second_form_class = CommentForm
 
     def get_form(self, *args, **kwargs):
+        """ Main form class. """
         form = super().get_form(*args, **kwargs)
         initial = self.profile.username if self.profile else 'none'
         form.fields['auctioneer'].initial = initial
@@ -171,14 +177,33 @@ class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        """ Secondary CommentForm class. """
+        if self.profile:
+            context['form2'] = self.second_form_class(instance=context['listing'])
+            context['form2'].fields['author_hidden'].initial = self.profile.username
+
         if self.profile and self.object.bid_possibility(self.profile) is False:
             context['form'].fields['bid_value'].disabled = True
             context['bid_forbidden'] = True
         return context
 
 
-class CommentsView(ProfileMixin, NavbarMixin, generic.TemplateView):
+class CommentsView(ProfileMixin, NavbarMixin, generic.UpdateView):
     template_name = 'auctions/comments.html'
+    model = Listing
+    context_object_name = 'listing'
+    form_class = CommentForm
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        if self.profile:
+            form.fields['author_hidden'].initial = self.profile.username
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comment_view'] = True
+        return context
 
 
 """ TODO
