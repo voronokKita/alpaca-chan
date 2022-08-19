@@ -76,6 +76,51 @@ class AuctionLotForm(ModelForm):  # TODO test
         model = Listing
         fields = ['ghost_field', 'bid_value']
 
+    def clean(self):
+        username = self.fields['auctioneer'].initial
+        if 'btn_owner_closed_auction' in self.data and \
+                self.instance.owner.username != username:
+            raise ValidationError('ERROR: you aren’t the owner ot the lot')
+
+        elif 'btn_owner_withdrew' in self.data and \
+                self.instance.owner.username != username:
+            raise ValidationError('ERROR: you aren’t the owner ot the lot')
+
+        elif 'btn_user_bid' in self.data and \
+                self.instance.bid_possibility(username=username) is False:
+            raise ValidationError('ERROR: bid is prohibited')
+
+        elif 'btn_user_watching' in self.data and \
+                self.instance.check_name_in_watchlist(username) is True:
+            raise ValidationError('ERROR: already watching')
+
+        elif 'btn_user_unwatched' in self.data and \
+                self.instance.can_unwatch(username=username) is False:
+            raise ValidationError('ERROR: can’t unwatch')
+
+        return super().clean()
+
+    def is_valid(self):
+        username = self.fields['auctioneer'].initial
+        if super().is_valid() is False:
+            return False
+        elif 'btn_owner_closed_auction' in self.data:
+            return self.instance.change_the_owner()
+        elif 'btn_owner_withdrew' in self.data:
+            return self.instance.withdraw()
+        elif 'btn_user_bid' in self.data:
+            bid_value = self.cleaned_data['bid_value']
+            profile = Profile.manager.filter(username=username).first()
+            return self.instance.make_a_bid(profile, bid_value)
+        elif 'btn_user_watching' in self.data:
+            profile = Profile.manager.filter(username=username).first()
+            profile.items_watched.add(self.instance)
+            return True
+        elif 'btn_user_unwatched' in self.data:
+            return self.instance.unwatch(username=username)
+        else:
+            return True
+
 
 class EditListingForm(ModelForm):  # TODO test
     title = CharField(

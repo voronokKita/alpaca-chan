@@ -333,18 +333,22 @@ class Listing(Model):
         else:
             return True
 
-    def unwatch(self, profile) -> bool:
+    def unwatch(self, profile=None, username=None) -> bool:  # TODO test
         """ Remove from watchlist if
             the user is not the owner or potential buyer of the lot. """
+        if username:
+            profile = Profile.manager.filter(username=username).first()
         if self.can_unwatch(profile) is False:
             return False
         else:
             self.in_watchlist.remove(profile)
             return True
 
-    def bid_possibility(self, auctioneer=None, username=None, return_highest_bid=False) -> bool or Bid:  # TODO test
+    def bid_possibility(self, auctioneer=None, username=None,
+                        return_highest_bid=False) -> bool or Bid:
         """ Initial check of the possibility to place a bid.
             Can return bool or the highest bid. """
+        # TODO test and return str with reason
         if username:
             auctioneer = Profile.manager.filter(username=username).first()
 

@@ -102,3 +102,8 @@ To implement a redirect between ListingView, EditListingView and AuctionLotView 
 
 Wrote AuctionLotView & AuctionLotForm basics, with buttons and template tugs. <br>
 Wrote ProfileMixin and refactor many small things in all the views, forms and templates.
+
+### 2022.AUG.19
+
+###### Auctions
+Finished AuctionLotView and AuctionLotForm. All logic is working. <br>

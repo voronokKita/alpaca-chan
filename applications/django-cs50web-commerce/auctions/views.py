@@ -10,6 +10,7 @@ from .forms import TransferMoneyForm, CreateListingForm, EditListingForm, Publis
 logger = logging.getLogger(__name__)
 
 # TODO bets placed view
+# the BIG access problem
 
 
 class ProfileMixin:
@@ -137,6 +138,7 @@ class CreateListingView(ProfileMixin, NavbarMixin,
         return form
 
 
+# TODO access & redirect
 class ListingView(ProfileMixin, NavbarMixin,
                   AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/listing.html'
@@ -145,6 +147,7 @@ class ListingView(ProfileMixin, NavbarMixin,
     form_class = PublishListingForm
 
 
+# TODO access & redirect
 class EditListingView(ProfileMixin, NavbarMixin,
                       AuctionsAuthMixin, generic.UpdateView):
     template_name = 'auctions/listing_edit.html'
@@ -153,8 +156,8 @@ class EditListingView(ProfileMixin, NavbarMixin,
     form_class = EditListingForm
 
 
+# TODO access & redirect
 class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
-    # TODO anon, owner, other - separate logic
     template_name = 'auctions/listing_published.html'
     model = Listing
     context_object_name = 'listing'
@@ -162,12 +165,13 @@ class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        form.fields['auctioneer'].initial = self.profile.username
+        initial = self.profile.username if self.profile else 'none'
+        form.fields['auctioneer'].initial = initial
         return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.object.bid_possibility(self.profile) is False:
+        if self.profile and self.object.bid_possibility(self.profile) is False:
             context['form'].fields['bid_value'].disabled = True
             context['bid_forbidden'] = True
         return context
