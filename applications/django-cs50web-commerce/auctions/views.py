@@ -1,6 +1,5 @@
 import logging
 
-from django.urls import reverse, reverse_lazy
 from django.views import generic
 from django.shortcuts import redirect
 
@@ -9,73 +8,12 @@ from .forms import (
     EditListingForm, PublishListingForm,
     AuctionLotForm, CommentForm
 )
-from .models import Profile, Listing, ListingCategory, Log
+from .models import Profile, Listing, Log
+from .mixins import ProfileMixin, NavbarMixin, AuctionsAuthMixin, ListingRedirectMixin
 
 logger = logging.getLogger(__name__)
 
 # TODO bets placed view
-# the BIG access problem
-
-
-class ProfileMixin:
-    auctioneer = None
-    auctioneer_pk = None
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            self.auctioneer = request.user.username
-
-            request.session.clear_expired()
-            auctioneer_pk = request.session.get('auctioneer_pk')
-
-            if auctioneer_pk:
-                self.auctioneer_pk = auctioneer_pk
-            else:
-                profile = Profile.manager.filter(
-                    username=self.auctioneer
-                ).first()
-                request.session['auctioneer_pk'] = profile.pk
-                self.auctioneer_pk = profile.pk
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class NavbarMixin:
-    @staticmethod
-    def _get_default_nav() -> list:
-        category_list = []
-        for category in ListingCategory.manager.iterator():
-            url = reverse('auctions:category', args=[category.pk])
-            category_list.append({'label': category.label, 'url': url})
-        return [
-            {'url': reverse_lazy('auctions:index'), 'text': 'Active Listings'},
-            {'text': 'Category', 'category_list': category_list, 'category': True},
-        ]
-
-    @staticmethod
-    def _get_auth_user_nav(pk: int) -> list:
-        return [
-            {'url': reverse_lazy('auctions:watchlist', args=[pk]), 'text': 'Watchlist'},
-            {'url': reverse_lazy('auctions:create_listing', args=[pk]), 'text': 'Create Listing'},
-            {'url': reverse_lazy('auctions:profile', args=[pk]), 'text': 'Wallet'},
-            {'url': reverse_lazy('auctions:user_history', args=[pk]), 'text': 'History'},
-        ]
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['expand_navbar'] = True
-        context['navbar_list'] = self._get_default_nav()
-        if self.auctioneer_pk:
-            context['navbar_list'] += self._get_auth_user_nav(self.auctioneer_pk)
-        return context
-
-
-class AuctionsAuthMixin:
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect(reverse('accounts:login_and_next', args=['auctions']))
-        else:
-            return super().dispatch(request, *args, **kwargs)
 
 
 class AuctionsIndexView(ProfileMixin, NavbarMixin, generic.ListView):
@@ -97,12 +35,19 @@ class AuctionsIndexView(ProfileMixin, NavbarMixin, generic.ListView):
                 .filter(is_active=True).all()
 
 
-class ProfileView(ProfileMixin, NavbarMixin,
-                  AuctionsAuthMixin, generic.UpdateView):
+# TODO access & redirect
+class ProfileView(AuctionsAuthMixin, ProfileMixin,
+                  NavbarMixin, generic.UpdateView):
     template_name = 'auctions/profile.html'
     model = Profile
     context_object_name = 'profile'
     form_class = TransferMoneyForm
+
+    def dispatch(self, request, *args, **kwargs):
+        result = super().dispatch(request, *args, **kwargs)
+        logger.debug(kwargs.get('pk'))
+        logger.debug(self.auctioneer_pk)
+        return result
 
     def get_queryset(self):
         return Profile.manager.filter(pk=self.auctioneer_pk)
@@ -115,8 +60,9 @@ class ProfileView(ProfileMixin, NavbarMixin,
         return context
 
 
-class UserHistoryView(ProfileMixin, NavbarMixin,
-                      AuctionsAuthMixin, generic.ListView):
+# TODO access & redirect
+class UserHistoryView(AuctionsAuthMixin, ProfileMixin,
+                      NavbarMixin, generic.ListView):
     template_name = 'auctions/profile_history.html'
     model = Log
     context_object_name = 'profile_logs'
@@ -127,8 +73,9 @@ class UserHistoryView(ProfileMixin, NavbarMixin,
         ).all()
 
 
-class WatchlistView(ProfileMixin, NavbarMixin,
-                    AuctionsAuthMixin, generic.DetailView):
+# TODO access & redirect
+class WatchlistView(AuctionsAuthMixin, ProfileMixin,
+                    NavbarMixin, generic.DetailView):
     template_name = 'auctions/watchlist.html'
     model = Profile
     context_object_name = 'profile'
@@ -156,8 +103,9 @@ class WatchlistView(ProfileMixin, NavbarMixin,
         return context
 
 
-class CreateListingView(ProfileMixin, NavbarMixin,
-                        AuctionsAuthMixin, generic.CreateView):
+# TODO access & redirect
+class CreateListingView(AuctionsAuthMixin, ProfileMixin,
+                        NavbarMixin, generic.CreateView):
     template_name = 'auctions/listing_create.html'
     model = Listing
     form_class = CreateListingForm
@@ -170,29 +118,32 @@ class CreateListingView(ProfileMixin, NavbarMixin,
         return form
 
 
-# TODO access & redirect
-class ListingView(ProfileMixin, NavbarMixin,
-                  AuctionsAuthMixin, generic.UpdateView):
+# TODO access
+class ListingView(AuctionsAuthMixin, ProfileMixin, NavbarMixin,
+                  ListingRedirectMixin, generic.UpdateView):
     template_name = 'auctions/listing.html'
     model = Listing
     context_object_name = 'listing'
     form_class = PublishListingForm
 
     def get_queryset(self):
-        return Listing.manager.select_related('category')
+        return Listing.manager\
+                .select_related('category')\
+                .filter(slug=self.kwargs.get('slug'))
 
 
-# TODO access & redirect
-class EditListingView(ProfileMixin, NavbarMixin,
-                      AuctionsAuthMixin, generic.UpdateView):
+# TODO access
+class EditListingView(AuctionsAuthMixin, ProfileMixin, NavbarMixin,
+                      ListingRedirectMixin, generic.UpdateView):
     template_name = 'auctions/listing_edit.html'
     model = Listing
     context_object_name = 'listing'
     form_class = EditListingForm
 
 
-# TODO access & redirect
-class AuctionLotView(ProfileMixin, NavbarMixin, generic.UpdateView):
+# TODO access
+class AuctionLotView(ProfileMixin, NavbarMixin,
+                     ListingRedirectMixin, generic.UpdateView):
     template_name = 'auctions/listing_published.html'
     model = Listing
     context_object_name = 'listing'
@@ -227,16 +178,13 @@ class CommentsView(ProfileMixin, NavbarMixin, generic.UpdateView):
     model = Listing
     context_object_name = 'listing'
     form_class = CommentForm
+    extra_context = {'comment_view': True}
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
         if self.auctioneer:
             form.fields['author_hidden'].initial = self.auctioneer
         return form
-
-    def get_context_data(self, **kwargs):
-        kwargs['comment_view'] = True
-        return super().get_context_data(**kwargs)
 
 
 """ TODO

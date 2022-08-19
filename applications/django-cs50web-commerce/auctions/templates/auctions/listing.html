@@ -3,7 +3,7 @@
 {% block title %}Auctions :: Listings :: {{ listing.title }}{% endblock %}
 
 {% block main_content %}
-{% if listing.is_active is False %}
+{% if listing.is_active is False and request.user.username == listing.owner.username %}
 <div class='row mt-5'>
 
   <div class='col-0 col-md-0 col-lg-1 col-xl-2 col-xxl-3'></div>
@@ -21,13 +21,13 @@
           </div>
         </div>
         <p class='card-text'>{{ listing.description }}</p>
-        <div class='d-inline'>
-          <a href='{% url "auctions:edit_listing" listing.slug %}' class='btn btn-secondary'>Edit</a>
-        </div>
-        <form method='POST' class='d-inline'>
-          {% csrf_token %}{{ form }}
-          <button type='submit' class='btn btn-warning'>Publish and start the auction</button>
-        </form>
+          <div class='d-inline'>
+            <a href='{% url "auctions:edit_listing" listing.slug %}' class='btn btn-secondary'>Edit</a>
+          </div>
+          <form method='POST' class='d-inline'>
+            {% csrf_token %}{{ form }}
+            <button type='submit' class='btn btn-warning'>Publish and start the auction</button>
+          </form>
       </div>
       <span class='card-footer'><small>Created: {{ listing.date_created }}</small></span>
     </div>
@@ -37,5 +37,7 @@
   </div>
 
 </div>
+{% else %}
+<h3>Error: listing is published and/or you aren't it's owner.</h3>
 {% endif %}
 {% endblock %}

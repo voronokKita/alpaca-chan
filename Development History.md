@@ -111,4 +111,5 @@ CommentsView and CommentForm done.
 
 All main parts of the application are written and working!
 
-Username & pk now stored in a session.
+Username & pk now stored in a session. <br>
+ListingRedirectMixin; some misc mixin logic.
