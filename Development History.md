@@ -113,3 +113,8 @@ All main parts of the application are written and working!
 
 Username & pk now stored in a session. <br>
 ListingRedirectMixin; some misc mixin logic.
+
+### 2022.AUG.19
+
+###### Auctions
+RestrictPkMixin and PresetMixin, with view access logic.

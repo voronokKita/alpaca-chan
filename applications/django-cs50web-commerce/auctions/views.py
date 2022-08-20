@@ -1,7 +1,8 @@
 import logging
 
-from django.views import generic
+from django.urls import reverse
 from django.shortcuts import redirect
+from django.views import generic
 
 from .forms import (
     TransferMoneyForm, CreateListingForm,
@@ -9,24 +10,25 @@ from .forms import (
     AuctionLotForm, CommentForm
 )
 from .models import Profile, Listing, Log
-from .mixins import ProfileMixin, NavbarMixin, AuctionsAuthMixin, ListingRedirectMixin
+from .mixins import AuctionsAuthMixin, PresetMixin, ListingRedirectMixin
 
 logger = logging.getLogger(__name__)
 
 # TODO bets placed view
 
 
-class AuctionsIndexView(ProfileMixin, NavbarMixin, generic.ListView):
+class AuctionsIndexView(PresetMixin, generic.ListView):
     template_name = 'auctions/index.html'
     model = Listing
     context_object_name = 'published_listings'
 
     def get_queryset(self):
-        if self.kwargs.get('category_pk'):
+        filter_by_category = self.kwargs.get('category_pk')
+        if filter_by_category:
             return Listing.manager\
                 .select_related('category')\
                 .filter(
-                    category__pk=self.kwargs.get('category_pk'),
+                    category__pk=filter_by_category,
                     is_active=True
                 ).all()
         else:
@@ -35,19 +37,11 @@ class AuctionsIndexView(ProfileMixin, NavbarMixin, generic.ListView):
                 .filter(is_active=True).all()
 
 
-# TODO access & redirect
-class ProfileView(AuctionsAuthMixin, ProfileMixin,
-                  NavbarMixin, generic.UpdateView):
+class ProfileView(AuctionsAuthMixin, PresetMixin, generic.UpdateView):
     template_name = 'auctions/profile.html'
     model = Profile
     context_object_name = 'profile'
     form_class = TransferMoneyForm
-
-    def dispatch(self, request, *args, **kwargs):
-        result = super().dispatch(request, *args, **kwargs)
-        logger.debug(kwargs.get('pk'))
-        logger.debug(self.auctioneer_pk)
-        return result
 
     def get_queryset(self):
         return Profile.manager.filter(pk=self.auctioneer_pk)
@@ -60,9 +54,7 @@ class ProfileView(AuctionsAuthMixin, ProfileMixin,
         return context
 
 
-# TODO access & redirect
-class UserHistoryView(AuctionsAuthMixin, ProfileMixin,
-                      NavbarMixin, generic.ListView):
+class UserHistoryView(AuctionsAuthMixin, PresetMixin, generic.ListView):
     template_name = 'auctions/profile_history.html'
     model = Log
     context_object_name = 'profile_logs'
@@ -73,9 +65,7 @@ class UserHistoryView(AuctionsAuthMixin, ProfileMixin,
         ).all()
 
 
-# TODO access & redirect
-class WatchlistView(AuctionsAuthMixin, ProfileMixin,
-                    NavbarMixin, generic.DetailView):
+class WatchlistView(AuctionsAuthMixin, PresetMixin, generic.DetailView):
     template_name = 'auctions/watchlist.html'
     model = Profile
     context_object_name = 'profile'
@@ -103,9 +93,7 @@ class WatchlistView(AuctionsAuthMixin, ProfileMixin,
         return context
 
 
-# TODO access & redirect
-class CreateListingView(AuctionsAuthMixin, ProfileMixin,
-                        NavbarMixin, generic.CreateView):
+class CreateListingView(AuctionsAuthMixin, PresetMixin, generic.CreateView):
     template_name = 'auctions/listing_create.html'
     model = Listing
     form_class = CreateListingForm
@@ -118,22 +106,15 @@ class CreateListingView(AuctionsAuthMixin, ProfileMixin,
         return form
 
 
-# TODO access
-class ListingView(AuctionsAuthMixin, ProfileMixin, NavbarMixin,
+class ListingView(AuctionsAuthMixin, PresetMixin,
                   ListingRedirectMixin, generic.UpdateView):
     template_name = 'auctions/listing.html'
     model = Listing
     context_object_name = 'listing'
     form_class = PublishListingForm
 
-    def get_queryset(self):
-        return Listing.manager\
-                .select_related('category')\
-                .filter(slug=self.kwargs.get('slug'))
 
-
-# TODO access
-class EditListingView(AuctionsAuthMixin, ProfileMixin, NavbarMixin,
+class EditListingView(AuctionsAuthMixin, PresetMixin,
                       ListingRedirectMixin, generic.UpdateView):
     template_name = 'auctions/listing_edit.html'
     model = Listing
@@ -141,17 +122,12 @@ class EditListingView(AuctionsAuthMixin, ProfileMixin, NavbarMixin,
     form_class = EditListingForm
 
 
-# TODO access
-class AuctionLotView(ProfileMixin, NavbarMixin,
-                     ListingRedirectMixin, generic.UpdateView):
+class AuctionLotView(PresetMixin, ListingRedirectMixin, generic.UpdateView):
     template_name = 'auctions/listing_published.html'
     model = Listing
     context_object_name = 'listing'
     form_class = AuctionLotForm
     second_form_class = CommentForm
-
-    def get_queryset(self):
-        return Listing.manager.select_related('category', 'owner')
 
     def get_form(self, *args, **kwargs):
         """ Main form class. """
@@ -173,12 +149,26 @@ class AuctionLotView(ProfileMixin, NavbarMixin,
         return context
 
 
-class CommentsView(ProfileMixin, NavbarMixin, generic.UpdateView):
+class CommentsView(PresetMixin, generic.UpdateView):
     template_name = 'auctions/comments.html'
     model = Listing
     context_object_name = 'listing'
     form_class = CommentForm
     extra_context = {'comment_view': True}
+
+    def dispatch(self, request, *args, **kwargs):
+        """ Comment page of a listing that not published is available only to the owner. """
+        result = super(CommentsView, self).dispatch(request, *args, **kwargs)
+        if (not self.object.is_active and not request.user.is_authenticated) or \
+                (not self.object.is_active and self.object.owner.username != self.auctioneer):
+            return redirect(reverse('auctions:index'))
+        else:
+            return result
+
+    def get_queryset(self):
+        return Listing.manager\
+                .select_related('owner')\
+                .filter(slug=self.kwargs.get('slug'))
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
