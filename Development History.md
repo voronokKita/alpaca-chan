@@ -117,4 +117,5 @@ ListingRedirectMixin; some misc mixin logic.
 ### 2022.AUG.19
 
 ###### Auctions
-RestrictPkMixin and PresetMixin, with view access logic.
+RestrictPkMixin and PresetMixin, with view access logic. <br>
+BidView.

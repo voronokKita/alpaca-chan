@@ -1,0 +1,32 @@
+{% extends 'auctions/base_auctions.html' %}
+
+{% block title %}Auctions :: Bets placed on {{ listing.title }}{% endblock %}
+
+{% block main_content %}
+{% if listing.is_active %}
+<div class='row'>
+  <div class='col-0 col-md-0 col-lg-2 col-xl-3 col-xxl-3'></div>
+  <div class='col-12 col-md-12 col-lg-7 col-xl-6 col-xxl-5'>
+    <h3 class='mb-4'>
+      Bets placed on
+      «<a href='{{ listing.get_absolute_url }}' style='text-decoration: none;'>{{ listing.title }}</a>»
+    </h3>
+    <table class="table table-striped">
+      <tbody>
+      {% for bid in listing.bid_set.all %}
+        <tr>
+          <th scope="row">{{ bid.auctioneer }}</th>
+          <td>🪙{{ bid.bid_value }}</td>
+          <td>{{ bid.bid_date }}</td>
+        </tr>
+      {% empty %}
+        <tr><th scope="row">No bets yet...</th></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<h3>Error: listing is not published.</h3>
+{% endif %}
+{% endblock %}

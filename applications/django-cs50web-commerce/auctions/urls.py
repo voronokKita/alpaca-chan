@@ -16,4 +16,5 @@ urlpatterns = [
     path('/listings/<slug:slug>/edit', views.EditListingView.as_view(), name='edit_listing'),
     path('/listings/<slug:slug>/comments', views.CommentsView.as_view(), name='comments'),
     path('/lots/<slug:slug>', views.AuctionLotView.as_view(), name='auction_lot'),
+    path('/lots/<slug:slug>/bets', views.BidView.as_view(), name='bid'),
 ]

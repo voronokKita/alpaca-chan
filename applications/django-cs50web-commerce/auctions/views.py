@@ -14,8 +14,6 @@ from .mixins import AuctionsAuthMixin, PresetMixin, ListingRedirectMixin
 
 logger = logging.getLogger(__name__)
 
-# TODO bets placed view
-
 
 class AuctionsIndexView(PresetMixin, generic.ListView):
     template_name = 'auctions/index.html'
@@ -158,7 +156,7 @@ class CommentsView(PresetMixin, generic.UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         """ Comment page of a listing that not published is available only to the owner. """
-        result = super(CommentsView, self).dispatch(request, *args, **kwargs)
+        result = super().dispatch(request, *args, **kwargs)
         if (not self.object.is_active and not request.user.is_authenticated) or \
                 (not self.object.is_active and self.object.owner.username != self.auctioneer):
             return redirect(reverse('auctions:index'))
@@ -168,6 +166,7 @@ class CommentsView(PresetMixin, generic.UpdateView):
     def get_queryset(self):
         return Listing.manager\
                 .select_related('owner')\
+                .prefetch_related('comment_set', 'comment_set__author')\
                 .filter(slug=self.kwargs.get('slug'))
 
     def get_form(self, *args, **kwargs):
@@ -175,6 +174,25 @@ class CommentsView(PresetMixin, generic.UpdateView):
         if self.auctioneer:
             form.fields['author_hidden'].initial = self.auctioneer
         return form
+
+
+class BidView(PresetMixin, generic.DetailView):
+    template_name = 'auctions/bets_list.html'
+    model = Listing
+    context_object_name = 'listing'
+
+    def dispatch(self, request, *args, **kwargs):
+        """ Only for the published auction lots. """
+        result = super().dispatch(request, *args, **kwargs)
+        if self.object.is_active is False:
+            return redirect(reverse('auctions:index'))
+        else:
+            return result
+
+    def get_queryset(self):
+        return Listing.manager\
+                .prefetch_related('bid_set')\
+                .filter(slug=self.kwargs.get('slug'))
 
 
 """ TODO
