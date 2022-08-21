@@ -4,15 +4,10 @@ register = template.Library()
 
 
 @register.simple_tag
-def in_watchlist(listing, username):
-    return listing.check_name_in_watchlist(username)
+def in_watchlist(listing, profile):
+    return listing.in_watchlist.contains(profile)
 
 
 @register.simple_tag
-def can_unwatch(listing, username):
-    return listing.can_unwatch(username=username)
-
-
-@register.simple_tag
-def can_bid(listing, username):
-    return listing.bid_possibility(username=username)
+def can_unwatch(listing, profile):
+    return listing.can_unwatch(profile)

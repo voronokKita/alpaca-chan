@@ -31,13 +31,13 @@ def get_profile(username='Toki', money=100) -> Profile:
     return Profile.manager.create(username=username, money=money)
 
 
-def get_listing(category=None, profile=None,
+def get_listing(category=None, profile=None, username='Fennec',
                 title='Japari bun', image=TMP_IMAGE,
                 description='An endless source of energy!') -> Listing:
     if category is None:
         category = get_category()
     if profile is None:
-        profile = get_profile()
+        profile = get_profile(username)
     listing = Listing.manager.create(
         title=title,
         description=description,
@@ -48,12 +48,12 @@ def get_listing(category=None, profile=None,
     return listing
 
 
-def get_comment(listing=None, author=None, text='Japari bun is the best bun!'):
-    if author is None:
-        author = get_profile()
+def get_comment(listing=None, profile=None, text='Japari bun is the best bun!'):
+    if profile is None:
+        profile = get_profile()
     if listing is None:
-        listing = get_listing(profile=author)
-    return Comment.manager.create(listing=listing, author=author, text=text)
+        listing = get_listing(profile=profile)
+    return Comment.manager.create(listing=listing, author=profile, text=text)
 
 
 class UniqueSlugTests(TestCase):
@@ -61,8 +61,9 @@ class UniqueSlugTests(TestCase):
 
     def test_unique_slug_works(self):
         expected = 3
-        for i in range(expected):
-            get_listing(title='Test slug')
+        get_listing(title='Test slug', username='Eagle-owl')
+        get_listing(title='Test slug', username='White-faced-owl')
+        get_listing(title='Test slug', username='Fossa')
         self.assertEqual(Listing.manager.count(), expected)
 
         from auctions.models import SLUG_MAX_LEN
@@ -174,7 +175,7 @@ class ListingTests(TestCase):
         super().setUpClass()
         cls.time_now = timezone.localtime()
         cls.category = get_category()
-        cls.profile = get_profile('Toki')
+        cls.profile = get_profile('Serval')
         cls.listing = get_listing(category=cls.category, title='Japari bun',
                                   profile=cls.profile, image=TEST_IMAGE)
         date = timezone.localdate().strftime('%Y.%m.%d')
@@ -221,7 +222,7 @@ class ListingTests(TestCase):
         # already published
         self.assertFalse(listing.publish_the_lot(),'already published')
         # too low starting price
-        listing2 = get_listing()
+        listing2 = get_listing(username='Okapi')
         listing2.starting_price = 0
         listing2.save()
         self.assertFalse(listing2.publish_the_lot(), 'too low starting price')
@@ -230,12 +231,17 @@ class ListingTests(TestCase):
         listing = get_listing()
         listing.is_active = True
         listing.save()
-        listing.potential_buyers.add(get_profile(), through_defaults={'bid_value': 2})
+        potential_buyer = get_profile()
+        listing.potential_buyers.add(potential_buyer, through_defaults={'bid_value': 2})
+        listing.in_watchlist.add(potential_buyer)
         # ok
-        self.assertTrue(listing.withdraw(), 'normal')
-        self.assertFalse(listing.is_active, 'normal')
-        self.assertIsNone(listing.date_published, 'normal')
-        self.assertTrue(listing.potential_buyers.count() == 0, 'normal')
+        self.assertTrue(potential_buyer.items_watched.contains(listing), 'in watchlist')
+        self.assertTrue(listing.withdraw(), 'ok')
+        self.assertFalse(listing.is_active, 'ok')
+        self.assertIsNone(listing.date_published, 'ok')
+        self.assertTrue(listing.potential_buyers.count() == 0, 'ok')
+        self.assertFalse(potential_buyer.items_watched.contains(listing), 'watchlist empty')
+        self.assertTrue(listing.in_watchlist.count() == 1, 'ok')
         # not published
         self.assertFalse(listing.withdraw(), 'not published')
 
@@ -247,57 +253,63 @@ class ListingTests(TestCase):
         # owner
         self.assertFalse(listing.unwatch(profile), 'owner can’t unwatch')
         # potential buyer
-        profile2 = get_profile()
+        profile2 = get_profile('Tsuchinoko')
         listing.potential_buyers.add(profile2, through_defaults={'bid_value': 2})
         self.assertFalse(listing.unwatch(profile2), 'potential buyer can’t unwatch')
         # ok
-        profile3 = get_profile()
+        profile3 = get_profile('Tasmanian-Devil')
         listing.in_watchlist.add(profile3)
         self.assertTrue(listing.unwatch(profile3), 'normal')
         self.assertFalse(listing.in_watchlist.contains(profile3), 'normal')
 
-    def test_listing_method_bid_possibility(self):
+    def test_listing_method_no_bet_option(self):
+        from auctions.models import (
+            NO_BET_NO_MONEY_SP, NO_BET_THE_OWNER,
+            NO_BET_NO_MONEY, NO_BET_ON_TOP
+        )
         profile = get_profile()
         listing = get_listing(profile=profile)
         listing.is_active = True
         listing.save()
         # owner
-        self.assertFalse(listing.bid_possibility(profile), 'you are the owner')
+        self.assertEqual(listing.no_bet_option(profile), NO_BET_THE_OWNER)
         # starting price
-        profile2 = get_profile(money=0.1)
-        self.assertFalse(listing.bid_possibility(profile2), 'lower than the starting price')
+        profile2 = get_profile('Shirosai', money=0.1)
+        self.assertEqual(listing.no_bet_option(profile2), NO_BET_NO_MONEY_SP)
         # already on top
         profile2.add_money(10)
         profile2.refresh_from_db()
         listing.potential_buyers.add(profile2, through_defaults={'bid_value': 10})
-        self.assertFalse(listing.bid_possibility(profile2), 'already on top')
+        self.assertEqual(listing.no_bet_option(profile2), NO_BET_ON_TOP)
         # low on money
-        profile3 = get_profile(money=9)
-        self.assertFalse(listing.bid_possibility(profile3), 'low on money')
+        profile3 = get_profile('Sunaneko', money=9)
+        self.assertEqual(listing.no_bet_option(profile3), NO_BET_NO_MONEY)
         # ok
         profile3.add_money(2)
         profile3.refresh_from_db()
-        self.assertTrue(listing.bid_possibility(profile3), 'normal')
+        self.assertIsNone(listing.no_bet_option(profile3), 'ok')
 
     def test_listing_method_make_a_bid(self):
+        from auctions.models import NEW_BID_PERCENT
         profile = get_profile()
         listing = get_listing(profile=profile)
         listing.is_active = True
         listing.save()
         # owner
         self.assertFalse(listing.make_a_bid(profile, 99), 'owner can’t bid')
-        # lower or equal than listing's starting price
+        # lower or than listing's starting price
         listing.save()
-        profile2 = get_profile()
+        profile2 = get_profile('Otter')
         self.assertFalse(listing.make_a_bid(profile2, 0.99), 'starting price')
-        self.assertFalse(listing.make_a_bid(profile2, 1), 'starting price')
         # ok
-        self.assertTrue(listing.make_a_bid(profile2, 1.1), 'ok')
+        self.assertTrue(listing.make_a_bid(profile2, 1), 'ok')
         self.assertTrue(listing.in_watchlist.contains(profile2), 'ok')
-        # lower or equal than listing's highest bid
-        profile3 = get_profile()
-        self.assertFalse(listing.make_a_bid(profile3, 1), 'not enough')
-        self.assertFalse(listing.make_a_bid(profile3, 1.1), 'not enough')
+        self.assertTrue(listing.potential_buyers.contains(profile2), 'ok')
+        # lower than listing's highest bid
+        profile3 = get_profile('Chameleon')
+        self.assertFalse(listing.make_a_bid(profile3, 1 * NEW_BID_PERCENT - 0.01), 'not enough')
+        # ok
+        self.assertTrue(listing.make_a_bid(profile3, 1 * NEW_BID_PERCENT), 'ok')
 
     def test_listing_method_change_the_owner(self):
         from auctions.models import DEFAULT_STARTING_PRICE
@@ -313,7 +325,7 @@ class ListingTests(TestCase):
         self.assertFalse(listing.change_the_owner(), 'not wanted')
         # ok
         bid_value = 2
-        buyer = get_profile()
+        buyer = get_profile('Rikaon')
         listing.potential_buyers.add(buyer, through_defaults={'bid_value': bid_value})
         self.assertTrue(listing.change_the_owner())
         self.assertFalse(listing.is_active)
@@ -352,7 +364,7 @@ class BidTests(TestCase):
     def test_bets_normal_case(self):
         time_now = timezone.localtime()
         listing1 = get_listing(title='friends')
-        listing2 = get_listing(title='buns')
+        listing2 = get_listing(title='buns', username='Gazelle')
 
         profile = get_profile('Shoujoutoki')
         profile.placed_bets.add(listing1, through_defaults={'bid_value': 2})

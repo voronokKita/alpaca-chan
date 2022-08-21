@@ -10,7 +10,7 @@ from django.forms import (
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
-    USERNAME_MAX_LEN, Profile, Listing, ListingCategory
+    USERNAME_MAX_LEN, NEW_BID_PERCENT, Profile, Listing, ListingCategory
 )
 
 logger = logging.getLogger(__name__)
@@ -67,10 +67,10 @@ class AuctionLotForm(ModelForm):  # TODO test
     )
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        highest_price = kwargs['instance'].get_highest_price() + 0.01  # TODO each new bid must bee higher on %
-        self.fields['bid_value'].initial = highest_price
-        self.fields['bid_value'].min_value = highest_price
-        self.fields['bid_value'].widget.attrs['min'] = highest_price
+        initial = kwargs['instance'].get_highest_price(percent=True)
+        self.fields['bid_value'].initial = initial
+        self.fields['bid_value'].min_value = initial
+        self.fields['bid_value'].widget.attrs['min'] = initial
 
     class Meta:
         model = Listing
@@ -87,11 +87,11 @@ class AuctionLotForm(ModelForm):  # TODO test
             raise ValidationError('ERROR: you aren’t the owner ot the lot')
 
         elif 'btn_user_bid' in self.data and \
-                self.instance.bid_possibility(username=username) is False:
+                self.instance.no_bet_option(username=username):
             raise ValidationError('ERROR: bid is prohibited')
 
         elif 'btn_user_watching' in self.data and \
-                self.instance.check_name_in_watchlist(username) is True:
+                self.instance.in_watchlist.filter(username=username).exists():
             raise ValidationError('ERROR: already watching')
 
         elif 'btn_user_unwatched' in self.data and \

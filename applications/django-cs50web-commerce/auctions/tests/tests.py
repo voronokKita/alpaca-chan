@@ -13,6 +13,8 @@ from auctions.models import (
 from .test_models import get_category, get_profile, get_listing, get_comment
 
 
+#TODO tags, signals
+
 DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
 PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 

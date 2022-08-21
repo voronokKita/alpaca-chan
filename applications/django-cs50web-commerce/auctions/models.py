@@ -9,19 +9,27 @@ from django.db.models import (
     SlugField, FloatField, ImageField,
     DateTimeField, BooleanField,
     ForeignKey, ManyToManyField,
-    Sum, F
+    IntegerField, Sum, F
 )
 from core.utils import unique_slugify
 
-# TODO get listing out from watchlists of all the users if it has been sold, except for the new owner
-# TODO each new bid must bee higher on %
+
+# TODO check users db on startup and create a profile for every user, check all names and pks
 
 class LowOnMoney(Exception): pass
+
+NEW_BID_PERCENT = 1+5/100
 
 SLUG_MAX_LEN = 16
 USERNAME_MAX_LEN = 150
 LOT_TITLE_MAX_LEN = 300
 DEFAULT_STARTING_PRICE = 1
+
+NO_BET_NOT_PUBLISHED = 'Listing is not published'
+NO_BET_THE_OWNER = 'You are the owner'
+NO_BET_NO_MONEY = 'Insufficient funds'
+NO_BET_NO_MONEY_SP = 'Your money is less than the starting price'
+NO_BET_ON_TOP = 'Your bid is on top'
 
 LOG_REGISTRATION = 'Date of your registration.'
 LOG_MONEY_ADDED = 'Wallet topped up with %0.2f coins.'
@@ -60,7 +68,8 @@ def user_media_path(listing, filename):
 class Profile(Model):
     manager = models.Manager()
 
-    username = CharField(max_length=USERNAME_MAX_LEN, db_index=True)
+    user_model_pk = IntegerField('the users pk on the User model', blank=True, null=True)  # TODO fill
+    username = CharField(max_length=USERNAME_MAX_LEN, unique=True, db_index=True)
     money = FloatField('money on account', default=0.0)
 
     class Meta:
@@ -81,19 +90,20 @@ class Profile(Model):
     def save(self, date_joined=None, log=False, update_fields=None, *args, **kwargs):
         if not self.pk:
             log = True
-        super().save(*args, update_fields=update_fields, **kwargs)
-        if log is True:
-            date = date_joined if date_joined else timezone.localtime()
-            self.logs.create(entry=LOG_REGISTRATION, date=date)
+        with transaction.atomic('auctions_db', savepoint=False):
+            super().save(*args, update_fields=update_fields, **kwargs)
+            if log is True:
+                date = date_joined if date_joined else timezone.localtime()
+                self.logs.create(entry=LOG_REGISTRATION, date=date)
 
-    def add_money(self, amount, silent=False):
+    def add_money(self, amount: float, silent=False):
         with transaction.atomic('auctions_db', savepoint=False):
             self.money = F('money') + amount
             self.save(update_fields=['money'])
             if silent is False:
                 log_entry(self, 'money_added', coins=amount)
 
-    def get_money(self, value) -> (float, LowOnMoney):
+    def get_money(self, value: float) -> (float, LowOnMoney):
         if self.money >= value:
             self.money = F('money') - value
             self.save(update_fields=['money'])
@@ -102,7 +112,7 @@ class Profile(Model):
             raise LowOnMoney
 
     def display_money(self) -> (float, float):
-        """ Current + in all the bets. """
+        """ Returns current money + in all the bets. """
         bets_total = 0
         if self.bid_set.count() > 0:
             result = self.bid_set.aggregate(Sum('bid_value'))
@@ -121,14 +131,15 @@ class Profile(Model):
     def placed_bets_count(self):
         return self.bid_set.count()
 
-    def __str__(self): return self.username
+    def __str__(self):
+        return self.username
 
 
 class Log(Model):
     manager = models.Manager()
 
     entry = CharField(max_length=100)
-    date = DateTimeField(default=timezone.localtime)
+    date = DateTimeField(auto_now=True)
     profile = ForeignKey(Profile, on_delete=models.CASCADE, related_name='logs')
 
     class Meta:
@@ -170,14 +181,22 @@ class Bid(Model):
 
     def delete(self, refund=False, item_sold=False, **kwargs):
         if refund:
+            self._refund(item_sold)
+        return super().delete(**kwargs)
+
+    def _refund(self, item_sold):
+        """ Returns the money back to the profile
+            if the auction was lost or
+            the owner withdrew the lot from the auction. """
+        with transaction.atomic('auctions_db', savepoint=False):
             if item_sold is True:
                 log_entry(self.auctioneer, 'you_lose',
                           self.lot.title, coins=self.bid_value)
             else:
                 log_entry(self.auctioneer, 'removed',
                           self.lot.title, coins=self.bid_value)
+
             self.auctioneer.add_money(self.bid_value, silent=True)
-        return super().delete(**kwargs)
 
     class Meta:
         """ profiles >-- bid --< listings """
@@ -187,7 +206,8 @@ class Bid(Model):
         ordering = ['-bid_date']
         get_latest_by = ['bid_value']
 
-    def __str__(self): return f'{self.auctioneer} >-- bid --< {self.lot}'
+    def __str__(self):
+        return f'{self.auctioneer} >-- bid --< {self.lot}'
 
 
 class Watchlist(Model):
@@ -202,13 +222,10 @@ class Watchlist(Model):
         verbose_name = 'watchlist'
         verbose_name_plural = 'watchlists'
 
-    def get_absolute_url(self):
-        return reverse('auctions:watchlist', args=[self.profile.pk])
-
+    # **DEPRECATED**
     def generate_watchlist(self) -> (list, list, list):
-        """ Will return 3 lists: items owned,
-            items owned and published, and just watched.
-            **DEPRECATED** """
+        """ Will return 3 lists: [items owned],
+            [items owned and published], and [just watched]. """
         items_owned = []
         items_owned_and_published = []
         just_watched = []
@@ -222,7 +239,8 @@ class Watchlist(Model):
                 just_watched.append(item)
         return items_owned, items_owned_and_published, just_watched
 
-    def __str__(self): return f'{self.profile} >-- watchlist --< {self.listing}'
+    def __str__(self):
+        return f'{self.profile} >-- watchlist --< {self.listing}'
 
 
 class Listing(Model):
@@ -237,6 +255,7 @@ class Listing(Model):
     date_created = DateTimeField('created', default=timezone.localtime)
     date_published = DateTimeField('published', null=True, blank=True, default=None)
     is_active = BooleanField('is listing published?', default=False)
+    highest_bid = FloatField(null=True, blank=True, default=None)
 
     category = ForeignKey(ListingCategory, on_delete=models.PROTECT)
     owner = ForeignKey(Profile, on_delete=models.CASCADE, related_name='lots_owned')
@@ -265,9 +284,12 @@ class Listing(Model):
             add a new listing to owner's watchlist. """
         with transaction.atomic('auctions_db', savepoint=False):
             if not self.pk:
-                if self.slug: s = str(self.slug)
-                else: s = slugify(self.title)
+                if self.slug:
+                    s = str(self.slug)
+                else:
+                    s = slugify(self.title)
                 unique_slugify(self, s)
+
                 log_entry(self.owner, 'new_item', self.title)
 
             super().save(*args, **kwargs)
@@ -279,7 +301,7 @@ class Listing(Model):
             self.image.delete()
             return super().delete(**kwargs)
 
-    def can_be_published(self) -> bool:   # TODO test
+    def can_be_published(self) -> bool:
         if self.starting_price < 1 or self.is_active is True:
             return False
         else:
@@ -298,84 +320,85 @@ class Listing(Model):
             return True
 
     def withdraw(self, item_sold=False) -> bool:
-        """ Get the listing back from the auction. """
+        """ Get the listing back from the auction.
+            Refund money back to the auctioneers and
+            clear the item from all the watchlists, except for the owner. """
         if self.is_active is False:
             return False
-        else:
-            with transaction.atomic('auctions_db', savepoint=False):
-                self.date_published = None
-                self.is_active = False
 
-                if item_sold is False:
-                    log_entry(self.owner, 'withdrawn', self.title)
+        with transaction.atomic('auctions_db', savepoint=False):
+            self.date_published = None
+            self.is_active = False
+            self.highest_bid = None
 
-                if self.potential_buyers.count() > 0:
-                    for bid in self.bid_set.iterator():
-                        bid.delete(refund=True, item_sold=item_sold)
+            if item_sold is False:
+                log_entry(self.owner, 'withdrawn', self.title)
 
-                self.save()
+            if self.potential_buyers.count() > 0:
+                for bid in self.bid_set.iterator():
+                    bid.delete(refund=True, item_sold=item_sold)
+
+            if self.in_watchlist.count() > 1:
+                self.watchlist_set.exclude(profile=self.owner).delete()
+
+            self.save()
             return True
 
-    def check_name_in_watchlist(self, username:str) -> bool:  # TODO test
-        for profile in self.in_watchlist.iterator():
-            if profile.username == username:
-                return True
-        else:
-            return False
-
-    def can_unwatch(self, profile=None, username=None) -> bool:  # TODO test
-        if username:
-            profile = Profile.manager.filter(username=username).first()
-        if self.is_active is False or \
-                profile == self.owner or \
-                self.potential_buyers.contains(profile):
+    def can_unwatch(self, profile:Profile = None, username:str = None) -> bool:
+        """ Can remove from watchlist if
+            the user is not the owner or potential buyer of the lot. """
+        if profile:
+            username = profile.username
+        if username == self.owner.username or \
+                self.potential_buyers.filter(username=username).exists():
             return False
         else:
             return True
 
-    def unwatch(self, profile=None, username=None) -> bool:  # TODO test
+    def unwatch(self, profile:Profile = None, username:str = None) -> bool:
         """ Remove from watchlist if
             the user is not the owner or potential buyer of the lot. """
-        if username:
-            profile = Profile.manager.filter(username=username).first()
-        if self.can_unwatch(profile) is False:
+        if profile:
+            username = profile.username
+        if self.can_unwatch(username=username) is False:
             return False
         else:
-            self.in_watchlist.remove(profile)
+            self.in_watchlist.filter(username=username).delete()
             return True
 
-    def bid_possibility(self, auctioneer=None, username=None,
-                        return_highest_bid=False) -> bool or Bid:
+    def no_bet_option(self, auctioneer:Profile = None,
+                      username:str = None) -> str or None:
         """ Initial check of the possibility to place a bid.
-            Can return bool or the highest bid. """
-        # TODO test and return str with reason
+            Returns None if ok or the reason of the limitation. """
         if username:
             auctioneer = Profile.manager.filter(username=username).first()
 
-        if not self.is_active or \
-                self.owner == auctioneer or \
-                (self.potential_buyers.count() == 0 and
-                 auctioneer.money < self.starting_price):
-            return False
+        if not self.is_active:
+            return NO_BET_NOT_PUBLISHED
+        elif self.owner == auctioneer:
+            return NO_BET_THE_OWNER
 
         elif self.potential_buyers.count() > 0:
-            highest_bid = self.bid_set.latest()
-            if highest_bid.auctioneer == auctioneer or \
-                    auctioneer.money < highest_bid.bid_value:
-                return False
+            highest_bid = self.get_highest_bid_entry()
+            if highest_bid.auctioneer == auctioneer:
+                return NO_BET_ON_TOP
+            elif auctioneer.money < highest_bid.bid_value * NEW_BID_PERCENT:
+                return NO_BET_NO_MONEY
 
-            if return_highest_bid:
-                return_highest_bid = highest_bid
-
-        return True if not return_highest_bid else return_highest_bid
+        elif self.potential_buyers.count() == 0 and \
+                auctioneer.money < self.starting_price:
+            return NO_BET_NO_MONEY_SP
 
     def make_a_bid(self, auctioneer, bid_value) -> bool:
         """ Also add the lot to user's watchlist. """
-        result = self.bid_possibility(auctioneer, return_highest_bid=True)
-        if result is False or \
-                auctioneer.money < bid_value or \
-                (self.potential_buyers.count() == 0 and bid_value <= self.starting_price) or \
-                (type(result) is Bid and result.bid_value >= bid_value):
+        if self.no_bet_option(auctioneer):
+            return False
+        elif auctioneer.money < bid_value:
+            return False
+        elif self.potential_buyers.count() == 0 and \
+                bid_value < self.starting_price:
+            return False
+        elif self.highest_bid and self.highest_bid * NEW_BID_PERCENT > bid_value:
             return False
 
         with transaction.atomic('auctions_db', savepoint=False):
@@ -384,44 +407,58 @@ class Listing(Model):
 
             money = auctioneer.get_money(bid_value)
             auctioneer.placed_bets.add(self, through_defaults={'bid_value': money})
+            self.highest_bid = money
 
             log_entry(auctioneer, 'bid', self.title, coins=money)
-        return True
+            return True
 
     def change_the_owner(self) -> bool:
-        """ Sell the lot to the auctioneer that offers the highest bid and
+        """ Transfer the money to the owner form the auctioneer that offers the highest bid,
+            transfer the lot to its new owner,
             withdraw the lot from the auction. """
         if self.is_active is False or self.potential_buyers.count() == 0:
             return False
-        else:
-            highest_bid = self.bid_set.latest()
-            new_owner = highest_bid.auctioneer
-            money = highest_bid.bid_value
-            with transaction.atomic('auctions_db', savepoint=False):
-                log_entry(self.owner, 'sold', self.title, new_owner)
-                self.owner.add_money(money)
-                highest_bid.delete()
 
-                self._save_new_owner(new_owner)
-                self.starting_price = DEFAULT_STARTING_PRICE
-                self.withdraw(item_sold=True)
+        highest_bid = self.get_highest_bid_entry()
+        new_owner = highest_bid.auctioneer
+        money = highest_bid.bid_value
 
-                log_entry(self.owner, 'you_won', self.title, coins=money)
+        with transaction.atomic('auctions_db', savepoint=False):
+            log_entry(self.owner, 'sold', self.title, new_owner)
+            self.owner.add_money(money)
+            highest_bid.delete()
+
+            self.save_new_owner(new_owner)
+            self.starting_price = DEFAULT_STARTING_PRICE
+            self.withdraw(item_sold=True)
+
+            log_entry(self.owner, 'you_won', self.title, coins=money)
             return True
 
-    def _save_new_owner(self, new_owner):
+    def save_new_owner(self, new_owner):
         self.owner = new_owner
         super().save(update_fields=['owner'])
 
-    def get_highest_price(self):  # TODO test or make a field
+    def get_highest_price(self, with_starting_price=True, percent=False) -> float:
+        if self.highest_bid and percent:
+            return self.highest_bid * NEW_BID_PERCENT
+        elif self.highest_bid:
+            return self.highest_bid
+        elif self.highest_bid is None and with_starting_price:
+            return self.starting_price
+        else:
+            return 0.0
+
+    def get_highest_bid_entry(self) -> Bid or None:
         try:
             highest_bid = self.bid_set.latest()
         except ObjectDoesNotExist:
-            return self.starting_price
+            return None
         else:
-            return highest_bid.bid_value
+            return highest_bid
 
-    def __str__(self): return self.slug if self.slug else self.title
+    def __str__(self):
+        return self.slug if self.slug else self.title
 
 
 class Comment(Model):

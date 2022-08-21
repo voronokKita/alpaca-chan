@@ -136,14 +136,18 @@ class AuctionLotView(PresetMixin, ListingRedirectMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        """ Secondary CommentForm class. """
         if self.auctioneer:
+            """ Secondary CommentForm class. """
             context['form2'] = self.second_form_class(instance=context['listing'])
             context['form2'].fields['author_hidden'].initial = self.auctioneer
 
-        if self.auctioneer and not self.object.bid_possibility(username=self.auctioneer):
-            context['form'].fields['bid_value'].disabled = True
-            context['bid_forbidden'] = True
+            context['profile'] = Profile.manager.filter(username=self.auctioneer).first()
+
+            result = self.object.no_bet_option(context['profile'])
+            if result:
+                context['form'].fields['bid_value'].disabled = True
+                context['bid_forbidden'] = result
+
         return context
 
 

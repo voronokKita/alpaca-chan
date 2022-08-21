@@ -114,8 +114,15 @@ All main parts of the application are written and working!
 Username & pk now stored in a session. <br>
 ListingRedirectMixin; some misc mixin logic.
 
-### 2022.AUG.19
+### 2022.AUG.20
 
 ###### Auctions
 RestrictPkMixin and PresetMixin, with view access logic. <br>
 BidView.
+
+### 2022.AUG.21
+
+###### Auctions
+Refactor models with connected parts of app. <br>
+Listing.highest_bid will help to make less queries. Profile.user_model_pk and unique username will help to better connect the model to the User model. <br>
+Many small features.

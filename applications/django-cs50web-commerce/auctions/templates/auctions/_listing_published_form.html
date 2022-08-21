@@ -4,7 +4,7 @@
 {{ form.ghost_field.errors }}
 {{ form.ghost_field }}
 
-{% if request.user.username == listing.owner.username %}
+{% if profile == listing.owner %}
 
   {% if listing.potential_buyers.count > 0 %}
     <button type='submit' name='btn_owner_closed_auction' class='btn btn-warning'>Close the auction</button>
@@ -14,19 +14,18 @@
 {% else %}
 
   {% load listing_tags %}
-  {% in_watchlist listing request.user.username as in_watchlist_flag %}
-  {% can_unwatch listing request.user.username as can_unwatch_flag %}
-  {% can_bid listing request.user.username as can_bid_flag %}
+  {% in_watchlist listing profile as in_watchlist_flag %}
+  {% can_unwatch listing profile as can_unwatch_flag %}
 
   {{ form.bid_value.errors }}
   {{ form.bid_value }}
 
-  {% if can_bid_flag %}
+  {% if bid_forbidden %}
+    <span class='btn btn-warning disabled'>{{ bid_forbidden }}</span>
+  {% else %}
     {{ form.auctioneer.errors }}
     {{ form.auctioneer }}
     <button type='submit' name='btn_user_bid' class='btn btn-warning'>Make a bid</button>
-  {% elif bid_forbidden %}
-    <span class='btn btn-warning disabled'>Can't place a bet</span>
   {% endif %}
 
   {% if in_watchlist_flag is False %}
