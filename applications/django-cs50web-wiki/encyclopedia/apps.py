@@ -1,3 +1,5 @@
+import os
+import sys
 from django.apps import AppConfig
 
 
@@ -5,8 +7,7 @@ class EncyclopediaConfig(AppConfig):
     name = 'encyclopedia'
 
     def ready(self):
-        import sys
-        if 'test' not in sys.argv:
+        if os.environ.get('RUN_MAIN') != 'true' and 'test' not in sys.argv:
             from django.db.models.signals import post_save, post_delete
             from .logs import log_entry_save, log_entry_delete
             from .models import Entry

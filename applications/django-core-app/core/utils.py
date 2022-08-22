@@ -2,10 +2,11 @@ import re
 from django.template.defaultfilters import slugify
 
 
-# https://djangosnippets.org/snippets/690/
 def unique_slugify(instance, value, slug_field_name='slug', queryset=None,
                    slug_separator='-'):
     """
+    https://djangosnippets.org/snippets/690/
+
     Calculates and stores a unique slug of ``value`` for an instance.
 
     ``slug_field_name`` should be a string matching the name of the field to

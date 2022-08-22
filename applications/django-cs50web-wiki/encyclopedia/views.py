@@ -23,7 +23,7 @@ class NavbarMixin:
 
 class IndexView(generic.ListView):
     template_name = 'encyclopedia/index.html'
-    queryset = Entry.objects.all()[:20]
+    queryset = Entry.manager.all()[:20]
     context_object_name = 'wiki_entries'
     extra_context = {
         'navbar_list': [{'url': reverse_lazy('encyclopedia:new_entry'),

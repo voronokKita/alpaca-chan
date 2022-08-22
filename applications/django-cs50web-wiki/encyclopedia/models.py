@@ -3,16 +3,19 @@ from django.utils.text import slugify
 from django.urls import reverse
 from django.db.models import (
     Model, DateTimeField, Index,
-    CharField, TextField, SlugField
+    CharField, TextField, SlugField,
+    Manager
 )
 
 
 class Entry(Model):
-    slug = SlugField('URL Shortcut (slug)', null=True, unique=True)
-    entry_name = CharField('Article Name', max_length=150)
-    entry_text = TextField('Article Text')
-    pub_date = DateTimeField('Date Published', default=timezone.localtime)
-    upd_date = DateTimeField('Last Update', auto_now=True)
+    manager = Manager()
+
+    slug = SlugField('slug', null=True, unique=True)
+    entry_name = CharField('article name', max_length=150)
+    entry_text = TextField('article text')
+    pub_date = DateTimeField('date published', default=timezone.localtime)
+    upd_date = DateTimeField('last update', auto_now=True)
 
     def get_absolute_url(self):
         return reverse('encyclopedia:detail', kwargs={'slug': self.slug})
@@ -23,13 +26,9 @@ class Entry(Model):
         return super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name = 'Wiki Entry'
-        verbose_name_plural = 'Wiki Entries'
+        verbose_name = 'wiki entry'
+        verbose_name_plural = 'wiki entries'
         ordering = ['entry_name']
         indexes = [Index(fields=['slug'])]
 
     def __str__(self): return self.slug if self.slug else slugify(self.entry_name)
-
-    def __repr__(self):
-        s = self.slug if self.slug else slugify(self.entry_name)
-        return f'<encyclopedia.models.Entry[{s}]>'

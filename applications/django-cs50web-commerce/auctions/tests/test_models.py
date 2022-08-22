@@ -13,6 +13,35 @@ from auctions.models import (
 from django.contrib.auth.models import User
 
 
+""" TODO
++ unique slug func
++ profile model
+    + User & Profile models sync
+    - save()
+    + add_money()
+    - get_money()
+    + display_money()
++ category model
++ listing model
+    + image upload
+    - save()
+    - can_be_published()
+    + publish_the_lot()
+    + withdraw()
+    - can_unwatch()
+    + unwatch()
+    + no_bet_option()
+    + make_a_bid()
+    + change_the_owner()
+    - save_new_owner()
+    - get_highest_price()
+    - get_highest_bid_entry()
++ watchlist model
++ bid model
+    - refund()
++ comment model
++ profile log model
+"""
 small_gif = (
     b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00'
     b'\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00'
@@ -94,6 +123,7 @@ class UserProfileTests(TestCase):
     def test_profile_username_updated_with_user_username(self):
         user = User.objects.create(username='Manul')
         self.assertTrue(Profile.manager.filter(username='Manul').exists())
+        self.assertTrue(Profile.manager.filter(user_model_pk=user.pk).exists())
         user.username = 'Manul Cat'
         user.save()
         self.assertTrue(Profile.manager.filter(username='Manul Cat').exists())

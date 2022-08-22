@@ -26,17 +26,17 @@ class IndexView(generic.ListView):
     context_object_name = 'latest_question_list'
 
     def get_queryset(self):
-        return Question.objects.filter(pub_date__lte=timezone.localtime())
+        return Question.manager.filter(pub_date__lte=timezone.localtime())
 
 
 class DetailView(NavbarMixin, generic.UpdateView):
     template_name = 'polls/detail.html'
-    form_class = ChoiceSetForm
     model = Question
+    form_class = ChoiceSetForm
     success_url = reverse_lazy('polls:index')
 
     def get_queryset(self):
-        return Question.objects.filter(pub_date__lte=timezone.localtime())
+        return Question.manager.filter(pub_date__lte=timezone.localtime())
 
     def form_valid(self, form):
         self.success_url = reverse_lazy('polls:results', args=[form.instance.pk])
@@ -48,4 +48,4 @@ class ResultsView(NavbarMixin, generic.DetailView):
     model = Question
 
     def get_queryset(self):
-        return Question.objects.filter(pub_date__lte=timezone.localtime())
+        return Question.manager.filter(pub_date__lte=timezone.localtime())

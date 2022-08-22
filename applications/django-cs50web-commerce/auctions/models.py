@@ -66,7 +66,7 @@ def user_media_path(listing, filename):
 class Profile(Model):
     manager = models.Manager()
 
-    user_model_pk = IntegerField('the users pk on the User model', unique=True, blank=True, null=True)
+    user_model_pk = IntegerField('user.pk', unique=True, blank=True, null=True)
     username = CharField(max_length=USERNAME_MAX_LEN, unique=True, db_index=True)
     money = FloatField('money on account', default=0.0)
 
@@ -129,8 +129,7 @@ class Profile(Model):
     def placed_bets_count(self):
         return self.bid_set.count()
 
-    def __str__(self):
-        return self.username
+    def __str__(self): return self.username
 
 
 class Log(Model):
@@ -183,8 +182,8 @@ class Bid(Model):
         return super().delete(**kwargs)
 
     def _refund(self, item_sold):
-        """ Returns the money back to the profile
-            if the auction was lost or
+        """ Returns the money back to the profile if
+            the auction was lost or
             the owner withdrew the lot from the auction. """
         with transaction.atomic('auctions_db', savepoint=False):
             if item_sold is True:
@@ -220,23 +219,6 @@ class Watchlist(Model):
         verbose_name = 'watchlist'
         verbose_name_plural = 'watchlists'
         ordering = ['listing']
-
-    # **DEPRECATED**
-    def generate_watchlist(self) -> (list, list, list):
-        """ Will return 3 lists: [items owned],
-            [items owned and published], and [just watched]. """
-        items_owned = []
-        items_owned_and_published = []
-        just_watched = []
-        for item in self.profile.items_watched.all():
-            if item.owner == self.profile:
-                if item.is_active:
-                    items_owned_and_published.append(item)
-                else:
-                    items_owned.append(item)
-            else:
-                just_watched.append(item)
-        return items_owned, items_owned_and_published, just_watched
 
     def __str__(self):
         return f'{self.profile} >-- watchlist --< {self.listing}'

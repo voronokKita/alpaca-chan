@@ -63,13 +63,13 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'username', 'money', 'items_owned_count',
+    list_display = ['pk', 'user_model_pk', 'username', 'money', 'items_owned_count',
                     'placed_bets_count', 'comments_written_count']
     list_display_links = ['pk', 'username']
     list_filter = ['username', 'money']
 
-    fields = ['pk', 'username', 'money']
-    readonly_fields = ['pk']
+    fields = ['pk', 'user_model_pk', 'username', 'money']
+    readonly_fields = ['pk', 'user_model_pk']
 
     inlines = [ListingInline, BidInline, WatchlistInline, CommentInline, LogInline]
 

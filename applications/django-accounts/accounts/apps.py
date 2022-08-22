@@ -1,3 +1,5 @@
+import os
+import sys
 from django.apps import AppConfig
 
 
@@ -5,8 +7,7 @@ class AccountsConfig(AppConfig):
     name = 'accounts'
 
     def ready(self):
-        import sys
-        if 'test' not in sys.argv:
+        if os.environ.get('RUN_MAIN') != 'true' and 'test' not in sys.argv:
             from django.db.models.signals import post_save, post_delete
             from .logs import log_proxy_user_save, log_proxy_user_delete
             from .models import ProxyUser

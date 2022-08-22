@@ -127,3 +127,6 @@ So far, I have made a crutch synchronization mechanism. I need a knowledge about
 
 The admin fields adjustment. <br>
 Clean up the Watchlist & Bid entries before the startapp.
+
+###### Project
+Design refactor.

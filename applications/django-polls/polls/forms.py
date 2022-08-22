@@ -5,7 +5,11 @@ from .models import Question, Choice
 
 
 class ChoiceSetForm(ModelForm):
-    choices = ModelChoiceField(queryset=Choice.objects.all(), label='', widget=RadioSelect)
+    choices = ModelChoiceField(queryset=Choice.manager.all(), label='', widget=RadioSelect)
+
+    class Meta:
+        model = Question
+        fields = ['choices']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -17,7 +21,3 @@ class ChoiceSetForm(ModelForm):
         choice.votes = F('votes') + 1
         choice.save()
         return choice
-
-    class Meta:
-        model = Question
-        fields = ['choices']

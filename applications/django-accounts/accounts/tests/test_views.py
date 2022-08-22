@@ -1,92 +1,11 @@
-from django.test import TestCase, SimpleTestCase, override_settings
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.conf import settings
 from django.contrib.auth.hashers import make_password
 
 from django.contrib.auth.models import User
-from .models import ProxyUser
-from .forms import UserLoginForm, UserRegisterForm
-
-
-# + proxy user model
-# + forms
-# + index page
-# + login & logout
-# + register page
-#   + register a new user
-# + redirections
-# + check resources
-# + check navbar
-
-SECOND_DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
-PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
-
-
-class ProxyUserModelTests(TestCase):
-    databases = ['default']
-
-    def test_entry_normal_case(self):
-        """ Test that the proxy model is working fine. """
-        user = ProxyUser.manager.create(
-            username='Rockhopper', first_name='Iwatobi', last_name='the Penguin',
-            email='rockhopper@japaripark.int', is_staff=True, password='qwerty'
-        )
-        self.assertTrue(User.objects.filter(username='Rockhopper').exists())
-        self.assertEqual(user.get_full_name(), 'Iwatobi the Penguin')
-        self.assertEqual(user.get_short_name(), 'Iwatobi')
-        self.assertEqual(user.get_username(), 'Rockhopper')
-
-
-@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
-class UserRegisterFormTests(TestCase):
-    databases = ['default']
-
-    def test_register_form_normal_case(self):
-        form_data = {
-            'username': 'Hululu',
-            'first_name': 'Humboldt',
-            'last_name': 'the Penguin',
-            'email': 'hululu@japaripark.int',
-            'password1': 'qwerty',
-            'password2': 'qwerty'
-        }
-        form = UserRegisterForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        form.save()
-        self.assertTrue(User.objects.filter(username='Hululu').exists())
-
-    def test_register_form_optional_parameters(self):
-        form_data = {
-            'username': 'Princess',
-            'password1': 'qwerty',
-            'password2': 'qwerty'
-        }
-        form = UserRegisterForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        form.save()
-        self.assertTrue(User.objects.filter(username='Princess').exists())
-
-    def test_register_form_errors(self):
-        errors = [
-            {'username': 'Gentoo'},
-            {'username': 'Koutei', 'password1': 'qwerty'},
-            {'username': 'Margay', 'password2': 'qwerty'},
-        ]
-        for err in errors:
-            form = UserRegisterForm(data=err)
-            self.assertFalse(form.is_valid())
-
-
-@override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
-class UserLoginFormTests(TestCase):
-    databases = ['default']
-
-    def test_login_form_normal_case(self):
-        user = ProxyUser.manager.create(username='Tsuchinoko',
-                                        password=make_password('qwerty'))
-        form_data = {'username': 'Tsuchinoko', 'password': 'qwerty'}
-        form = UserLoginForm(data=form_data)
-        self.assertTrue(form.is_valid())
+from accounts.models import ProxyUser
+from accounts.forms import UserLoginForm, UserRegisterForm
+from .tests import SECOND_DB, PASSWORD_HASHER
 
 
 @override_settings(PASSWORD_HASHERS=PASSWORD_HASHER)
@@ -99,11 +18,11 @@ class AccountsIndexViewTests(TestCase):
 
     def test_accounts_navbar(self):
         response_anon = self.client.get(reverse('accounts:index'))
-        self.assertContains(response_anon, 'Home')
+        self.assertContains(response_anon, 'Alpaca’s Cafe')
         self.assertContains(response_anon, 'Register')
         self.assertContains(response_anon, 'Login')
 
-        User.objects.create(username='Hashibirokou', password=make_password('qwerty'))
+        ProxyUser.manager.create(username='Hashibirokou', password=make_password('qwerty'))
         self.client.login(username='Hashibirokou', password='qwerty')
         response_user = self.client.get(reverse('accounts:index'))
         self.assertContains(response_user, 'Hashibirokou')
@@ -259,17 +178,3 @@ class AccountsRegisterIntegrityTests(TestCase):
         self.assertTrue(User.objects.filter(username='Fennec-chan').exists())
         response_get_register = self.client.get(reverse('core:index'))
         self.assertTrue(response_get_register.context['user'].is_authenticated)
-
-
-class AccountsResourcesTests(SimpleTestCase):
-    app_dir = settings.ALL_PROJECT_APPS['accounts']['app_dir']
-    resources = [
-        app_dir / 'readme.md',
-        app_dir / 'accounts' / 'logs.py',
-        app_dir / 'accounts' / 'static' / 'accounts' / 'favicon.ico',
-        app_dir / 'accounts' / 'templates' / 'accounts' / 'base_accounts.html',
-    ]
-    def test_base_resources_exists(self):
-        """ Check that I didn't miss anything. """
-        for item in self.resources:
-            self.assertTrue(item.exists(), msg=item)
