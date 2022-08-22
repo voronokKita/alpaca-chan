@@ -20,6 +20,7 @@ class AuctionsConfig(AppConfig):
                 from .models import Profile
                 self._logger_signals(Profile)
                 self._user_and_profile_models_sync(User, Profile)
+                # TODO clean watchlist
 
     @staticmethod
     def _user_model_signals(user_model):

@@ -14,8 +14,6 @@ from django.db.models import (
 from core.utils import unique_slugify
 
 
-# TODO check users db on startup and create a profile for every user, check all names and pks
-
 class LowOnMoney(Exception): pass
 
 NEW_BID_PERCENT = 1+5/100
@@ -68,7 +66,7 @@ def user_media_path(listing, filename):
 class Profile(Model):
     manager = models.Manager()
 
-    user_model_pk = IntegerField('the users pk on the User model', blank=True, null=True)
+    user_model_pk = IntegerField('the users pk on the User model', unique=True, blank=True, null=True)
     username = CharField(max_length=USERNAME_MAX_LEN, unique=True, db_index=True)
     money = FloatField('money on account', default=0.0)
 
@@ -221,6 +219,7 @@ class Watchlist(Model):
         db_table = 'auctions_watchlists'
         verbose_name = 'watchlist'
         verbose_name_plural = 'watchlists'
+        ordering = ['listing']
 
     # **DEPRECATED**
     def generate_watchlist(self) -> (list, list, list):
