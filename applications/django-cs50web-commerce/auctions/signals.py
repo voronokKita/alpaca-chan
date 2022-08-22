@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.db import transaction
 
 from .models import Profile
 
@@ -7,7 +6,7 @@ from .models import Profile
 def user_saved_signal(instance, created, **kwargs):
     """ For every created user create a profile in the auctions app. """
     if created is True:
-        p = Profile(username=instance.username)
+        p = Profile(username=instance.username, user_model_pk=instance.pk)
         p.save(date_joined=instance.date_joined)
 
 
@@ -24,9 +23,8 @@ def user_pre_saved_signal(instance, **kwargs):
         return
     else:
         profile = Profile.manager.get(username=old_user_entry.username)
-        with transaction.atomic('auctions_db', savepoint=False):
-            profile.username = instance.username
-            profile.save(update_fields=['username'])
+        profile.username = instance.username
+        profile.save(update_fields=['username'])
 
 
 def user_pre_delete_signal(instance, **kwargs):

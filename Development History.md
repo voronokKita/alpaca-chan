@@ -74,7 +74,6 @@ Atomic transactions. <br>
 F queries with profile's money.
 
 ### 2022.AUG.15
-
 ###### Project
 Navbar & the active_nav template tag fixes. NavbarMixin.
 
@@ -84,19 +83,16 @@ NavbarMixin & AuctionsAuthMixin. <br>
 IndexView. Listing cards. View by category.
 
 ### 2022.AUG.16
-
 ###### Auctions
 ProfileView with TransferMoneyForm. Fixed bug with float numbers format in the user logs. <br>
 UserHistoryView. WatchlistView.
 
 ### 2022.AUG.17
-
 ###### Auctions
 CreateListingView with CreateListingForm. That was surprisingly tough! <br>
 ListingView with PublishListingForm.
 
 ### 2022.AUG.18
-
 ###### Auctions
 To implement a redirect between ListingView, EditListingView and AuctionLotView and vice versa, in order of listing.is_active logic to work, I need to request the same listing instance from the db twice. So far I don’t know how to get around this, so instead of a redirect I will display an empty page.
 
@@ -104,7 +100,6 @@ Wrote AuctionLotView & AuctionLotForm basics, with buttons and template tugs. <b
 Wrote ProfileMixin and refactor many small things in all the views, forms and templates.
 
 ### 2022.AUG.19
-
 ###### Auctions
 Finished AuctionLotView and AuctionLotForm. All logic is working. <br>
 CommentsView and CommentForm done.
@@ -115,14 +110,17 @@ Username & pk now stored in a session. <br>
 ListingRedirectMixin; some misc mixin logic.
 
 ### 2022.AUG.20
-
 ###### Auctions
 RestrictPkMixin and PresetMixin, with view access logic. <br>
 BidView.
 
 ### 2022.AUG.21
-
 ###### Auctions
 Refactor models with connected parts of app. <br>
 Listing.highest_bid will help to make less queries. Profile.user_model_pk and unique username will help to better connect the model to the User model. <br>
 Many small features.
+
+### 2022.AUG.22
+###### Auctions
+The price for a separate application database is the need to keep User model in sync with Profile model. Surely there are better ways to do this... I wonder... <br>
+So far, I have made a crutch synchronization mechanism. I need a knowledge about large systems building.
