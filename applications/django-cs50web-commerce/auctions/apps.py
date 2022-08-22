@@ -18,9 +18,13 @@ class AuctionsConfig(AppConfig):
 
             if 'test' not in sys.argv:
                 from .models import Profile
+                users = User.objects.all()
+                profiles = Profile.manager.all()
+
                 self._logger_signals(Profile)
-                self._user_and_profile_models_sync(User, Profile)
-                # TODO clean watchlist
+                self._clean_watchlist(profiles)
+                self._clean_bets(profiles)
+                self._user_and_profile_models_sync(User, Profile, users, profiles)
 
     @staticmethod
     def _user_model_signals(user_model):
@@ -49,11 +53,30 @@ class AuctionsConfig(AppConfig):
         post_save.connect(log_bid_save, sender=Bid, dispatch_uid='bid')
         post_save.connect(log_listing_save, sender=Listing, dispatch_uid='listing')
 
-    def _user_and_profile_models_sync(self, user_model, profile_model):
-        """ The debug mechanism for the User-Profile synchronisation. """
-        users = user_model.objects.all()
-        profiles = profile_model.manager.all()
+    @staticmethod
+    def _clean_watchlist(profiles):
+        """ Ensures that profiles watching only their own listings or the auction lots. """
+        for profile in profiles:
+            result = profile.watchlist_set\
+                .exclude(listing__owner=profile)\
+                .filter(listing__is_active=False)
+            if result:
+                result.delete()
+                logger.info(f'the profile [{profile}] had a subscription to '
+                            f'unpublished items that did not belong to him')
 
+    @staticmethod
+    def _clean_bets(profiles):
+        """ Ensures that profiles do not have bets placed on the unpublished items. """
+        for profile in profiles:
+            result = profile.bid_set.filter(lot__is_active=False)
+            if result:
+                for bid in result:
+                    bid.delete(refund=True)
+                logger.info(f'the profile [{profile}] had bets on unpublished items')
+
+    def _user_and_profile_models_sync(self, user_model, profile_model, users, profiles):
+        """ The debug mechanism for the User-Profile synchronisation. """
         users_usernames_set = set([q.username for q in users])
         profiles_usernames_set = set([q.username for q in profiles])
 

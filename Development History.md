@@ -125,4 +125,5 @@ Many small features.
 The price for a separate application database is the need to keep User model in sync with Profile model. Surely there are better ways to do this... I wonder... <br>
 So far, I have made a crutch synchronization mechanism. I need a knowledge about large systems building.
 
-The admin fields adjustment.
+The admin fields adjustment. <br>
+Clean up the Watchlist & Bid entries before the startapp.
