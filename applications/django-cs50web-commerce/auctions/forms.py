@@ -10,7 +10,7 @@ from django.forms import (
 )
 from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
-    USERNAME_MAX_LEN, NEW_BID_PERCENT, Profile, Listing, ListingCategory
+    USERNAME_MAX_LEN, Profile, Listing, ListingCategory
 )
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class AuctionLotForm(ModelForm):  # TODO test
             raise ValidationError('ERROR: you aren’t the owner ot the lot')
 
         elif 'btn_user_bid' in self.data and \
-                self.instance.no_bet_option(username=username):
+                self.instance.no_bid_option(username=username):
             raise ValidationError('ERROR: bid is prohibited')
 
         elif 'btn_user_watching' in self.data and \

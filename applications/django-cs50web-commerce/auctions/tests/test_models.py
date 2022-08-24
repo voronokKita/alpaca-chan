@@ -30,7 +30,7 @@ from django.contrib.auth.models import User
     + withdraw()
     - can_unwatch()
     + unwatch()
-    + no_bet_option()
+    + no_bid_option()
     + make_a_bid()
     + change_the_owner()
     - save_new_owner()
@@ -292,32 +292,32 @@ class ListingTests(TestCase):
         self.assertTrue(listing.unwatch(profile3), 'normal')
         self.assertFalse(listing.in_watchlist.contains(profile3), 'normal')
 
-    def test_listing_method_no_bet_option(self):
+    def test_listing_method_no_bid_option(self):
         from auctions.models import (
-            NO_BET_NO_MONEY_SP, NO_BET_THE_OWNER,
-            NO_BET_NO_MONEY, NO_BET_ON_TOP
+            NO_BID_NO_MONEY_SP, NO_BID_THE_OWNER,
+            NO_BID_NO_MONEY, NO_BID_ON_TOP
         )
         profile = get_profile()
         listing = get_listing(profile=profile)
         listing.is_active = True
         listing.save()
         # owner
-        self.assertEqual(listing.no_bet_option(profile), NO_BET_THE_OWNER)
+        self.assertEqual(listing.no_bid_option(profile), NO_BID_THE_OWNER)
         # starting price
         profile2 = get_profile('Shirosai', money=0.1)
-        self.assertEqual(listing.no_bet_option(profile2), NO_BET_NO_MONEY_SP)
+        self.assertEqual(listing.no_bid_option(profile2), NO_BID_NO_MONEY_SP)
         # already on top
         profile2.add_money(10)
         profile2.refresh_from_db()
         listing.potential_buyers.add(profile2, through_defaults={'bid_value': 10})
-        self.assertEqual(listing.no_bet_option(profile2), NO_BET_ON_TOP)
+        self.assertEqual(listing.no_bid_option(profile2), NO_BID_ON_TOP)
         # low on money
         profile3 = get_profile('Sunaneko', money=9)
-        self.assertEqual(listing.no_bet_option(profile3), NO_BET_NO_MONEY)
+        self.assertEqual(listing.no_bid_option(profile3), NO_BID_NO_MONEY)
         # ok
         profile3.add_money(2)
         profile3.refresh_from_db()
-        self.assertIsNone(listing.no_bet_option(profile3), 'ok')
+        self.assertIsNone(listing.no_bid_option(profile3), 'ok')
 
     def test_listing_method_make_a_bid(self):
         from auctions.models import NEW_BID_PERCENT
@@ -391,21 +391,21 @@ class WatchlistTests(TestCase):
 class BidTests(TestCase):
     databases = [SECOND_DB]
 
-    def test_bets_normal_case(self):
+    def test_bids_normal_case(self):
         time_now = timezone.localtime()
         listing1 = get_listing(title='friends')
         listing2 = get_listing(title='buns', username='Gazelle')
 
         profile = get_profile('Shoujoutoki')
-        profile.placed_bets.add(listing1, through_defaults={'bid_value': 2})
-        profile.placed_bets.add(listing2, through_defaults={'bid_value': 3})
+        profile.placed_bids.add(listing1, through_defaults={'bid_value': 2})
+        profile.placed_bids.add(listing2, through_defaults={'bid_value': 3})
 
         self.assertEqual(Bid.manager.count(), 2)
-        self.assertTrue(profile.placed_bets.filter(slug='friends').exists())
+        self.assertTrue(profile.placed_bids.filter(slug='friends').exists())
         self.assertTrue(listing1.potential_buyers.filter(username='Shoujoutoki').exists())
         self.assertTrue(
             Profile.manager.filter(username='Shoujoutoki',
-                                   placed_bets__slug='buns').exists()
+                                   placed_bids__slug='buns').exists()
         )
         bid = profile.bid_set.get(lot=listing2)
         self.assertEqual(bid.bid_value, 3)
@@ -457,7 +457,7 @@ class LogTests(TestCase):
         # auction created
         listing.publish_the_lot()
         self.assertTrue(Log.manager.filter(entry=LOG_LOT_PUBLISHED % title).exists())
-        # made a bet
+        # made a bid
         profile_two = get_profile(username='Moose')
         listing.make_a_bid(profile_two, 10)
         profile_two.refresh_from_db()

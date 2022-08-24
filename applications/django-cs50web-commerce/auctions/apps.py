@@ -23,7 +23,7 @@ class AuctionsConfig(AppConfig):
 
                 self._logger_signals(Profile)
                 self._clean_watchlist(profiles)
-                self._clean_bets(profiles)
+                self._clean_bids(profiles)
                 self._user_and_profile_models_sync(User, Profile, users, profiles)
 
     @staticmethod
@@ -66,14 +66,14 @@ class AuctionsConfig(AppConfig):
                             f'unpublished items that did not belong to him')
 
     @staticmethod
-    def _clean_bets(profiles):
-        """ Ensures that profiles do not have bets placed on the unpublished items. """
+    def _clean_bids(profiles):
+        """ Ensures that profiles do not have bids placed on the unpublished items. """
         for profile in profiles:
             result = profile.bid_set.filter(lot__is_active=False)
             if result:
                 for bid in result:
                     bid.delete(refund=True)
-                logger.info(f'the profile [{profile}] had bets on unpublished items')
+                logger.info(f'the profile [{profile}] had bids on unpublished items')
 
     def _user_and_profile_models_sync(self, user_model, profile_model, users, profiles):
         """ The debug mechanism for the User-Profile synchronisation. """

@@ -46,9 +46,9 @@ class ProfileView(AuctionsAuthMixin, PresetMixin, generic.UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        money, bets_total = context['profile'].display_money()
+        money, bids_total = context['profile'].display_money()
         context['user_money'] = money
-        context['bets_total'] = bets_total
+        context['bids_total'] = bids_total
         return context
 
 
@@ -143,7 +143,7 @@ class AuctionLotView(PresetMixin, ListingRedirectMixin, generic.UpdateView):
 
             context['profile'] = Profile.manager.filter(username=self.auctioneer).first()
 
-            result = self.object.no_bet_option(context['profile'])
+            result = self.object.no_bid_option(context['profile'])
             if result:
                 context['form'].fields['bid_value'].disabled = True
                 context['bid_forbidden'] = result
@@ -181,7 +181,7 @@ class CommentsView(PresetMixin, generic.UpdateView):
 
 
 class BidView(PresetMixin, generic.DetailView):
-    template_name = 'auctions/bets_list.html'
+    template_name = 'auctions/bids_list.html'
     model = Listing
     context_object_name = 'listing'
 

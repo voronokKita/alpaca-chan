@@ -23,18 +23,18 @@ USERNAME_MAX_LEN = 150
 LOT_TITLE_MAX_LEN = 300
 DEFAULT_STARTING_PRICE = 1
 
-NO_BET_NOT_PUBLISHED = 'Listing is not published'
-NO_BET_THE_OWNER = 'You are the owner'
-NO_BET_NO_MONEY = 'Insufficient funds'
-NO_BET_NO_MONEY_SP = 'Your money is less than the starting price'
-NO_BET_ON_TOP = 'Your bid is on top'
+NO_BID_NOT_PUBLISHED = 'Listing is not published'
+NO_BID_THE_OWNER = 'You are the owner'
+NO_BID_NO_MONEY = 'Insufficient funds'
+NO_BID_NO_MONEY_SP = 'Your money is less than the starting price'
+NO_BID_ON_TOP = 'Your bid is on top'
 
 LOG_REGISTRATION = 'Date of your registration.'
 LOG_MONEY_ADDED = 'Wallet topped up with %0.2f coins.'
 LOG_NEW_LISTING = 'The item [%s] has been added to your listings.'
 LOG_YOU_WON = 'The listing [%s] has been taken into possession. Price — %0.2f.'
 LOG_LOT_PUBLISHED = 'You have created an auction — [%s].'
-LOG_NEW_BID = 'Made a bet on [%s]. Value — %0.2f.'
+LOG_NEW_BID = 'Made a bid on [%s]. Value — %0.2f.'
 LOG_WITHDRAWN = 'You have withdrawn [%s] from the auction.'
 LOG_YOU_LOSE = 'You lost the auction — [%s]. Refund %0.2f coins.'
 LOG_OWNER_REMOVED = 'The owner removed the lot [%s] from the auction. Refund %0.2f coins.'
@@ -72,7 +72,7 @@ class Profile(Model):
 
     class Meta:
         """
-        profile >-- bid --< placed_bets (listing)
+        profile >-- bid --< placed_bids (listing)
         profile >-- watchlist --< items_watched (listing)
         profile --< lots_owned (listing)
         profile --< comment_set
@@ -110,12 +110,12 @@ class Profile(Model):
             raise LowOnMoney
 
     def display_money(self) -> (float, float):
-        """ Returns current money + in all the bets. """
-        bets_total = 0
+        """ Returns current money + in all the bids. """
+        bids_total = 0
         if self.bid_set.count() > 0:
             result = self.bid_set.aggregate(Sum('bid_value'))
-            bets_total = result['bid_value__sum']
-        return self.money, bets_total
+            bids_total = result['bid_value__sum']
+        return self.money, bids_total
 
     @admin.display(description='items owned')
     def items_owned_count(self):
@@ -125,8 +125,8 @@ class Profile(Model):
     def comments_written_count(self):
         return self.comment_set.count()
 
-    @admin.display(description='placed bets')
-    def placed_bets_count(self):
+    @admin.display(description='placed bids')
+    def placed_bids_count(self):
         return self.bid_set.count()
 
     def __str__(self): return self.username
@@ -199,7 +199,7 @@ class Bid(Model):
         """ profiles >-- bid --< listings """
         db_table = 'auctions_bids'
         verbose_name = 'placed bid'
-        verbose_name_plural = 'placed bets'
+        verbose_name_plural = 'placed bids'
         ordering = ['-bid_date']
         get_latest_by = ['bid_value']
 
@@ -240,7 +240,7 @@ class Listing(Model):
 
     category = ForeignKey(ListingCategory, on_delete=models.PROTECT)
     owner = ForeignKey(Profile, on_delete=models.CASCADE, related_name='lots_owned')
-    potential_buyers = ManyToManyField(Profile, through=Bid, related_name='placed_bets')
+    potential_buyers = ManyToManyField(Profile, through=Bid, related_name='placed_bids')
     in_watchlist = ManyToManyField(Profile, through=Watchlist, related_name='items_watched')
 
     class Meta:
@@ -347,7 +347,7 @@ class Listing(Model):
             self.in_watchlist.filter(username=username).delete()
             return True
 
-    def no_bet_option(self, auctioneer:Profile = None,
+    def no_bid_option(self, auctioneer:Profile = None,
                       username:str = None) -> str or None:
         """ Initial check of the possibility to place a bid.
             Returns None if ok or the reason of the limitation. """
@@ -355,24 +355,24 @@ class Listing(Model):
             auctioneer = Profile.manager.filter(username=username).first()
 
         if not self.is_active:
-            return NO_BET_NOT_PUBLISHED
+            return NO_BID_NOT_PUBLISHED
         elif self.owner == auctioneer:
-            return NO_BET_THE_OWNER
+            return NO_BID_THE_OWNER
 
         elif self.potential_buyers.count() > 0:
             highest_bid = self.get_highest_bid_entry()
             if highest_bid.auctioneer == auctioneer:
-                return NO_BET_ON_TOP
+                return NO_BID_ON_TOP
             elif auctioneer.money < highest_bid.bid_value * NEW_BID_PERCENT:
-                return NO_BET_NO_MONEY
+                return NO_BID_NO_MONEY
 
         elif self.potential_buyers.count() == 0 and \
                 auctioneer.money < self.starting_price:
-            return NO_BET_NO_MONEY_SP
+            return NO_BID_NO_MONEY_SP
 
     def make_a_bid(self, auctioneer, bid_value) -> bool:
         """ Also add the lot to user's watchlist. """
-        if self.no_bet_option(auctioneer):
+        if self.no_bid_option(auctioneer):
             return False
         elif auctioneer.money < bid_value:
             return False
@@ -387,7 +387,7 @@ class Listing(Model):
                 self.in_watchlist.add(auctioneer)
 
             money = auctioneer.get_money(bid_value)
-            auctioneer.placed_bets.add(self, through_defaults={'bid_value': money})
+            auctioneer.placed_bids.add(self, through_defaults={'bid_value': money})
             self.highest_bid = money
 
             log_entry(auctioneer, 'bid', self.title, coins=money)
