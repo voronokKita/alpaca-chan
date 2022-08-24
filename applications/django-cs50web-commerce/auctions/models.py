@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.contrib import admin
 from django.utils import timezone
 from django.urls import reverse, reverse_lazy
@@ -56,11 +58,12 @@ def log_entry(profile, msg, listing='None', user='None', coins=0):
     profile.logs.create(entry=case)
 
 
-def user_media_path(listing, filename):
+def user_media_path(listing=None, filename=None, slug=None) -> Path:
     """ Files will be uploaded to
         MEDIA_ROOT/auctions/listings/2022.08.08__<listing.slug>/<filename> """
     date = timezone.localdate().strftime('%Y.%m.%d')
-    return f'auctions/listings/{date}__{listing.slug}/{filename}'
+    slug = listing.slug if listing else slug
+    return Path('auctions', 'listings', f'{date}__{slug}', f'{filename}')
 
 
 class Profile(Model):
@@ -344,7 +347,7 @@ class Listing(Model):
         if self.can_unwatch(username=username) is False:
             return False
         else:
-            self.in_watchlist.filter(username=username).delete()
+            self.watchlist_set.filter(profile__username=username).delete()
             return True
 
     def no_bid_option(self, auctioneer:Profile = None,

@@ -15,10 +15,13 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
+MONEY_MIN_VALUE = 0.01
+MONEY_MAX_VALUE = 9999.99
 
-class TransferMoneyForm(ModelForm):  # TODO test
+
+class TransferMoneyForm(ModelForm):
     transfer_money = FloatField(
-        label='', min_value=0.01, max_value=9999.99,
+        label='', min_value=MONEY_MIN_VALUE, max_value=MONEY_MAX_VALUE,
         widget=NumberInput(attrs={'placeholder': '0.01',
                                   'class': 'form-control',
                                   'autocomplete': 'off'})
@@ -27,15 +30,16 @@ class TransferMoneyForm(ModelForm):  # TODO test
         model = Profile
         fields = ['transfer_money']
 
-    def clean_transfer_money(self):
-        money = self.cleaned_data['transfer_money']
-        self.instance.add_money(money)
-        return money
+    def is_valid(self):
+        if super().is_valid():
+            money = self.cleaned_data['transfer_money']
+            self.instance.add_money(money)
+            return True
+        else:
+            return False
 
-    # TODO def is_valid(self):
 
-
-class PublishListingForm(ModelForm):  # TODO test
+class PublishListingForm(ModelForm):
     ghost_field = BooleanField(required=False, disabled=True, widget=HiddenInput())
 
     class Meta:
@@ -60,21 +64,21 @@ class AuctionLotForm(ModelForm):  # TODO test
                            max_length=USERNAME_MAX_LEN, widget=HiddenInput())
     bid_value = FloatField(
         label='',
-        min_value=0.01,
-        initial=0.01,
+        min_value=MONEY_MIN_VALUE,
+        initial=MONEY_MIN_VALUE,
         required=False,
         widget=NumberInput(attrs={'class': 'form-control d-inline', 'style': 'width: 100px;'})
     )
+    class Meta:
+        model = Listing
+        fields = ['ghost_field', 'bid_value']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         initial = kwargs['instance'].get_highest_price(percent=True)
         self.fields['bid_value'].initial = initial
         self.fields['bid_value'].min_value = initial
         self.fields['bid_value'].widget.attrs['min'] = initial
-
-    class Meta:
-        model = Listing
-        fields = ['ghost_field', 'bid_value']
 
     def clean(self):
         username = self.fields['auctioneer'].initial
@@ -122,9 +126,9 @@ class AuctionLotForm(ModelForm):  # TODO test
             return True
 
 
-class CommentForm(ModelForm):  # TODO test
+class CommentForm(ModelForm):
     author_hidden = CharField(
-        required=False,
+        required=True,
         disabled=True,
         max_length=USERNAME_MAX_LEN,
         widget=HiddenInput()
@@ -150,7 +154,7 @@ class CommentForm(ModelForm):  # TODO test
             return True
 
 
-class CreateListingForm(ModelForm):  # TODO test
+class CreateListingForm(ModelForm):
     slug = CharField(
         label='SLUG (optional)',
         required=False,
@@ -168,12 +172,12 @@ class CreateListingForm(ModelForm):  # TODO test
     )
     category = ModelChoiceField(
         label='Category',
-        queryset=ListingCategory.manager.all(),  # TODO filter ghost
+        queryset=ListingCategory.manager.all(),
         widget=Select(attrs={'class': 'form-control'})
     )
     starting_price = FloatField(
         label='Starting 🪙 price',
-        min_value=0.01,
+        min_value=MONEY_MIN_VALUE,
         initial=DEFAULT_STARTING_PRICE,
         widget=NumberInput(attrs={'class': 'form-control'})
     )
@@ -191,14 +195,13 @@ class CreateListingForm(ModelForm):  # TODO test
         queryset=None,
         widget=HiddenInput()
     )
-
     class Meta:
         model = Listing
         fields = ['slug', 'title', 'category', 'starting_price',
                   'description', 'image', 'owner']
 
 
-class EditListingForm(ModelForm):  # TODO test
+class EditListingForm(ModelForm):
     title = CharField(
         label='Listing title',
         help_text=f'{LOT_TITLE_MAX_LEN} characters max',
@@ -206,12 +209,12 @@ class EditListingForm(ModelForm):  # TODO test
     )
     category = ModelChoiceField(
         label='Category',
-        queryset=ListingCategory.manager.all(),  # TODO filter ghost
+        queryset=ListingCategory.manager.all(),
         widget=Select(attrs={'class': 'form-control'})
     )
     starting_price = FloatField(
         label='Starting 🪙 price',
-        min_value=0.01,
+        min_value=MONEY_MIN_VALUE,
         widget=NumberInput(attrs={'class': 'form-control'})
     )
     description = CharField(

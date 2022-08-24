@@ -130,3 +130,7 @@ Clean up the Watchlist & Bid entries before the startapp.
 
 ###### Project
 Design refactor.
+
+### 2022.AUG.24
+###### Auctions
+Form tests. Fixed critical bug in Listing.unwatch(), that resulted in deletion of the profile instead of the watchlist entry (‾́◡‾́)

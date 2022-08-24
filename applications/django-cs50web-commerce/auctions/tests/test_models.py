@@ -7,14 +7,15 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from auctions.models import (
     Profile, ListingCategory, Comment,
-    Listing, Watchlist, Bid, Log
+    Listing, Watchlist, Bid, Log,
+    user_media_path
 )
 from .tests import (
-    DB, TEST_IMAGE,
+    DB, DATABASES,
+    TEST_IMAGE, IMGNAME,
     get_category, get_profile,
     get_listing, get_comment
 )
-
 
 """ TODO
 + unique slug func
@@ -48,7 +49,7 @@ from .tests import (
 
 
 class UniqueSlugTests(TestCase):
-    databases = [DB]
+    databases = DATABASES
 
     def test_unique_slug_works(self):
         expected = 3
@@ -64,7 +65,7 @@ class UniqueSlugTests(TestCase):
 
 
 class UserProfileTests(TestCase):
-    databases = ['default', DB]
+    databases = DATABASES
 
     def test_new_user_gets_new_profile_in_correct_db(self):
         user = User.objects.create(username='Serval')
@@ -151,7 +152,7 @@ class UserProfileTests(TestCase):
 
 
 class ListingCategoryTests(TestCase):
-    databases = [DB]
+    databases = DATABASES
 
     def test_category_normal_case(self):
         ListingCategory.manager.create(label='items')
@@ -164,7 +165,7 @@ class ListingCategoryTests(TestCase):
 
 
 class ListingTests(TestCase):
-    databases = [DB]
+    databases = DATABASES
 
     @classmethod
     def setUpClass(cls):
@@ -174,17 +175,17 @@ class ListingTests(TestCase):
         cls.profile = get_profile('Serval')
         cls.listing = get_listing(category=cls.category, title='Japari bun',
                                   profile=cls.profile, image=TEST_IMAGE)
-        date = timezone.localdate().strftime('%Y.%m.%d')
+
         cls.image_path = Path(
-            settings.MEDIA_ROOT / 'auctions' /
-            'listings' / f'{date}__japari-bun' / 'dot.gif'
+            settings.MEDIA_ROOT / user_media_path(cls.listing, IMGNAME)
         ).resolve()
 
     @classmethod
     def tearDownClass(cls):
         if cls.image_path.exists():
             cls.image_path.unlink()
-        if not [f for f in cls.image_path.parent.iterdir()]:
+        if cls.image_path.parent.exists() and \
+                not [f for f in cls.image_path.parent.iterdir()]:
             cls.image_path.parent.rmdir()
         super().tearDownClass()
 
@@ -371,7 +372,7 @@ class ListingTests(TestCase):
 
 
 class WatchlistTests(TestCase):
-    databases = [DB]
+    databases = DATABASES
 
     def test_watchlist_normal_case(self):
         profile1 = get_profile('Toki')
@@ -392,7 +393,7 @@ class WatchlistTests(TestCase):
 
 
 class BidTests(TestCase):
-    databases = [DB]
+    databases = DATABASES
 
     def test_bids_normal_case(self):
         time_now = timezone.localtime()
@@ -439,7 +440,7 @@ class BidTests(TestCase):
 
 
 class CommentTests(TestCase):
-    databases = [DB]
+    databases = DATABASES
 
     @classmethod
     def setUpClass(cls):
@@ -460,7 +461,7 @@ class CommentTests(TestCase):
 
 
 class LogTests(TestCase):
-    databases = ['default', DB]
+    databases = DATABASES
 
     def test_auctions_logs(self):
         from auctions.models import (
@@ -469,11 +470,11 @@ class LogTests(TestCase):
             LOG_YOU_LOSE, LOG_OWNER_REMOVED, LOG_ITEM_SOLD,
             LOG_MONEY_ADDED
         )
-        user = User.objects.create(username='Lucky Beast')
+        user = User.objects.create(username='LuckyBeast')
 
         # registration
         self.assertTrue(Log.manager.filter(entry=LOG_REGISTRATION).exists())
-        profile = Profile.manager.get(username='Lucky Beast')
+        profile = Profile.manager.get(username='LuckyBeast')
 
         # money
         profile.add_money(10)

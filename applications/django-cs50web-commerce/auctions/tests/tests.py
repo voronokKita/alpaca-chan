@@ -20,6 +20,7 @@ from auctions.models import (
 # TODO navbar, functions
 
 DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
+DATABASES = ['default', DB]
 FAST_PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 small_gif = (
@@ -27,7 +28,8 @@ small_gif = (
     b'\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00'
     b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
 )
-TEST_IMAGE = SimpleUploadedFile('dot.gif', small_gif, content_type='image/gif')
+IMGNAME = 'dot.gif'
+TEST_IMAGE = SimpleUploadedFile(IMGNAME, small_gif, content_type='image/gif')
 TMP_IMAGE = tempfile.NamedTemporaryFile(suffix='.jpg').name
 
 
