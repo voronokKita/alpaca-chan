@@ -1,89 +1,80 @@
-from django.test import TestCase, SimpleTestCase
+import tempfile
+import datetime
+
+from django.test import TestCase, SimpleTestCase, override_settings
 from django.utils import timezone
-from django.urls import reverse
+from django.utils.text import slugify
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 from django.contrib.auth.models import User
+from accounts.models import ProxyUser
 from auctions.models import (
     Profile, ListingCategory, Comment,
     Listing, Watchlist, Bid, Log
 )
-from .test_models import get_category, get_profile, get_listing, get_comment
 
-
-#TODO tags, signals
+# TODO navbar, functions
 
 DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
-PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
+FAST_PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
+small_gif = (
+    b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00'
+    b'\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00'
+    b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
+)
+TEST_IMAGE = SimpleUploadedFile('dot.gif', small_gif, content_type='image/gif')
+TMP_IMAGE = tempfile.NamedTemporaryFile(suffix='.jpg').name
 
 
-# class IndexViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_index_loads(self):
-#         response = self.client.get(reverse('auctions:index'))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class ProfileViewTests(TestCase):
-#     databases = ['default', DB]
-#
-#     def test_profile_loads(self):
-#         User.objects.create(username='Serval')
-#         response = self.client.get(reverse('auctions:profile', args=[1]))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class UserHistoryViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_history_loads(self):
-#         profile = get_profile(username='Nana')
-#         response = self.client.get(reverse('auctions:user_history', args=[profile.pk]))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class WatchlistViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_watchlist_loads(self):
-#         profile = get_profile(username='Kitakitsune')
-#         response = self.client.get(reverse('auctions:watchlist', args=[profile.pk]))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class CreateListingViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_create_loads(self):
-#         response = self.client.get(reverse('auctions:create_listing'))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class ListingViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_listing_loads(self):
-#         listing = get_listing()
-#         response = self.client.get(reverse('auctions:listing', args=[listing.slug]))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class CommentsViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_comments_loads(self):
-#         listing = get_listing()
-#         response = self.client.get(reverse('auctions:comments', args=[listing.slug]))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class AuctionLotViewTests(TestCase):
-#     databases = [DB]
-#
-#     def test_published_loads(self):
-#         listing = get_listing()
-#         response = self.client.get(reverse('auctions:auction_lot', args=[listing.slug]))
-#         self.assertEqual(response.status_code, 200)
+def get_category(label='precious') -> ListingCategory:
+    return ListingCategory.manager.create(label=label)
+
+
+def get_profile(username='Toki', money=100) -> Profile:
+    return Profile.manager.create(username=username, money=money)
+
+
+def get_listing(category=None, profile=None, username='Fennec',
+                title='Japari bun', image=TMP_IMAGE,
+                description='An endless source of energy!') -> Listing:
+    if category is None:
+        category = get_category()
+    if profile is None:
+        profile = get_profile(username)
+    return Listing.manager.create(
+        title=title,
+        description=description,
+        image=image,
+        category=category,
+        owner=profile,
+    )
+
+
+def get_comment(listing=None, profile=None,
+                text='Japari bun is the best bun!') -> Comment:
+    if profile is None:
+        profile = get_profile()
+    if listing is None:
+        listing = get_listing(profile=profile)
+    return Comment.manager.create(listing=listing, author=profile, text=text)
+
+
+class AuctionsResourcesTests(SimpleTestCase):
+    app_dir = settings.ALL_PROJECT_APPS['auctions']['app_dir']
+    resources = [
+        app_dir / 'readme.md',
+        app_dir / 'auctions' / 'logs.py',
+        app_dir / 'auctions' / 'db_router.py',
+        app_dir / 'auctions' / 'static' / 'auctions' / 'favicon.ico',
+        app_dir / 'auctions' / 'static' / 'auctions' / 'logo.jpg',
+        app_dir / 'auctions' / 'templates' / 'auctions' / 'base_auctions.html',
+    ]
+    def test_base_resources_exists(self):
+        from auctions.db_router import CommerceRouter
+        for item in self.resources:
+            self.assertTrue(item.exists(), msg=item)
