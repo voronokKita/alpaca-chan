@@ -137,4 +137,5 @@ Form tests. Fixed critical bug in Listing.unwatch(), that resulted in deletion o
 
 ### 2022.AUG.25
 ###### Auctions
-Tested all the forms.
+Tested all the forms, found some bugs. <br>
+Tested index view.

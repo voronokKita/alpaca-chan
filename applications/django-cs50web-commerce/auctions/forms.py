@@ -58,7 +58,7 @@ class PublishListingForm(ModelForm):
             return False
 
 
-class AuctionLotForm(ModelForm):  # TODO test
+class AuctionLotForm(ModelForm):
     ghost_field = BooleanField(required=False, disabled=True, widget=HiddenInput())
     auctioneer = CharField(required=False, disabled=True,
                            max_length=USERNAME_MAX_LEN, widget=HiddenInput())

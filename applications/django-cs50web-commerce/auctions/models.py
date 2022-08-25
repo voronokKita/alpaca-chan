@@ -394,6 +394,7 @@ class Listing(Model):
             money = auctioneer.get_money(bid_value)
             auctioneer.placed_bids.add(self, through_defaults={'bid_value': money})
             self.highest_bid = money
+            self.save()
 
             log_entry(auctioneer, 'bid', self.title, coins=money)
             return True

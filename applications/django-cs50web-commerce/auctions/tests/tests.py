@@ -1,27 +1,15 @@
 import tempfile
-import datetime
 
-from django.test import TestCase, SimpleTestCase, override_settings
-from django.utils import timezone
-from django.utils.text import slugify
-from django.urls import reverse, reverse_lazy
+from django.test import SimpleTestCase
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from auctions.models import Profile, ListingCategory, Listing, Comment
 
-from django.contrib.auth.models import User
-from accounts.models import ProxyUser
-from auctions.models import (
-    Profile, ListingCategory, Comment,
-    Listing, Watchlist, Bid, Log
-)
-
-# TODO navbar, functions
 
 DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
 DATABASES = ['default', DB]
-FAST_PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
+FAST_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 small_gif = (
     b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00'

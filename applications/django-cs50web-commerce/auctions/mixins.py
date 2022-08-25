@@ -32,7 +32,6 @@ class ProfileMixin:
                 ).first()
                 request.session['auctioneer_pk'] = profile.pk
                 self.auctioneer_pk = profile.pk
-                print(self.auctioneer_pk)
 
         return super().dispatch(request, *args, **kwargs)
 

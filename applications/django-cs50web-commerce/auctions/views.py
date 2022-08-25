@@ -58,9 +58,7 @@ class UserHistoryView(AuctionsAuthMixin, PresetMixin, generic.ListView):
     context_object_name = 'profile_logs'
 
     def get_queryset(self):
-        return Log.manager.filter(
-            profile__pk=self.auctioneer_pk
-        ).all()
+        return Log.manager.filter(profile__pk=self.auctioneer_pk).all()
 
 
 class WatchlistView(AuctionsAuthMixin, PresetMixin, generic.DetailView):
