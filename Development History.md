@@ -134,3 +134,7 @@ Design refactor.
 ### 2022.AUG.24
 ###### Auctions
 Form tests. Fixed critical bug in Listing.unwatch(), that resulted in deletion of the profile instead of the watchlist entry (‾́◡‾́)
+
+### 2022.AUG.25
+###### Auctions
+Tested all the forms.

@@ -86,9 +86,17 @@ class AuctionLotForm(ModelForm):  # TODO test
                 self.instance.owner.username != username:
             raise ValidationError('ERROR: you aren’t the owner ot the lot')
 
+        elif 'btn_owner_closed_auction' in self.data and \
+                self.instance.highest_bid is None:
+            raise ValidationError('ERROR: there is no bids')
+
         elif 'btn_owner_withdrew' in self.data and \
                 self.instance.owner.username != username:
             raise ValidationError('ERROR: you aren’t the owner ot the lot')
+
+        elif 'btn_user_bid' in self.data and \
+                not isinstance(self.cleaned_data['bid_value'], (int, float)):
+            raise ValidationError('enter the value of the bid')
 
         elif 'btn_user_bid' in self.data and \
                 self.instance.no_bid_option(username=username):

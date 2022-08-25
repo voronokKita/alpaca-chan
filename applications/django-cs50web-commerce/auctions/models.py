@@ -373,9 +373,11 @@ class Listing(Model):
                 auctioneer.money < self.starting_price:
             return NO_BID_NO_MONEY_SP
 
-    def make_a_bid(self, auctioneer, bid_value) -> bool:
+    def make_a_bid(self, auctioneer:Profile, bid_value:float) -> bool:
         """ Also add the lot to user's watchlist. """
-        if self.no_bid_option(auctioneer):
+        if not isinstance(bid_value, (int, float)):
+            return False
+        elif self.no_bid_option(auctioneer):
             return False
         elif auctioneer.money < bid_value:
             return False
