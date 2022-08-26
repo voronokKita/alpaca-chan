@@ -103,8 +103,11 @@ class ListingRedirectMixin:
                 listing.owner.username != request.user.username:
             # only the listing owner can see & edit an unpublished item
             return redirect(reverse('auctions:index'))
+
         elif listing.is_active != is_active_flag:
+            # request of a published auction lot by url of an unpublished listing, and vice versa
             return redirect(listing.get_absolute_url())
+
         else:
             return super().dispatch(request, *args, **kwargs)
 
@@ -120,7 +123,7 @@ class ListingRedirectMixin:
         """
         The conditions depend on the state of a view.
         May add the listing object to the view if called first.
-        Note: If the view has an object, then the get_queryset() method isn't called.
+        Note: If a View has an object, then the get_queryset() method isn't called.
         """
         if self.queryset:
             listing_set = self.queryset
@@ -133,7 +136,7 @@ class ListingRedirectMixin:
 
     @staticmethod
     def _must_bee_active(request, slug):
-        """ Is this listing's path — the published object's path? """
+        """ Is this listing's path — the published auctions' lot path? """
         if 'lots' in request.path:
             return True
         else:

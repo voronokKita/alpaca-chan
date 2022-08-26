@@ -21,7 +21,8 @@ MONEY_MAX_VALUE = 9999.99
 
 class TransferMoneyForm(ModelForm):
     transfer_money = FloatField(
-        label='', min_value=MONEY_MIN_VALUE, max_value=MONEY_MAX_VALUE,
+        label='', required=True,
+        min_value=MONEY_MIN_VALUE, max_value=MONEY_MAX_VALUE,
         widget=NumberInput(attrs={'placeholder': '0.01',
                                   'class': 'form-control',
                                   'autocomplete': 'off'})
@@ -30,13 +31,11 @@ class TransferMoneyForm(ModelForm):
         model = Profile
         fields = ['transfer_money']
 
-    def is_valid(self):
-        if super().is_valid():
-            money = self.cleaned_data['transfer_money']
-            self.instance.add_money(money)
-            return True
-        else:
-            return False
+    def save(self, commit=True):
+        money = self.cleaned_data['transfer_money']
+        self.instance.add_money(money)
+        self.instance.refresh_from_db()
+        return self.instance
 
 
 class PublishListingForm(ModelForm):
@@ -51,11 +50,10 @@ class PublishListingForm(ModelForm):
             raise ValidationError('ERROR: this lot already published!')
         return super().clean()
 
-    def is_valid(self):
-        if super().is_valid():
-            return self.instance.publish_the_lot()
-        else:
-            return False
+    def save(self, commit=True):
+        self.instance.publish_the_lot()
+        self.instance.refresh_from_db()
+        return self.instance
 
 
 class AuctionLotForm(ModelForm):
@@ -112,26 +110,24 @@ class AuctionLotForm(ModelForm):
 
         return super().clean()
 
-    def is_valid(self):
+    def save(self, commit=True):
         username = self.fields['auctioneer'].initial
-        if super().is_valid() is False:
-            return False
-        elif 'btn_owner_closed_auction' in self.data:
-            return self.instance.change_the_owner()
+        if 'btn_owner_closed_auction' in self.data:
+            self.instance.change_the_owner()
         elif 'btn_owner_withdrew' in self.data:
-            return self.instance.withdraw()
+            self.instance.withdraw()
         elif 'btn_user_bid' in self.data:
             bid_value = self.cleaned_data['bid_value']
             profile = Profile.manager.filter(username=username).first()
-            return self.instance.make_a_bid(profile, bid_value)
+            self.instance.make_a_bid(profile, bid_value)
         elif 'btn_user_watching' in self.data:
             profile = Profile.manager.filter(username=username).first()
             profile.items_watched.add(self.instance)
-            return True
         elif 'btn_user_unwatched' in self.data:
-            return self.instance.unwatch(username=username)
-        else:
-            return True
+            self.instance.unwatch(username=username)
+
+        self.instance.refresh_from_db()
+        return self.instance
 
 
 class CommentForm(ModelForm):
@@ -150,16 +146,13 @@ class CommentForm(ModelForm):
         model = Listing
         fields = ['text_field', 'author_hidden']
 
-    def is_valid(self):
-        if super().is_valid() is False:
-            return False
-        else:
-            username = self.cleaned_data['author_hidden']
-            self.instance.comment_set.create(
-                text=self.cleaned_data['text_field'],
-                author=Profile.manager.filter(username=username).first()
-            )
-            return True
+    def save(self, commit=True):
+        username = self.cleaned_data['author_hidden']
+        self.instance.comment_set.create(
+            text=self.cleaned_data['text_field'],
+            author=Profile.manager.filter(username=username).first()
+        )
+        return self.instance
 
 
 class CreateListingForm(ModelForm):
@@ -173,6 +166,7 @@ class CreateListingForm(ModelForm):
     )
     title = CharField(
         label='Listing title',
+        required=True,
         widget=TextInput(
             attrs={'class': 'form-control', 'autocomplete': 'off',
                    'placeholder': f'{LOT_TITLE_MAX_LEN} characters max'}
@@ -180,25 +174,30 @@ class CreateListingForm(ModelForm):
     )
     category = ModelChoiceField(
         label='Category',
+        required=True,
         queryset=ListingCategory.manager.all(),
         widget=Select(attrs={'class': 'form-control'})
     )
     starting_price = FloatField(
         label='Starting 🪙 price',
+        required=True,
         min_value=MONEY_MIN_VALUE,
         initial=DEFAULT_STARTING_PRICE,
         widget=NumberInput(attrs={'class': 'form-control'})
     )
     description = CharField(
         label='Description',
+        required=True,
         min_length=10,
         widget=Textarea(attrs={'class': 'form-control'})
     )
     image = ImageField(
         label='Item image',
+        required=True,
         widget=ClearableFileInput(attrs={'class': 'form-control'})
     )
     owner = ModelChoiceField(
+        required=True,
         disabled=True,
         queryset=None,
         widget=HiddenInput()
@@ -243,10 +242,9 @@ class EditListingForm(ModelForm):
             raise ValidationError('ERROR: this lot already published!')
         return super().clean()
 
-    def is_valid(self):
-        if super().is_valid() is False:
-            return False
-        elif 'button_publish' in self.data:
-            return self.instance.publish_the_lot()
-        else:
-            return True
+    def save(self, commit=True):
+        instance = super().save(commit)
+        if 'button_publish' in self.data:
+            instance.publish_the_lot()
+        instance.refresh_from_db()
+        return instance

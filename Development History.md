@@ -139,3 +139,9 @@ Form tests. Fixed critical bug in Listing.unwatch(), that resulted in deletion o
 ###### Auctions
 Tested all the forms, found some bugs. <br>
 Tested index view.
+
+### 2022.AUG.26
+###### Auctions
+Fixed a very stupid logical bug of mine in the forms: logic was executed in the is_valid() instead of the save() method (￣ω￣;) <br>
+Some tests for the mixins. <br>
+ProfileViewTests, UserHistoryViewTests, WatchlistViewTests, CreateListingViewTests, ListingViewTests, EditListingViewTests.

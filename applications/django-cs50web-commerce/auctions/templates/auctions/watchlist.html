@@ -13,10 +13,10 @@
     <a class='card h-100' href='{{ listing.get_absolute_url }}' style='color: black; text-decoration: none;'>
       <img src='/media/{{ listing.image }}' class='card-img-top' alt='{{ listing.slug }}'>
       <div class='card-body'>
-        <h5 class='card-title'>{{ listing.title|truncatechars:20 }}</h5>
+        <h5 class='card-title'>{{ listing.title|capfirst|truncatechars:20 }}</h5>
         <h6 class='card-subtitle  mb-2'>Category: {{ listing.category|lower }}</h6>
         <h6 class='card-subtitle  mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
-        <p class='card-text'>{{ listing.description|truncatechars:50 }}</p>
+        <p class='card-text'>{{ listing.description|capfirst|truncatechars:50 }}</p>
       </div>
       <span class='card-footer'><small>Not Published</small></span>
     </a>
@@ -35,10 +35,10 @@
     <a class='card h-100' href='{{ listing.get_absolute_url }}' style='color: black; text-decoration: none;'>
       <img src='/media/{{ listing.image }}' class='card-img-top' alt='{{ listing.slug }}'>
       <div class='card-body'>
-        <h5 class='card-title'>{{ listing.title|truncatechars:20 }}</h5>
+        <h5 class='card-title'>{{ listing.title|capfirst|truncatechars:20 }}</h5>
         <h6 class='card-subtitle  mb-2'>Category: {{ listing.category|lower }}</h6>
         <h6 class='card-subtitle  mb-2'>Price: 🪙{{ listing.get_highest_price|floatformat:"-2" }}</h6>
-        <p class='card-text'>{{ listing.description|truncatechars:50 }}</p>
+        <p class='card-text'>{{ listing.description|capfirst|truncatechars:50 }}</p>
       </div>
       <span class='card-footer'><small>Published: {{ listing.date_published }}</small></span>
     </a>
@@ -57,10 +57,10 @@
     <a class='card h-100' href='{{ listing.get_absolute_url }}' style='color: black; text-decoration: none;'>
       <img src='/media/{{ listing.image }}' class='card-img-top' alt='{{ listing.slug }}'>
       <div class='card-body'>
-        <h5 class='card-title'>{{ listing.title|truncatechars:20 }}</h5>
+        <h5 class='card-title'>{{ listing.title|capfirst|truncatechars:20 }}</h5>
         <h6 class='card-subtitle  mb-2'>Category: {{ listing.category|lower }}</h6>
         <h6 class='card-subtitle  mb-2'>Price: 🪙{{ listing.get_highest_price|floatformat:"-2" }}</h6>
-        <p class='card-text'>{{ listing.description|truncatechars:150 }}</p>
+        <p class='card-text'>{{ listing.description|capfirst|truncatechars:150 }}</p>
       </div>
       <span class='card-footer'><small>Published: {{ listing.date_published }}</small></span>
     </a>

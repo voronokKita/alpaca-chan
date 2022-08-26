@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from django.contrib import admin
@@ -14,6 +15,8 @@ from django.db.models import (
     IntegerField, Sum, F
 )
 from core.utils import unique_slugify
+
+logger = logging.getLogger(__name__)
 
 
 class LowOnMoney(Exception): pass
@@ -97,14 +100,14 @@ class Profile(Model):
                 date = date_joined if date_joined else timezone.localtime()
                 self.logs.create(entry=LOG_REGISTRATION, date=date)
 
-    def add_money(self, amount: float, silent=False):
+    def add_money(self, amount:float, silent=False):
         with transaction.atomic('auctions_db', savepoint=False):
             self.money = F('money') + amount
             self.save(update_fields=['money'])
             if silent is False:
                 log_entry(self, 'money_added', coins=amount)
 
-    def get_money(self, value: float) -> (float, LowOnMoney):
+    def get_money(self, value:float) -> (float, LowOnMoney):
         if self.money >= value:
             self.money = F('money') - value
             self.save(update_fields=['money'])

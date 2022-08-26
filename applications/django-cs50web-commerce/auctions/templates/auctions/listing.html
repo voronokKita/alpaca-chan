@@ -15,19 +15,19 @@
           <img class='col mb-2' src='/media/{{ listing.image }}' alt='{{ listing.slug }}'
                style='width: fit-content; min-width: 120px; max-width: 200px;'>
           <div class='col'>
-            <h3 class='card-title mb-3'>{{ listing.title }}</h3>
+            <h3 class='card-title mb-3'>{{ listing.title|capfirst }}</h3>
             <h6 class='card-subtitle mb-3'>Category: {{ listing.category|lower }}</h6>
             <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
           </div>
         </div>
-        <p class='card-text'>{{ listing.description }}</p>
-          <div class='d-inline'>
-            <a href='{% url "auctions:edit_listing" listing.slug %}' class='btn btn-secondary'>Edit</a>
-          </div>
-          <form method='POST' class='d-inline'>
-            {% csrf_token %}{{ form }}
-            <button type='submit' class='btn btn-warning'>Publish and start the auction</button>
-          </form>
+        <p class='card-text'>{{ listing.description|capfirst }}</p>
+        <div class='d-inline'>
+          <a href='{% url "auctions:edit_listing" listing.slug %}' class='btn btn-secondary'>Edit</a>
+        </div>
+        <form method='POST' class='d-inline'>
+          {% csrf_token %}{{ form }}
+          <button type='submit' class='btn btn-warning'>Publish and start the auction</button>
+        </form>
       </div>
       <span class='card-footer'><small>Created: {{ listing.date_created }}</small></span>
     </div>

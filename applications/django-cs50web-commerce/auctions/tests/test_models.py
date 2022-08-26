@@ -103,16 +103,19 @@ class UserProfileTests(TestCase):
         profile.add_money(10)
         profile.refresh_from_db()
         self.assertTrue(profile.money == 10)
+        profile.add_money(10)
+        profile.refresh_from_db()
+        self.assertTrue(profile.money == 20)
 
         # display money
         listing = get_listing()
         listing.publish_the_lot()
-        listing.make_a_bid(profile, 5)
+        listing.make_a_bid(profile, 10)
         profile.refresh_from_db()
-        self.assertEqual(profile.display_money(), (5.0, 5.0))
+        self.assertEqual(profile.display_money(), (10.0, 10.0))
 
         # get money
-        self.assertEqual(profile.get_money(5.0), 5.0)
+        self.assertEqual(profile.get_money(10.0), 10.0)
         profile.refresh_from_db()
         self.assertTrue(profile.money == 0)
 
