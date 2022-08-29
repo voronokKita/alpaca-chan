@@ -136,7 +136,7 @@ class ListingRedirectMixin:
 
     @staticmethod
     def _must_bee_active(request, slug):
-        """ Is this listing's path — the published auctions' lot path? """
+        """ Is this listing's path — the published auction's lot path? """
         if 'lots' in request.path:
             return True
         else:

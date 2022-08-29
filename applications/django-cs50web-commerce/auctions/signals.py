@@ -11,7 +11,7 @@ def user_saved_signal(instance, created, **kwargs):
 
 
 def user_pre_saved_signal(instance, **kwargs):
-    """ Ensures the auctions' profile name and User username always match. """
+    """ Ensures the auction's profile name and User username always match. """
     if not instance.pk:
         return
     else:
@@ -28,6 +28,6 @@ def user_pre_saved_signal(instance, **kwargs):
 
 
 def user_pre_delete_signal(instance, **kwargs):
-    """ Delete the auctions' profile along with its user. """
+    """ Delete the auction's profile along with its user. """
     p = Profile.manager.get(username=instance.username)
     p.delete()

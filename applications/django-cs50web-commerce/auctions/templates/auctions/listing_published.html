@@ -15,21 +15,21 @@
           <img class='col mb-2' src='/media/{{ listing.image }}' alt='{{ listing.slug }}'
                style='width: fit-content; min-width: 120px; max-width: 200px;'>
           <div class='col'>
-            <h3 class='card-title mb-3'>{{ listing.title }}</h3>
+            <h3 class='card-title mb-3'>{{ listing.title|capfirst }}</h3>
             <h6 class='card-subtitle mb-2'>Owner: {{ listing.owner.username }}</h6>
             <h6 class='card-subtitle mb-3'>Category: {{ listing.category|lower }}</h6>
             <h6 class='card-subtitle mb-2'>
-              <a href='{% url "auctions:bid" listing.slug %}' style='text-decoration: none;'>Bids placed</a>:
-              {{ listing.potential_buyers.count }}
+              <a href='{% url "auctions:bid" listing.slug %}'
+                 style='text-decoration: none;'>Bids placed</a>: {{ listing.potential_buyers.count }}
             </h6>
-            {% if listing.potential_buyers.count == 0 %}
-            <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
+            {% if listing.highest_bid %}
+            <h6 class='card-subtitle mb-2'>Highest price: 🪙{{ listing.highest_bid|floatformat:"-2" }}</h6>
             {% else %}
-            <h6 class='card-subtitle mb-2'>Highest price: 🪙{{ listing.get_highest_price|floatformat:"-2" }}</h6>
+            <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
             {% endif %}
           </div>
         </div>
-        <p class='card-text'>{{ listing.description }}</p>
+        <p class='card-text'>{{ listing.description|capfirst }}</p>
         {% if request.user.is_authenticated %}
           {% include 'auctions/_listing_published_form.html' %}
         {% endif %}

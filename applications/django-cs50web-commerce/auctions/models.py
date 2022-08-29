@@ -32,7 +32,7 @@ NO_BID_NOT_PUBLISHED = 'Listing is not published'
 NO_BID_THE_OWNER = 'You are the owner'
 NO_BID_NO_MONEY = 'Insufficient funds'
 NO_BID_NO_MONEY_SP = 'Your money is less than the starting price'
-NO_BID_ON_TOP = 'Your bid is on top'
+NO_BID_ON_TOP = 'Your bid is on the top'
 
 LOG_REGISTRATION = 'Date of your registration.'
 LOG_MONEY_ADDED = 'Wallet topped up with %0.2f coins.'

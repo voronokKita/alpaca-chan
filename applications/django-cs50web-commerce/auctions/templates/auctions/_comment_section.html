@@ -1,7 +1,7 @@
 {% if comment_view %}
 <h3 class='mb-4'>
   Comments to
-  «<a href='{{ listing.get_absolute_url }}' style='text-decoration: none;'>{{ listing.title }}</a>»
+  «<a href='{{ listing.get_absolute_url }}' style='text-decoration: none;'>{{ listing.title|capfirst }}</a>»
 </h3>
 {% else %}
 <h4 class='mt-5 mb-2'>

@@ -43,7 +43,7 @@ Wrote a few model tests and the auctions models extensions.
 ### 2022.AUG.8
 
 1st half of the day: <br>
-Finished auctions' models tests. Added unique_slugify util.
+Finished auction's models tests. Added unique_slugify util.
 
 2nd half of the day: <br>
 Made a Log model for auctions, integrated its logic and wrote all the tests.
@@ -145,3 +145,8 @@ Tested index view.
 Fixed a very stupid logical bug of mine in the forms: logic was executed in the is_valid() instead of the save() method (￣ω￣;) <br>
 Some tests for the mixins. <br>
 ProfileViewTests, UserHistoryViewTests, WatchlistViewTests, CreateListingViewTests, ListingViewTests, EditListingViewTests.
+
+### 2022.AUG.29
+###### Auctions
+CommentsViewTests & BidViewTests. <br>
+Some AuctionLotViewTests.

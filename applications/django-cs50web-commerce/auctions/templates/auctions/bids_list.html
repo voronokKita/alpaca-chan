@@ -9,7 +9,7 @@
   <div class='col-12 col-md-12 col-lg-7 col-xl-6 col-xxl-5'>
     <h3 class='mb-4'>
       Bids placed on
-      «<a href='{{ listing.get_absolute_url }}' style='text-decoration: none;'>{{ listing.title }}</a>»
+      «<a href='{{ listing.get_absolute_url }}' style='text-decoration: none;'>{{ listing.title|capfirst }}</a>»
     </h3>
     <table class="table table-striped">
       <tbody>

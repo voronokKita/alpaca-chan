@@ -74,6 +74,7 @@ class AuctionLotForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         initial = kwargs['instance'].get_highest_price(percent=True)
+        initial = ('%f' % initial).rstrip('0').rstrip('.')
         self.fields['bid_value'].initial = initial
         self.fields['bid_value'].min_value = initial
         self.fields['bid_value'].widget.attrs['min'] = initial
