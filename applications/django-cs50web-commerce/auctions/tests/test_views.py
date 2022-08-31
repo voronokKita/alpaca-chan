@@ -1005,8 +1005,6 @@ class AuctionLotViewForUsersTests(TestCase):
         self._user_watching_the_auction()
         self._user_unwatch_the_auction_form_works()
 
-        self._user_watch_form_with_wrong_data()
-
     def _user_not_watching_the_auction(self):
         response = self.client.get(self.test_url)
         self.assertEqual(response.status_code, 200)
