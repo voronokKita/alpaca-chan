@@ -365,14 +365,14 @@ class Listing(Model):
         elif self.owner == auctioneer:
             return NO_BID_THE_OWNER
 
-        elif self.potential_buyers.count() > 0:
+        elif self.highest_bid is not None:
             highest_bid = self.get_highest_bid_entry()
             if highest_bid.auctioneer == auctioneer:
                 return NO_BID_ON_TOP
             elif auctioneer.money < highest_bid.bid_value * NEW_BID_PERCENT:
                 return NO_BID_NO_MONEY
 
-        elif self.potential_buyers.count() == 0 and \
+        elif not self.highest_bid and \
                 auctioneer.money < self.starting_price:
             return NO_BID_NO_MONEY_SP
 

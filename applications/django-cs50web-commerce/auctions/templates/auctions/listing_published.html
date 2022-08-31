@@ -23,9 +23,9 @@
                  style='text-decoration: none;'>Bids placed</a>: {{ listing.potential_buyers.count }}
             </h6>
             {% if listing.highest_bid %}
-            <h6 class='card-subtitle mb-2'>Highest price: 🪙{{ listing.highest_bid|floatformat:"-2" }}</h6>
+              <h6 class='card-subtitle mb-2'>Highest bid: 🪙{{ listing.highest_bid|floatformat:"-2" }}</h6>
             {% else %}
-            <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
+              <h6 class='card-subtitle mb-2'>Starting price: 🪙{{ listing.starting_price|floatformat:"-2" }}</h6>
             {% endif %}
           </div>
         </div>

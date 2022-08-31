@@ -6,7 +6,7 @@
 
 {% if profile == listing.owner %}
 
-  {% if listing.potential_buyers.count > 0 %}
+  {% if listing.highest_bid %}
     <button type='submit' name='btn_owner_closed_auction' class='btn btn-warning'>Close the auction</button>
   {% endif %}
   <button type='submit' name='btn_owner_withdrew' class='btn btn-danger'>Cancel the auction</button>
@@ -20,11 +20,12 @@
   {{ form.bid_value.errors }}
   {{ form.bid_value }}
 
+  {{ form.auctioneer.errors }}
+  {{ form.auctioneer }}
+
   {% if bid_forbidden %}
-    <span class='btn btn-warning disabled'>{{ bid_forbidden }}</span>
+    <span id='bid_forbidden' class='btn btn-warning disabled'>{{ bid_forbidden }}</span>
   {% else %}
-    {{ form.auctioneer.errors }}
-    {{ form.auctioneer }}
     <button type='submit' name='btn_user_bid' class='btn btn-warning'>Make a bid</button>
   {% endif %}
 

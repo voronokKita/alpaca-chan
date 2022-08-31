@@ -12,6 +12,7 @@ from .models import (
     SLUG_MAX_LEN, LOT_TITLE_MAX_LEN, DEFAULT_STARTING_PRICE,
     USERNAME_MAX_LEN, Profile, Listing, ListingCategory
 )
+from .utils import format_bid_value
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +74,8 @@ class AuctionLotForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        initial = kwargs['instance'].get_highest_price(percent=True)
-        initial = ('%f' % initial).rstrip('0').rstrip('.')
+        n = kwargs['instance'].get_highest_price(percent=True)
+        initial = format_bid_value(n)
         self.fields['bid_value'].initial = initial
         self.fields['bid_value'].min_value = initial
         self.fields['bid_value'].widget.attrs['min'] = initial

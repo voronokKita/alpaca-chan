@@ -2,7 +2,6 @@ import tempfile
 
 from django.test import SimpleTestCase
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from auctions.models import Profile, ListingCategory, Listing, Comment
 
@@ -11,13 +10,12 @@ DB = settings.PROJECT_MAIN_APPS['auctions']['db']['name']
 DATABASES = ['default', DB]
 FAST_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
-small_gif = (
+SMALL_GIF = (
     b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00'
     b'\x00\x05\x04\x04\x00\x00\x00\x2c\x00\x00\x00\x00'
     b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
 )
 IMGNAME = 'dot.gif'
-TEST_IMAGE = SimpleUploadedFile(IMGNAME, small_gif, content_type='image/gif')
 TMP_IMAGE = tempfile.NamedTemporaryFile(suffix='.jpg').name
 
 

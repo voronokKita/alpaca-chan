@@ -1,6 +1,6 @@
 import logging
 
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.views import generic
 
@@ -124,6 +124,7 @@ class AuctionLotView(PresetMixin, ListingRedirectMixin, generic.UpdateView):
     context_object_name = 'listing'
     form_class = AuctionLotForm
     second_form_class = CommentForm
+    success_url = None
 
     def get_form(self, *args, **kwargs):
         """ Main form class. """
@@ -147,6 +148,11 @@ class AuctionLotView(PresetMixin, ListingRedirectMixin, generic.UpdateView):
                 context['bid_forbidden'] = result
 
         return context
+
+    def form_valid(self, form):
+        if 'btn_owner_closed_auction' in form.data:
+            self.success_url = reverse_lazy('auctions:user_history', args=[self.auctioneer_pk])
+        return super().form_valid(form)
 
 
 class CommentsView(PresetMixin, generic.UpdateView):

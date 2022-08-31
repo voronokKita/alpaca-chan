@@ -150,3 +150,11 @@ ProfileViewTests, UserHistoryViewTests, WatchlistViewTests, CreateListingViewTes
 ###### Auctions
 CommentsViewTests & BidViewTests. <br>
 Some AuctionLotViewTests.
+
+### 2022.AUG.30
+###### Auctions
+Tests tests tests... I want to learn once and for all how to write tests clearly and effectively.
+
+### 2022.AUG.31
+###### Auctions
+Done all the tests for the auctions app.
