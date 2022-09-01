@@ -161,4 +161,5 @@ Done all the tests for the auctions app.
 
 ### 2022.SEP.1
 ###### Auctions, Accounts
-Improved the user registration process. Tests.
+Improved the user registration process. Tests. <br>
+Created some categories, users and auctions.
