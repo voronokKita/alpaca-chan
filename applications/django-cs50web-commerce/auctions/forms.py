@@ -32,6 +32,9 @@ class TransferMoneyForm(ModelForm):
         model = Profile
         fields = ['transfer_money']
 
+    def clean_transfer_money(self):
+        return round(self.cleaned_data['transfer_money'], 2)
+
     def save(self, commit=True):
         money = self.cleaned_data['transfer_money']
         self.instance.add_money(money)
@@ -119,7 +122,7 @@ class AuctionLotForm(ModelForm):
         elif 'btn_owner_withdrew' in self.data:
             self.instance.withdraw()
         elif 'btn_user_bid' in self.data:
-            bid_value = self.cleaned_data['bid_value']
+            bid_value = round(self.cleaned_data['bid_value'], 2)
             profile = Profile.manager.filter(username=username).first()
             self.instance.make_a_bid(profile, bid_value)
         elif 'btn_user_watching' in self.data:
@@ -209,6 +212,9 @@ class CreateListingForm(ModelForm):
         fields = ['slug', 'title', 'category', 'starting_price',
                   'description', 'image', 'owner']
 
+    def clean_starting_price(self):
+        return round(self.cleaned_data['starting_price'], 2)
+
 
 class EditListingForm(ModelForm):
     title = CharField(
@@ -243,6 +249,9 @@ class EditListingForm(ModelForm):
         if 'button_publish' in self.data and self.instance.can_be_published() is False:
             raise ValidationError('ERROR: this lot already published!')
         return super().clean()
+
+    def clean_starting_price(self):
+        return round(self.cleaned_data['starting_price'], 2)
 
     def save(self, commit=True):
         instance = super().save(commit)

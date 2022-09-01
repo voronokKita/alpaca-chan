@@ -1,7 +1,9 @@
+import sys
+
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django import forms
 
-from .models import ProxyUser
+from django.contrib.auth.models import User
 
 
 class UserLoginForm(AuthenticationForm):
@@ -61,6 +63,26 @@ class UserRegisterForm(UserCreationForm):
                                           'placeholder': 'required'}),
     )
     class Meta:
-        model = ProxyUser
+        model = User
         fields = ['username', 'first_name', 'last_name',
                   'email', 'password1', 'password2']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+            self._get_auctions_profile(user)
+        return user
+
+    @staticmethod
+    def _get_auctions_profile(user):
+        if 'test' in sys.argv and \
+                not [True for arg in sys.argv if 'auctions' in arg]:
+            # testing some other app
+            return
+
+        from auctions.models import Profile
+        if not Profile.manager.filter(username=user.username).exists():
+            profile = Profile(username=user.username, user_model_pk=user.pk)
+            profile.save()

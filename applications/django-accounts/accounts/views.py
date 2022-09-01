@@ -7,6 +7,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import views, login, authenticate
 from django.contrib import messages
 
+from django.contrib.auth.models import User
 from .forms import UserRegisterForm, UserLoginForm
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ class IndexView(generic.TemplateView):
 
 class RegisterView(SuccessMessageMixin, generic.CreateView):
     template_name = 'accounts/register_user.html'
+    model = User
     form_class = UserRegisterForm
     success_url = reverse_lazy('core:index')
     success_message = "Hello, %(username)s!"

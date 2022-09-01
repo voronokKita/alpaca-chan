@@ -102,12 +102,13 @@ class Profile(Model):
 
     def add_money(self, amount:float, silent=False):
         with transaction.atomic('auctions_db', savepoint=False):
-            self.money = F('money') + amount
+            self.money = F('money') + round(amount, 2)
             self.save(update_fields=['money'])
             if silent is False:
                 log_entry(self, 'money_added', coins=amount)
 
     def get_money(self, value:float) -> (float, LowOnMoney):
+        value = round(value, 2)
         if self.money >= value:
             self.money = F('money') - value
             self.save(update_fields=['money'])
@@ -280,6 +281,7 @@ class Listing(Model):
                 log_entry(self.owner, 'new_item', self.title)
 
             super().save(*args, **kwargs)
+
             if self.in_watchlist.contains(self.owner) is False:
                 self.in_watchlist.add(self.owner)
 

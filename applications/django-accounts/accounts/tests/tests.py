@@ -1,6 +1,8 @@
 from django.test import SimpleTestCase
 from django.conf import settings
 
+SECOND_DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
+PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 """ TODO
 + proxy user model
 + forms
@@ -12,8 +14,6 @@ from django.conf import settings
 + check resources
 + check navbar
 """
-SECOND_DB = settings.PROJECT_MAIN_APPS['polls']['db']['name']
-PASSWORD_HASHER = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
 class AccountsResourcesTests(SimpleTestCase):

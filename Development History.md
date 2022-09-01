@@ -158,3 +158,7 @@ Tests tests tests... I want to learn once and for all how to write tests clearly
 ### 2022.AUG.31
 ###### Auctions
 Done all the tests for the auctions app.
+
+### 2022.SEP.1
+###### Auctions, Accounts
+Improved the user registration process. Tests.

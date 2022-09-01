@@ -1,8 +1,10 @@
 import tempfile
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.conf import settings
 
+from django.contrib.auth.models import User
 from auctions.models import Profile, ListingCategory, Listing, Comment
 
 
@@ -66,3 +68,39 @@ class AuctionsResourcesTests(SimpleTestCase):
         from auctions.db_router import CommerceRouter
         for item in self.resources:
             self.assertTrue(item.exists(), msg=item)
+
+
+@override_settings(PASSWORD_HASHERS=FAST_HASHER)
+class AuctionsIntegrationWithRegistrationTests(TestCase):
+    databases = DATABASES
+
+    def test_register_form(self):
+        self._register_page_loads()
+        self._register_request()
+        self._models_created()
+
+    def _register_page_loads(self):
+        from accounts.forms import UserRegisterForm
+        response = self.client.get(reverse('accounts:register'))
+        self.assertTrue(response.status_code == 200)
+        self.assertTrue(isinstance(response.context['form'], UserRegisterForm))
+
+    def _register_request(self):
+        url = reverse('accounts:register_and_next', args=['auctions'])
+        form_data = {
+            'username': 'Serval',
+            'password1': 'qwerty',
+            'password2': 'qwerty',
+        }
+        response_post = self.client.post(url, form_data)
+
+        self.assertRedirects(response_post, reverse('auctions:index'), 302, 200)
+
+    def _models_created(self):
+        self.assertTrue(User.objects.filter(username='Serval').exists())
+        self.assertTrue(Profile.manager.filter(username='Serval').exists())
+
+        response = self.client.get(reverse('auctions:index'))
+        self.assertTrue(response.status_code == 200)
+        self.assertTrue(response.context['user'].is_authenticated)
+        self.assertEqual(response.context['user'].username, 'Serval')

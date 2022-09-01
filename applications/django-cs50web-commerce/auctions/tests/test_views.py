@@ -326,7 +326,7 @@ class ProfileViewTests(TestNavbarAndSessionMixin, TestAccessMixin, TestCase):
 
     def _profile_add_money_form(self):
         response_post = self.client.post(self.test_url, {'transfer_money': 20.05})
-        self.assertEqual(response_post.status_code, 302)
+        self.assertRedirects(response_post, self.test_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
         self.assertEqual(response_get.status_code, 200)
@@ -511,10 +511,10 @@ class CreateListingViewTests(TestNavbarAndSessionMixin, TestAccessMixin, TestCas
             'owner': self.owner_profile.id,
         }
         response_post = self.client.post(self.test_url, data)
-        self.assertEqual(response_post.status_code, 302)
+        success_url = reverse('auctions:listing', args=[self.slug])
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
-        self.assertEqual(response_get.status_code, 200)
         self.assertContains(response_get, 'Japari Pie')
         self.assertTrue(self.image_path.exists())
 
@@ -586,10 +586,10 @@ class ListingViewTests(TestNavbarAndSessionMixin, TestAccessMixin, TestRedirectM
     def test_publish_listing_form(self):
         login_user(self, self.owner_profile.username)
         response_post = self.client.post(self.test_url, {'ghost_field': True})
-        self.assertEqual(response_post.status_code, 302)
+        success_url = reverse('auctions:auction_lot', args=[self.listing.slug])
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
-        self.assertEqual(response_get.status_code, 200)
         self.assertContains(response_get, 'Japari bun')
         self.listing.refresh_from_db()
         self.assertTrue(self.listing.is_active)
@@ -654,10 +654,10 @@ class EditListingViewTests(TestNavbarAndSessionMixin, TestAccessMixin, TestCase)
             'button_save': [''],
         }
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        success_url = reverse('auctions:listing', args=[self.listing.slug])
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
-        self.assertEqual(response_get.status_code, 200)
         self.assertContains(response_get, 'Big Japari Bun')
 
     def test_edit_form_save_and_start(self):
@@ -670,10 +670,10 @@ class EditListingViewTests(TestNavbarAndSessionMixin, TestAccessMixin, TestCase)
             'button_publish': [''],
         }
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        success_url = reverse('auctions:auction_lot', args=[self.listing.slug])
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
-        self.assertEqual(response_get.status_code, 200)
         self.assertContains(response_get, 'Grand Japari Bun')
         self.listing.refresh_from_db()
         self.assertTrue(self.listing.is_active)
@@ -769,10 +769,10 @@ class CommentsViewTests(TestNavbarAndSessionMixin, TestAccessMixin, TestCase):
             'author_hidden': self.second_profile.username,
         }
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        success_url = reverse('auctions:auction_lot', args=[self.listing.slug])
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
-        self.assertEqual(response_get.status_code, 200)
         self.assertContains(response_get, 'third comment')
 
 
@@ -1021,7 +1021,7 @@ class AuctionLotViewForUsersTests(TestCase):
     def _user_watch_the_auction_form_works(self):
         form_data = {'ghost_field': '', 'btn_user_watching': ['']}
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        self.assertRedirects(response_post, self.test_url, 302, 200)
         self.assertTrue(self.listing.in_watchlist.contains(self.second_profile))
 
     def _user_watching_the_auction(self):
@@ -1040,7 +1040,7 @@ class AuctionLotViewForUsersTests(TestCase):
     def _user_unwatch_the_auction_form_works(self):
         form_data = {'ghost_field': '', 'btn_user_unwatched': ['']}
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        self.assertRedirects(response_post, self.test_url, 302, 200)
         self.assertFalse(self.listing.in_watchlist.contains(self.second_profile))
 
     def test_auction_bid(self):
@@ -1079,7 +1079,7 @@ class AuctionLotViewForUsersTests(TestCase):
             'btn_user_bid': [''],
         }
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        self.assertRedirects(response_post, self.test_url, 302, 200)
 
         self.listing.refresh_from_db()
         self.assertEqual(self.listing.highest_bid, 2)
@@ -1208,7 +1208,8 @@ class AuctionLotViewForTheOwnerTests(TestCase):
     def _auction_withdrew_form_works(self):
         form_data = {'ghost_field': '', 'btn_owner_withdrew': ['']}
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
+        success_url = reverse('auctions:listing', args=[self.listing.slug])
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         response_get = self.client.get(response_post.url)
         self.assertEqual(response_get.status_code, 200)
@@ -1245,10 +1246,8 @@ class AuctionLotViewForTheOwnerTests(TestCase):
     def _auction_close_form_works(self):
         form_data = {'ghost_field': '', 'btn_owner_closed_auction': ['']}
         response_post = self.client.post(self.test_url, form_data)
-        self.assertEqual(response_post.status_code, 302)
-
         success_url = reverse('auctions:user_history', args=[self.owner_profile.pk])
-        self.assertEqual(response_post.url, success_url)
+        self.assertRedirects(response_post, success_url, 302, 200)
 
         self.listing.refresh_from_db()
         self.assertFalse(self.listing.is_active)

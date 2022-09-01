@@ -14,7 +14,12 @@ class AuctionsConfig(AppConfig):
     def ready(self):
         if os.environ.get('RUN_MAIN') != 'true':
             from django.contrib.auth.models import User
-            self._user_model_signals(User)
+            if 'test' in sys.argv and \
+                    not [True for arg in sys.argv if 'auctions' in arg]:
+                # testing some other app
+                pass
+            else:
+                self._user_model_signals(User)
 
             if 'test' not in sys.argv:
                 from .models import Profile
@@ -62,7 +67,7 @@ class AuctionsConfig(AppConfig):
                 .filter(listing__is_active=False)
             if result:
                 result.delete()
-                logger.info(f'the profile [{profile}] had a subscription to '
+                logger.info(f'AUCTIONS APP: the profile [{profile}] had a subscription to '
                             f'unpublished items that did not belong to him')
 
     @staticmethod
@@ -73,7 +78,7 @@ class AuctionsConfig(AppConfig):
             if result:
                 for bid in result:
                     bid.delete(refund=True)
-                logger.info(f'the profile [{profile}] had bids on unpublished items')
+                logger.info(f'AUCTIONS APP: the profile [{profile}] had bids on unpublished items')
 
     def _user_and_profile_models_sync(self, user_model, profile_model, users, profiles):
         """ The debug mechanism for the User-Profile synchronisation. """
@@ -81,7 +86,7 @@ class AuctionsConfig(AppConfig):
         profiles_usernames_set = set([q.username for q in profiles])
 
         if users_usernames_set != profiles_usernames_set:
-            logger.critical(f'usernames do not match. '
+            logger.critical(f'AUCTIONS APP: models usernames do not match. '
                             f'User{users_usernames_set} Profile{profiles_usernames_set}')
             self._fix_usernames(users, profile_model)
 
@@ -89,34 +94,34 @@ class AuctionsConfig(AppConfig):
         profiles_external_pk_set = set([q.user_model_pk for q in profiles])
 
         if users_pk_set != profiles_external_pk_set:
-            logger.critical(f'users pks do not match. '
+            logger.critical(f'AUCTIONS APP: models pks do not match. '
                             f'User{users_pk_set} Profile{profiles_external_pk_set}')
             self._fix_pks(users, profile_model)
 
     @staticmethod
     def _fix_usernames(users, profile_model):
-        logger.critical('try to fix usernames...')
+        logger.critical('try to fix usernames through user.pk...')
         for user in users:
             if not profile_model.manager.filter(username=user.username).exists():
-                profile = profile_model.manager.filter(user_model_pk=user.pk).first()
-                if profile:
-                    logger.critical(f'found instance {user}-{user.pk} with profile {profile}')
+                if profile_model.manager.filter(user_model_pk=user.pk).exists():
+                    profile = profile_model.manager.filter(user_model_pk=user.pk).first()
+                    logger.critical(f'found the profile [{profile}] of the user [{user}-{user.pk}]')
                     profile.username = user.username
                     profile.save(update_fields=['username'])
-                    logger.critical(f'renamed the profile to {profile}')
+                    logger.critical(f'renamed the profile to [{profile}]')
                 else:
-                    logger.critical(f'found instance {user}-{user.pk} without a profile!')
+                    logger.critical(f'no profile found for this user [{user}-{user.pk}]')
 
     @staticmethod
     def _fix_pks(users, profile_model):
         logger.critical('try to fix the pk problem...')
         for user in users:
             if not profile_model.manager.filter(user_model_pk=user.pk).exists():
-                profile = profile_model.manager.filter(username=user.username).first()
-                if profile:
-                    logger.critical(f'found instance {user}-{user.pk} with profile {profile}')
+                if profile_model.manager.filter(username=user.username).exists():
+                    profile = profile_model.manager.filter(username=user.username).first()
+                    logger.critical(f'found the profile [{profile}] of the user [{user}-{user.pk}]')
                     profile.user_model_pk = user.pk
                     profile.save()
-                    logger.critical(f'user.pk saved to the [{profile}]')
+                    logger.critical(f'[{user}] pk saved to the [{profile}]')
                 else:
-                    logger.critical(f'found instance {user}-{user.pk} without a profile!')
+                    logger.critical(f'no profile found for this user [{user}-{user.pk}]')
